@@ -56,22 +56,6 @@ export const useDocumentHead = (metadata) => {
     addMetaTag(null, metadata.siteName, 'og:site_name')
     addMetaTag(null, metadata.locale, 'og:locale')
 
-    // Add Twitter Card meta tags
-    addMetaTag('twitter:card', metadata.twitterCard || 'summary_large_image')
-    addMetaTag('twitter:title', metadata.title)
-    addMetaTag('twitter:description', metadata.description)
-    addMetaTag('twitter:image', metadata.image)
-    addMetaTag('twitter:creator', metadata.twitterCreator)
-
-    // Add structured data
-    if (metadata.structuredData) {
-      const script = document.createElement('script')
-      script.type = 'application/ld+json'
-      script.textContent = JSON.stringify(metadata.structuredData)
-      document.head.appendChild(script)
-      addedElements.push(script)
-    }
-
     // Cleanup function
     return () => {
       document.title = originalTitle

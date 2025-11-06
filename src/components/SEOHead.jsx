@@ -15,70 +15,12 @@ const SEOHead = ({
     image,
     url,
     author: "Bishal Shah",
-    robots: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+    robots: "noindex, nofollow",
     language: "en",
     revisitAfter: "7 days",
     type: "website",
     siteName: "Bishal Shah Portfolio",
-    locale: "en_US",
-    twitterCard: "summary_large_image",
-    twitterCreator: "@bishalshah",
-    structuredData: {
-      "@context": "https://schema.org",
-      "@type": "Person",
-      "name": "Bishal Shah",
-      "alternateName": "Bishal K Shah",
-      "jobTitle": "Full Stack Developer",
-      "description": description,
-      "url": url,
-      "image": image,
-      "email": "bishal.shah2344@gmail.com",
-      "sameAs": [
-        "https://github.com/Bishal-K-Shah",
-        "https://linkedin.com/in/bishal-shah"
-      ],
-      "knowsAbout": [
-        "Full Stack Development",
-        "WordPress Development",
-        "React",
-        "JavaScript",
-        "PHP",
-        "Node.js",
-        "CMS Development",
-        "Web Application Development",
-        "Cloud Computing",
-        "Docker",
-        "AWS"
-      ],
-      "hasOccupation": {
-        "@type": "Occupation",
-        "name": "Full Stack Developer",
-        "occupationLocation": {
-          "@type": "Country",
-          "name": "Australia"
-        }
-      },
-      "workExample": [
-        {
-          "@type": "WebSite",
-          "name": "Adventure Rider Magazine",
-          "url": "https://advridermag.com.au/",
-          "description": "WordPress-based adventure motorcycling magazine"
-        },
-        {
-          "@type": "WebSite",
-          "name": "Australian Motorcyclist",
-          "url": "https://ausmotorcyclist.com.au/",
-          "description": "Premier WordPress magazine for motorcycle enthusiasts"
-        },
-        {
-          "@type": "WebSite",
-          "name": "Walkabout Australia",
-          "url": "https://walkaboutaustralia.org/",
-          "description": "Cultural WordPress platform with e-commerce integration"
-        }
-      ]
-    }
+    locale: "en_US"
   })
 
   return null
