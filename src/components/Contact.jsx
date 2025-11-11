@@ -77,7 +77,7 @@ const Contact = () => {
       console.error('Form submission error:', error)
       setSubmitStatus({ 
         type: 'error', 
-        message: '❌ Failed to send message. Please try again or email me directly at bishal.shah2344@gmail.com' 
+        message: '❌ Failed to send message. Please try again or email me directly at hello@bishalkshah.com.np' 
       })
     } finally {
       setIsSubmitting(false)
@@ -127,7 +127,7 @@ const Contact = () => {
               </div>
               <div>
                 <h3>Email</h3>
-                <p><a href="mailto:bishal.shah2344@gmail.com"> Send me an email</a></p>
+                <p><a href="mailto:hello@bishalkshah.com.np">hello@bishalkshah.com.np</a></p>
               </div>
             </div>
 

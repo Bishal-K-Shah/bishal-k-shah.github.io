@@ -106,7 +106,7 @@ Customize colors in `src/App.css`:
 ## Contact
 
 For questions or collaborations, reach out through the contact form on the website or via:
-- Email: [Email](mailto:bishal.shah2344@gmail.com)
+- Email: [Email](mailto:hello@bishalkshah.com.np)
 - LinkedIn: [LinkedIn](https://linkedin.com/in/bishal-k-shah/)
 - GitHub: [GitHub](https://github.com/bishal-k-shah)
 

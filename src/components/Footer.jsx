@@ -5,7 +5,7 @@ const Footer = () => {
     { icon: 'fab fa-github', href: 'https://github.com/bishal-k-shah', title: 'GitHub' },
     { icon: 'fab fa-linkedin', href: 'https://linkedin.com/in/bishal-k-shah', title: 'LinkedIn' },
     { icon: 'fab fa-twitter', href: 'https://twitter.com', title: 'Twitter' },
-    { icon: 'fas fa-envelope', href: 'mailto:bishal.shah2344@gmail.com', title: 'Email' }
+    { icon: 'fas fa-envelope', href: 'mailto:hello@bishalkshah.com.np', title: 'Email' }
   ]
 
   return (
