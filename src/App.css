@@ -768,8 +768,7 @@ footer p {
 .contact-item p a {
   color: var(--text-secondary);
   text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
+  transition: color 0.3s ease;
   position: relative;
 }
 
