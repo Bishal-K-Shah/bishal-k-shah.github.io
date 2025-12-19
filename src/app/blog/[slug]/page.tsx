@@ -8,11 +8,12 @@ import { categoryInfo } from '@/components/icons';
 import { Clock } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import CodeBlock from '@/components/CodeBlock';
+import { use } from 'react';
 
 type BlogPostPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export async function generateStaticParams() {
@@ -23,7 +24,8 @@ export async function generateStaticParams() {
 }
 
 export default function BlogPostPage({ params }: BlogPostPageProps) {
-  const post = getPostBySlug(params.slug);
+  const { slug } = use(params);
+  const post = getPostBySlug(slug);
 
   if (!post) {
     notFound();
