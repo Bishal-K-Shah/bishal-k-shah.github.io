@@ -1,6 +1,5 @@
 import React from 'react';
 import { Post, CATEGORIES, CategoryInfo } from '@/types';
-import CodeBlock from '@/components/CodeBlock';
 import { categoryInfo } from '@/components/icons';
 
 const posts: Post[] = [
@@ -11,32 +10,25 @@ const posts: Post[] = [
     category: 'Automobile',
     featuredImageId: 'classic-car',
     excerpt: 'Exploring the growing trend of restoring and modernizing classic automobiles. What fuels this passion?',
-    content: (
-      <>
-        <p className="lead text-lg text-foreground/80 mb-6">
-          In an age of electric vehicles and autonomous driving, a passionate community is looking back, breathing new life into the automotive legends of the past. The classic car revival is more than just a hobby; it's a cultural movement.
-        </p>
-        <h2 className="text-2xl font-bold mt-8 mb-4">Why the Resurgence?</h2>
-        <p className="mb-4">
-          Several factors contribute to this trend. Nostalgia plays a huge role, with enthusiasts longing for the distinct designs and raw driving experiences of a bygone era. Additionally, classic cars are increasingly seen as tangible assets, an investment you can actually enjoy.
-        </p>
-        <p className="mb-4">
-          The rise of "restomodding" — restoring a classic with modern parts — has also broadened the appeal. Imagine a '69 Mustang with the soul of a classic but the reliability, comfort, and performance of a modern sports car. This blend of old and new is captivating a new generation of car lovers.
-        </p>
-        <h2 className="text-2xl font-bold mt-8 mb-4">Getting Started</h2>
-        <p className="mb-4">
-          Thinking of starting your own project? Here are some tips:
-        </p>
-        <ul className="list-disc list-inside space-y-2 mb-4">
-          <li><strong>Start Small:</strong> Don't buy a complete rust bucket for your first project. Find a car that's running and has a solid frame.</li>
-          <li><strong>Community is Key:</strong> Join online forums and local clubs. The knowledge and support from fellow enthusiasts are invaluable.</li>
-          <li><strong>Budget Wisely:</strong> Restoration costs can spiral. Plan your budget carefully, and then add 30% for unexpected issues.</li>
-        </ul>
-        <p>
-          The journey of a car restoration is as rewarding as the destination. It's a chance to learn, to create, and to preserve a piece of history.
-        </p>
-      </>
-    ),
+    content: `
+In an age of electric vehicles and autonomous driving, a passionate community is looking back, breathing new life into the automotive legends of the past. The classic car revival is more than just a hobby; it's a cultural movement.
+
+## Why the Resurgence?
+
+Several factors contribute to this trend. Nostalgia plays a huge role, with enthusiasts longing for the distinct designs and raw driving experiences of a bygone era. Additionally, classic cars are increasingly seen as tangible assets, an investment you can actually enjoy.
+
+The rise of "restomodding" — restoring a classic with modern parts — has also broadened the appeal. Imagine a '69 Mustang with the soul of a classic but the reliability, comfort, and performance of a modern sports car. This blend of old and new is captivating a new generation of car lovers.
+
+## Getting Started
+
+Thinking of starting your own project? Here are some tips:
+
+- **Start Small:** Don't buy a complete rust bucket for your first project. Find a car that's running and has a solid frame.
+- **Community is Key:** Join online forums and local clubs. The knowledge and support from fellow enthusiasts are invaluable.
+- **Budget Wisely:** Restoration costs can spiral. Plan your budget carefully, and then add 30% for unexpected issues.
+
+The journey of a car restoration is as rewarding as the destination. It's a chance to learn, to create, and to preserve a piece of history.
+`,
   },
   {
     slug: 'raspberry-pi-home-server',
@@ -45,32 +37,31 @@ const posts: Post[] = [
     category: 'HomeLab',
     featuredImageId: 'raspberry-pi',
     excerpt: 'Turn a tiny, affordable Raspberry Pi into a powerful home server for file sharing, media streaming, and more.',
-    content: (
-      <>
-        <p className="lead text-lg text-foreground/80 mb-6">
-          A home server can revolutionize how you manage your digital life, and you don't need a bulky, power-hungry machine to do it. The humble Raspberry Pi is more than capable of handling a variety of server duties.
-        </p>
-        <h2 className="text-2xl font-bold mt-8 mb-4">What You'll Need</h2>
-        <ul className="list-disc list-inside space-y-2 mb-4">
-          <li>Raspberry Pi 4 or 5 (4GB or more recommended)</li>
-          <li>A good quality microSD card (32GB+)</li>
-          <li>Power supply and a case with cooling</li>
-          <li>An external hard drive for storage</li>
-        </ul>
-        <h2 className="text-2xl font-bold mt-8 mb-4">Step 1: Install the Operating System</h2>
-        <p className="mb-4">
-          We'll use Raspberry Pi OS Lite (64-bit) for a lightweight, headless setup. Use the Raspberry Pi Imager to flash the OS to your microSD card. In the advanced settings, be sure to enable SSH, set a hostname, and configure your user account.
-        </p>
-        <CodeBlock>
-          {`# After booting, connect via SSH
-ssh your_username@your_hostname.local`}
-        </CodeBlock>
-        <h2 className="text-2xl font-bold mt-8 mb-4">Step 2: Install Docker & Portainer</h2>
-        <p className="mb-4">
-          Docker makes it incredibly easy to manage services in isolated containers. Portainer provides a nice web UI to manage your Docker environment.
-        </p>
-        <CodeBlock>
-          {`# Install Docker
+    content: `
+A home server can revolutionize how you manage your digital life, and you don't need a bulky, power-hungry machine to do it. The humble Raspberry Pi is more than capable of handling a variety of server duties.
+
+## What You'll Need
+
+- Raspberry Pi 4 or 5 (4GB or more recommended)
+- A good quality microSD card (32GB+)
+- Power supply and a case with cooling
+- An external hard drive for storage
+
+## Step 1: Install the Operating System
+
+We'll use Raspberry Pi OS Lite (64-bit) for a lightweight, headless setup. Use the Raspberry Pi Imager to flash the OS to your microSD card. In the advanced settings, be sure to enable SSH, set a hostname, and configure your user account.
+
+\`\`\`bash
+# After booting, connect via SSH
+ssh your_username@your_hostname.local
+\`\`\`
+
+## Step 2: Install Docker & Portainer
+
+Docker makes it incredibly easy to manage services in isolated containers. Portainer provides a nice web UI to manage your Docker environment.
+
+\`\`\`bash
+# Install Docker
 curl -sSL https://get.docker.com | sh
 sudo usermod -aG docker your_username
 
@@ -80,13 +71,11 @@ docker run -d -p 8000:8000 -p 9443:9443 --name portainer \\
     --restart=always \\
     -v /var/run/docker.sock:/var/run/docker.sock \\
     -v portainer_data:/data \\
-    portainer/portainer-ce:latest`}
-        </CodeBlock>
-        <p className="mt-4">
-          Now you can access Portainer at <code>https://your_pi_ip:9443</code> and start deploying services like a Samba file share, a Plex media server, or a Pi-hole ad-blocker!
-        </p>
-      </>
-    ),
+    portainer/portainer-ce:latest
+\`\`\`
+
+Now you can access Portainer at \`https://your_pi_ip:9443\` and start deploying services like a Samba file share, a Plex media server, or a Pi-hole ad-blocker!
+`,
   },
   {
     slug: '3d-printer-kit-guide',
@@ -95,34 +84,28 @@ docker run -d -p 8000:8000 -p 9443:9443 --name portainer \\
     category: 'Technology',
     featuredImageId: '3d-printer',
     excerpt: 'Want to dive into 3D printing? Building from a kit is a rewarding way to learn the technology inside and out.',
-    content: (
-      <>
-        <p className="lead text-lg text-foreground/80 mb-6">
-          The world of 3D printing opens up a universe of creativity, allowing you to turn digital designs into physical objects. For beginners, assembling a printer from a kit is an excellent, hands-on introduction to the technology.
-        </p>
-        <h2 className="text-2xl font-bold mt-8 mb-4">Why Choose a Kit?</h2>
-        <p className="mb-4">
-          Building a printer yourself provides an intimate understanding of how it works. This knowledge is invaluable when it comes to troubleshooting, upgrading, and getting the most out of your machine. Plus, it's often more affordable than buying a pre-assembled printer.
-        </p>
-        <h2 className="text-2xl font-bold mt-8 mb-4">Top Beginner-Friendly Kits</h2>
-        <ul className="list-disc list-inside space-y-2 mb-4">
-          <li><strong>Creality Ender 3 V3 SE:</strong> A modern classic. It's affordable, has a huge community, and offers a fantastic balance of features like auto-leveling and a direct-drive extruder.</li>
-          <li><strong>Prusa MINI+:</strong> While a bit more expensive, Prusa is renowned for quality, excellent documentation, and reliability. The assembly is straightforward and the results are consistently great.</li>
-        </ul>
-        <h2 className="text-2xl font-bold mt-8 mb-4">The Assembly Process</h2>
-        <p className="mb-4">
-          Most modern kits are semi-assembled and can be put together in just a few hours. The key is to be patient and methodical.
-        </p>
-        <ol className="list-decimal list-inside space-y-2 mb-4">
-          <li>Follow the instructions carefully. Watch video guides if you get stuck.</li>
-          <li>Ensure the frame is perfectly square and all bolts are tight. A wobbly frame is the number one cause of print quality issues.</li>
-          <li>Take your time with cable management. A tidy setup is easier to work on later.</li>
-        </ol>
-        <p>
-          Once built, you'll need to calibrate it. This process, known as "dialing in," involves leveling the bed, setting the Z-offset, and tuning your slicer settings. It's a learning curve, but mastering it is the key to perfect prints.
-        </p>
-      </>
-    ),
+    content: `
+The world of 3D printing opens up a universe of creativity, allowing you to turn digital designs into physical objects. For beginners, assembling a printer from a kit is an excellent, hands-on introduction to the technology.
+
+## Why Choose a Kit?
+
+Building a printer yourself provides an intimate understanding of how it works. This knowledge is invaluable when it comes to troubleshooting, upgrading, and getting the most out of your machine. Plus, it's often more affordable than buying a pre-assembled printer.
+
+## Top Beginner-Friendly Kits
+
+- **Creality Ender 3 V3 SE:** A modern classic. It's affordable, has a huge community, and offers a fantastic balance of features like auto-leveling and a direct-drive extruder.
+- **Prusa MINI+:** While a bit more expensive, Prusa is renowned for quality, excellent documentation, and reliability. The assembly is straightforward and the results are consistently great.
+
+## The Assembly Process
+
+Most modern kits are semi-assembled and can be put together in just a few hours. The key is to be patient and methodical.
+
+1.  Follow the instructions carefully. Watch video guides if you get stuck.
+2.  Ensure the frame is perfectly square and all bolts are tight. A wobbly frame is the number one cause of print quality issues.
+3.  Take your time with cable management. A tidy setup is easier to work on later.
+
+Once built, you'll need to calibrate it. This process, known as "dialing in," involves leveling the bed, setting the Z-offset, and tuning your slicer settings. It's a learning curve, but mastering it is the key to perfect prints.
+`,
   },
   {
     slug: 'art-of-soldering-guide',
@@ -131,35 +114,29 @@ docker run -d -p 8000:8000 -p 9443:9443 --name portainer \\
     category: 'Electronics',
     featuredImageId: 'soldering-iron',
     excerpt: 'Master the fundamental skill of any electronics hobbyist. Learn the tools, techniques, and tips for perfect solder joints every time.',
-    content: (
-      <>
-        <p className="lead text-lg text-foreground/80 mb-6">
-          Soldering is the glue that holds the world of electronics together. It's a skill that seems intimidating at first, but with the right tools and a little practice, anyone can learn to make clean, reliable connections.
-        </p>
-        <h2 className="text-2xl font-bold mt-8 mb-4">Essential Tools</h2>
-        <ul className="list-disc list-inside space-y-2 mb-4">
-          <li><strong>Soldering Iron:</strong> A temperature-controlled iron is a must. A good station like the Hakko FX-888D or a quality smart iron like the Pinecil will serve you well for years.</li>
-          <li><strong>Solder:</strong> For electronics, use a lead-free (or 63/37 leaded if you're comfortable with the precautions) rosin-core solder with a diameter of 0.6-0.8mm.</li>
-          <li><strong>Tip Cleaner:</strong> A brass sponge is much better for your iron's tip than a wet sponge.</li>
-          <li><strong>Flux Pen:</strong> While solder has flux inside, adding extra flux makes everything flow much more smoothly.</li>
-          <li><strong>Helping Hands:</strong> A tool with clips to hold your circuit board and components steady.</li>
-        </ul>
-        <h2 className="text-2xl font-bold mt-8 mb-4">The Technique</h2>
-        <p className="mb-4">
-          The golden rule of soldering is to <strong>heat the joint, not the solder</strong>.
-        </p>
-        <ol className="list-decimal list-inside space-y-2 mb-4">
-          <li>Make sure your iron tip is clean and tinned (coated with a thin layer of fresh solder).</li>
-          <li>Place the iron tip so it touches both the component lead and the pad on the circuit board simultaneously.</li>
-          <li>Hold for 1-2 seconds to heat up the joint.</li>
-          <li>Introduce the solder to the opposite side of the joint (not the iron tip). It should melt and flow instantly, creating a shiny, volcano-shaped cone.</li>
-          <li>Remove the solder first, then the iron. The whole process should take only 3-4 seconds.</li>
-        </ol>
-        <p>
-          Practice on a cheap electronics kit. Learning to solder opens the door to repairing gadgets, building your own circuits, and bringing your electronic inventions to life.
-        </p>
-      </>
-    ),
+    content: `
+Soldering is the glue that holds the world of electronics together. It's a skill that seems intimidating at first, but with the right tools and a little practice, anyone can learn to make clean, reliable connections.
+
+## Essential Tools
+
+- **Soldering Iron:** A temperature-controlled iron is a must. A good station like the Hakko FX-888D or a quality smart iron like the Pinecil will serve you well for years.
+- **Solder:** For electronics, use a lead-free (or 63/37 leaded if you're comfortable with the precautions) rosin-core solder with a diameter of 0.6-0.8mm.
+- **Tip Cleaner:** A brass sponge is much better for your iron's tip than a wet sponge.
+- **Flux Pen:** While solder has flux inside, adding extra flux makes everything flow much more smoothly.
+- **Helping Hands:** A tool with clips to hold your circuit board and components steady.
+
+## The Technique
+
+The golden rule of soldering is to **heat the joint, not the solder**.
+
+1.  Make sure your iron tip is clean and tinned (coated with a thin layer of fresh solder).
+2.  Place the iron tip so it touches both the component lead and the pad on the circuit board simultaneously.
+3.  Hold for 1-2 seconds to heat up the joint.
+4.  Introduce the solder to the opposite side of the joint (not the iron tip). It should melt and flow instantly, creating a shiny, volcano-shaped cone.
+5.  Remove the solder first, then the iron. The whole process should take only 3-4 seconds.
+
+Practice on a cheap electronics kit. Learning to solder opens the door to repairing gadgets, building your own circuits, and bringing your electronic inventions to life.
+`,
   },
    {
     slug: 'why-your-next-car-should-be-an-ev',
@@ -168,33 +145,333 @@ docker run -d -p 8000:8000 -p 9443:9443 --name portainer \\
     category: 'Automobile',
     featuredImageId: 'modern-ev',
     excerpt: 'Beyond the environmental benefits, electric vehicles offer a superior driving experience and lower running costs. Is it time for you to make the switch?',
-    content: (
-      <>
-        <p className="lead text-lg text-foreground/80 mb-6">
-          Electric vehicles (EVs) are no longer a niche product for early adopters. They are rapidly becoming mainstream, and for good reason. If you're in the market for a new car, here's why an EV should be at the top of your list.
-        </p>
-        <h2 className="text-2xl font-bold mt-8 mb-4">Instant Torque, Silent Power</h2>
-        <p className="mb-4">
-          The driving experience in an EV is fundamentally different—and better. The instant torque from the electric motor provides exhilarating, silent acceleration that even high-performance gasoline cars struggle to match. Merging onto a highway or zipping through city traffic becomes effortless and fun. The lack of engine noise and vibration creates a serene and refined cabin environment.
-        </p>
-        <h2 className="text-2xl font-bold mt-8 mb-4">Lower Running Costs</h2>
-        <p className="mb-4">
-          Imagine never having to visit a gas station again. Charging an EV at home is significantly cheaper than filling up with gasoline. On average, you can expect to pay one-third to one-quarter of the cost per mile.
-        </p>
-        <p className="mb-4">
-          Maintenance is another huge saving. EVs have far fewer moving parts than internal combustion engine (ICE) vehicles. There are no oil changes, spark plugs, timing belts, or exhaust systems to worry about. The primary maintenance items are tires, brakes (which last longer due to regenerative braking), and cabin air filters.
-        </p>
-        <h2 className="text-2xl font-bold mt-8 mb-4">Addressing the Concerns</h2>
-        <ul className="list-disc list-inside space-y-2 mb-4">
-          <li><strong>Range Anxiety:</strong> Modern EVs regularly offer 250-350 miles of range, more than enough for daily driving and most road trips. The public charging infrastructure is also growing exponentially.</li>
-          <li><strong>Charging Time:</strong> While slower than a gas pump, home charging overnight handles 95% of your needs. On the road, DC fast chargers can add 150-200 miles of range in just 20-30 minutes.</li>
-          <li><strong>Purchase Price:</strong> While upfront costs can be higher, government incentives and long-term savings on fuel and maintenance often make the total cost of ownership lower than a comparable gasoline car.</li>
-        </ul>
-        <p>
-          Making the switch to an EV is a step into the future of transportation. It's a choice that's better for your wallet, the environment, and your driving enjoyment.
-        </p>
-      </>
-    ),
+    content: `
+Electric vehicles (EVs) are no longer a niche product for early adopters. They are rapidly becoming mainstream, and for good reason. If you're in the market for a new car, here's why an EV should be at the top of your list.
+
+## Instant Torque, Silent Power
+
+The driving experience in an EV is fundamentally different—and better. The instant torque from the electric motor provides exhilarating, silent acceleration that even high-performance gasoline cars struggle to match. Merging onto a highway or zipping through city traffic becomes effortless and fun. The lack of engine noise and vibration creates a serene and refined cabin environment.
+
+## Lower Running Costs
+
+Imagine never having to visit a gas station again. Charging an EV at home is significantly cheaper than filling up with gasoline. On average, you can expect to pay one-third to one-quarter of the cost per mile.
+
+Maintenance is another huge saving. EVs have far fewer moving parts than internal combustion engine (ICE) vehicles. There are no oil changes, spark plugs, timing belts, or exhaust systems to worry about. The primary maintenance items are tires, brakes (which last longer due to regenerative braking), and cabin air filters.
+
+## Addressing the Concerns
+
+- **Range Anxiety:** Modern EVs regularly offer 250-350 miles of range, more than enough for daily driving and most road trips. The public charging infrastructure is also growing exponentially.
+- **Charging Time:** While slower than a gas pump, home charging overnight handles 95% of your needs. On the road, DC fast chargers can add 150-200 miles of range in just 20-30 minutes.
+- **Purchase Price:** While upfront costs can be higher, government incentives and long-term savings on fuel and maintenance often make the total cost of ownership lower than a comparable gasoline car.
+
+Making the switch to an EV is a step into the future of transportation. It's a choice that's better for your wallet, the environment, and your driving enjoyment.
+`,
+  },
+  {
+    slug: 'building-your-first-nas',
+    title: 'Building Your First NAS: A Homelab Essential',
+    date: '2024-07-18',
+    category: 'HomeLab',
+    featuredImageId: 'nas-setup',
+    excerpt: 'Take control of your data by building a Network Attached Storage (NAS). We explore hardware choices and the best software options like TrueNAS and Unraid.',
+    content: `
+A Network Attached Storage (NAS) is the heart of any good homelab. It's a central repository for your files, backups, and media, accessible from any device on your network. Building your own is a rewarding project that offers more power and flexibility than off-the-shelf solutions.
+
+## Hardware Considerations
+
+You don't need a supercomputer. For a basic file and media server, consider:
+
+- **Chassis:** A case with plenty of hard drive bays is crucial. The Fractal Design Node 304 or Node 804 are popular choices.
+- **CPU/Motherboard:** A modern Intel Core i3 or AMD Ryzen 3 is more than enough. Look for a motherboard with plenty of SATA ports.
+- **RAM:** 8GB is a good start, but 16GB is better, especially if you plan to use ZFS. Use ECC RAM for added data integrity if your platform supports it.
+- **Hard Drives:** Start with at least two drives for redundancy. NAS-specific drives like WD Red or Seagate IronWolf are designed for 24/7 operation.
+
+## Software: TrueNAS vs. Unraid
+
+The two main contenders for home NAS operating systems are TrueNAS and Unraid.
+
+**TrueNAS CORE/SCALE:** It's free, open-source, and built on the rock-solid ZFS filesystem. ZFS provides excellent data protection features like checksums, snapshots, and RAID-Z. However, expanding a ZFS pool can be less flexible than other solutions.
+
+**Unraid:** It's a paid product but offers incredible flexibility. You can mix and match hard drives of different sizes and add new drives to your array one at a time. It also has excellent Docker and VM support through its user-friendly web interface.
+
+Whichever you choose, a NAS will become an indispensable part of your digital life, safeguarding your data and serving your media needs.
+`,
+  },
+  {
+    slug: 'essential-linux-cli-commands',
+    title: '10 Essential Linux Commands Every User Should Know',
+    date: '2024-07-12',
+    category: 'Technology',
+    featuredImageId: 'linux-terminal',
+    excerpt: 'Unlock the power of the Linux command line. These 10 commands are the foundation for efficient system navigation and management.',
+    content: `
+The command-line interface (CLI) is one of Linux's most powerful features. While it may seem daunting, mastering a few basic commands will dramatically improve your workflow. Here are 10 commands every Linux user should burn into their memory.
+
+## The Essentials
+
+1.  **\`ls\`** - List directory contents. Use \`ls -la\` to see a detailed, long-form listing of all files, including hidden ones.
+2.  **\`cd\`** - Change directory. \`cd ~\` takes you to your home directory, \`cd ..\` goes up one level.
+3.  **\`pwd\`** - Print working directory. Shows you exactly where you are in the filesystem.
+4.  **\`mv\`** - Move or rename a file. \`mv oldname.txt newname.txt\` renames, while \`mv file.txt /path/to/other/dir/\` moves it.
+5.  **\`cp\`** - Copy a file or directory. Use \`cp -r source_directory/ destination_directory/\` to copy directories recursively.
+6.  **\`rm\`** - Remove files or directories. Be careful! Use \`rm -i\` for an interactive prompt before deleting. \`rm -rf directory/\` will forcefully remove a directory and its contents without asking.
+7.  **\`grep\`** - Search for patterns in text. Example: \`grep "error" /var/log/syslog\` finds all lines containing "error" in the system log.
+8.  **\`find\`** - Search for files and directories. \`find . -name "*.log"\` finds all files ending in .log in the current directory and subdirectories.
+9.  **\`chmod\`** - Change file permissions. \`chmod +x script.sh\` makes a script executable.
+10. **\`sudo\`** - Execute a command as the superuser (root). The key to performing administrative tasks.
+
+Practice these commands, and you'll be well on your way to becoming a command-line pro.
+`,
+  },
+  {
+    slug: 'diy-oil-change-guide',
+    title: 'DIY Basics: How to Perform an Oil Change',
+    date: '2024-07-05',
+    category: 'Automobile',
+    featuredImageId: 'engine-bay',
+    excerpt: 'Save money and get to know your car better. Our step-by-step guide to changing your own engine oil.',
+    content: `
+Changing your own oil is a fundamental rite of passage for any aspiring hobbyist mechanic. It's a simple, cost-effective task that helps you connect with your vehicle.
+
+## Tools and Materials
+
+- The correct type and amount of new engine oil (check your owner's manual).
+- A new oil filter.
+- A wrench to fit the drain plug.
+- An oil filter wrench.
+- A drain pan.
+- Jack and jack stands for safety.
+- Gloves and paper towels.
+
+## Step-by-Step Guide
+
+1.  **Warm Up the Engine:** Run the car for a few minutes to warm the oil, which helps it drain more easily.
+2.  **Lift the Vehicle:** Safely lift the front of the car with a jack and secure it on jack stands. NEVER work under a car supported only by a jack.
+3.  **Drain the Old Oil:** Place the drain pan under the oil pan's drain plug. Loosen the plug with a wrench and then finish removing it by hand. Let the oil drain completely.
+4.  **Replace the Filter:** Locate the old oil filter. Use the filter wrench to loosen it, then unscrew it by hand. Be ready for some oil to spill. Before installing the new filter, apply a thin coat of new oil to the rubber gasket. Screw the new filter on hand-tight, then give it another quarter-turn with the wrench.
+5.  **Refill with New Oil:** Reinstall the drain plug. Open the oil filler cap in the engine bay and pour in the new oil, using a funnel to avoid spills. Check the dipstick periodically to avoid overfilling.
+6.  **Check Your Work:** Start the engine and let it run for a minute. Check for leaks around the drain plug and filter. Turn off the engine, wait a few minutes, and check the dipstick one last time, topping up if necessary.
+
+Congratulations! You've just performed one of the most essential pieces of vehicle maintenance. Be sure to dispose of your old oil and filter responsibly at an auto parts store or recycling center.
+`,
+  },
+  {
+    slug: 'proxmox-vs-esxi-homelab',
+    title: 'Proxmox vs. ESXi: Choosing a Hypervisor for Your Homelab',
+    date: '2024-06-21',
+    category: 'HomeLab',
+    featuredImageId: 'server-rack',
+    excerpt: 'The foundation of a virtualized homelab is the hypervisor. We compare the two titans: Proxmox and VMware ESXi.',
+    content: `
+When you want to run multiple operating systems on a single physical machine, you need a Type-1 hypervisor. For homelabbers, the choice usually boils down to two excellent options: Proxmox VE and VMware ESXi.
+
+## Proxmox Virtual Environment (VE)
+
+Proxmox is a completely free and open-source platform based on Debian Linux. It's beloved in the homelab community for its powerful features and lack of licensing restrictions.
+
+- **Pros:** No cost, feature-rich web interface, supports both KVM-based VMs and LXC containers, built-in backup and clustering features, ZFS support out-of-the-box.
+- **Cons:** Can have a steeper learning curve for beginners, community support model (paid support is optional).
+
+## VMware ESXi
+
+ESXi is the industry standard in enterprise virtualization. While many of its advanced features require expensive licenses, VMware offers a free tier that is more than adequate for most homelabs.
+
+- **Pros:** Extremely stable and reliable, polished and mature interface, huge amount of enterprise documentation and knowledge available, broad hardware compatibility.
+- **Cons:** The free license has limitations (e.g., max 8 vCPUs per VM), advanced features are locked behind a paywall, no easy built-in container solution like Proxmox.
+
+## Which One is for You?
+
+If you want a completely free, unrestricted, and highly customizable platform and are willing to learn, **Proxmox** is an unbeatable choice. It's the quintessential homelabber's tool.
+
+If you are looking to learn skills for a career in IT, or if you prefer a more "it just works" experience and can live with the free-tier limitations, **ESXi** is a fantastic and professional-grade option.
+`,
+  },
+  {
+    slug: 'mechanical-keyboard-hobby',
+    title: 'Down the Rabbit Hole: An Introduction to Mechanical Keyboards',
+    date: '2024-06-14',
+    category: 'Technology',
+    featuredImageId: 'custom-keyboard',
+    excerpt: 'The click, the clack, and the satisfying thock. Discover the world of custom mechanical keyboards and why it\'s such an addictive hobby.',
+    content: `
+What if the keyboard you type on every day could be a personalized work of art, perfectly tuned to your preferences? Welcome to the obsessive, wonderful world of custom mechanical keyboards.
+
+## More Than Just a Keyboard
+
+Unlike the mushy membrane keyboards most people are used to, mechanical keyboards use individual physical switches under each key. This provides superior tactile and auditory feedback, durability, and an endless potential for customization.
+
+## The Holy Trinity: Switches, Keycaps, and Case
+
+- **Switches:** The heart of the keyboard. They determine the feel and sound. They come in three main types: **Linear** (smooth), **Tactile** (with a bump), and **Clicky** (with a bump and an audible click). Popular brands include Cherry, Gateron, and Kailh.
+- **Keycaps:** The plastic caps you press. They come in various profiles (shapes), materials (ABS or PBT plastic), and countless colorways. This is where you can truly express your personality.
+- **Case & Plate:** The enclosure for the keyboard. Materials like aluminum, polycarbonate, and acrylic all affect the sound and feel of the keyboard, a concept known as "sound signature".
+
+## Getting Started
+
+The easiest way to start is with a "hot-swappable" keyboard. These boards have sockets that allow you to change switches easily without any soldering. A great entry-level hot-swap board is the Keychron V-series or the Glorious GMMK Pro.
+
+From there, you can experiment with different switches, try out new keycaps, and even perform mods like lubricating switches or adding foam to the case to change the sound. It's a deep and rewarding hobby that makes the everyday act of typing a joy.
+`,
+  },
+  {
+    slug: 'self-hosting-with-docker',
+    title: 'The Power of Self-Hosting with Docker',
+    date: '2024-06-07',
+    category: 'HomeLab',
+    featuredImageId: 'docker-whale',
+    excerpt: 'Learn how Docker containers can simplify deploying and managing applications on your home server, from media servers to cloud storage.',
+    content: `
+Self-hosting is about reclaiming control over your data and services. And the single most important tool for the modern self-hoster is Docker. It has revolutionized how we deploy and manage applications in a homelab.
+
+## What is Docker?
+
+Imagine you want to run a web application. Traditionally, you'd have to install a web server, a database, the application's language runtime, and all its dependencies directly onto your operating system. This can get messy and lead to conflicts.
+
+Docker solves this by packaging an application and all its dependencies into a single, isolated unit called a "container." This container can run on any system that has Docker installed, regardless of the underlying OS. It's like a lightweight, portable virtual machine.
+
+## Docker Compose: Your Best Friend
+
+While you can manage containers one by one, the real power comes from Docker Compose. It's a tool that uses a simple YAML file to define and run multi-container applications.
+
+Here is an example \`docker-compose.yml\` for running a Ghost blog:
+
+\`\`\`yaml
+version: '3.8'
+services:
+  ghost:
+    image: ghost:latest
+    restart: always
+    ports:
+      - "2368:2368"
+    volumes:
+      - ./ghost_content:/var/lib/ghost/content
+    environment:
+      url: http://localhost:2368
+\`\`\`
+
+With this file, a single command—\`docker-compose up -d\`—is all it takes to download the Ghost image and start the service. Updating is as simple as \`docker-compose pull\` and \`docker-compose up -d\`. This declarative approach makes managing even complex applications a breeze.
+
+## Awesome Self-Hosted Apps to Try
+
+- **Plex/Jellyfin:** Your personal Netflix.
+- **Nextcloud:** Your personal Google Drive/Photos.
+- **Pi-hole:** Network-wide ad blocking.
+- **Home Assistant:** The ultimate smart home hub.
+- **Vaultwarden:** A self-hosted Bitwarden password manager.
+`,
+  },
+  {
+    slug: 'diy-welding-for-mechanics',
+    title: 'Introduction to Welding for the Hobbyist Mechanic',
+    date: '2024-05-31',
+    category: 'Automobile',
+    featuredImageId: 'welding',
+    excerpt: 'Take your fabrication and repair skills to the next level. A guide to choosing your first welder and learning the basics of MIG welding.',
+    content: `
+For a hobbyist mechanic, learning to weld is a superpower. It's the key to repairing rusty panels, fabricating custom brackets, and building exhaust systems. While it takes practice, the barrier to entry has never been lower.
+
+## Choosing Your First Welder: MIG is King
+
+For automotive work, a MIG (Metal Inert Gas) welder is the most versatile and easiest to learn. MIG welding uses a wire-feed gun that continuously feeds a consumable electrode wire, while shielding the weld pool with a gas.
+
+Look for a 110V/120V machine from a reputable brand like Hobart, Lincoln, or Miller. These can handle most sheet metal and light fabrication tasks. You'll also need a gas bottle (usually a 75% Argon / 25% CO2 mix), a welding helmet, and gloves.
+
+## The Four Pillars of a Good Weld
+
+1.  **Cleanliness:** Your metal must be spotless. Grind away any paint, rust, or oil. Clean metal is the foundation of a strong weld.
+2.  **Amperage (Wire Speed):** This is your "heat." Too cold, and the weld won't penetrate. Too hot, and you'll blow holes in the metal. Your welder will have a chart to give you starting points.
+3.  **Stick-Out:** This is the length of wire protruding from the gun's tip. Aim for about 3/8 of an inch.
+4.  **Travel Speed:** Move the gun at a steady pace. You should hear a consistent "crackling bacon" sound. If it's popping, you're too fast. If it's a loud hum, you're too slow.
+
+Practice on scrap metal. Laying a bead on a flat plate, then moving to T-joints and butt joints. Welding is a skill built on muscle memory. Don't be discouraged by your first ugly welds—everyone starts there.
+`,
+  },
+  {
+    slug: 'restoring-retro-computers',
+    title: 'Retro-Computing: Bringing Vintage Tech Back to Life',
+    date: '2024-05-17',
+    category: 'Electronics',
+    featuredImageId: 'retro-computer',
+    excerpt: 'The joy of vintage computers is undeniable. Learn about the common issues in restoring old tech, from capacitor plagues to yellowed plastic.',
+    content: `
+In a world of disposable technology, there's a growing movement to preserve and restore the computers of our youth. The hobby of retro-computing is part history, part engineering, and all nostalgia.
+
+## The First Hurdle: Powering On
+
+Before you even think of plugging in that 30-year-old computer, STOP. The most common point of failure in old electronics are the electrolytic capacitors. Over time, they dry out, leak, and fail, often taking other components with them.
+
+"Recapping"—the process of replacing all the electrolytic capacitors on a motherboard and power supply—is the most important first step. It's a soldering-intensive job, but it's crucial for the long-term health of your machine.
+
+## Common Restoration Tasks
+
+- **Retr0brighting:** Old ABS plastic often turns a sickly yellow due to UV exposure. Retr0brighting is the process of using a hydrogen peroxide solution and UV light to reverse this chemical reaction and restore the original color.
+- **Drive Repairs:** Floppy drives and old hard drives often suffer from dried-out grease and failing rubber belts. Disassembly, cleaning, and re-lubrication can often bring them back to life.
+- **Battery Replacement:** Many old computers used a battery to maintain settings, and these are almost always dead and often leaking acid that destroys the motherboard. Removing and neutralizing the leakage is a top priority.
+
+Restoring a vintage computer like a Commodore 64, an Apple II, or an old 486 PC is a journey back in time. The satisfaction of hearing that boot-up chime and seeing that command prompt is a unique and wonderful feeling.
+`,
+  },
+  {
+    slug: 'motorcycle-chain-maintenance',
+    title: 'Motorcycle Maintenance: The Art of Chain Care',
+    date: '2024-05-10',
+    category: 'Automobile',
+    featuredImageId: 'motorcycle-repair',
+    excerpt: 'A clean, well-lubricated chain is crucial for a safe and smooth ride. Learn the simple steps to properly maintain your motorcycle\'s chain.',
+    content: `
+Your motorcycle's chain is its final drive, transferring all the engine's power to the rear wheel. Neglecting it is a recipe for poor performance, premature wear, and even danger. Proper chain maintenance is a quick and easy job that every rider should know.
+
+## Clean, Lube, and Adjust
+
+Chain maintenance comes down to three simple steps, ideally performed every 500 miles or so.
+
+### 1. Cleaning
+
+A dirty chain wears out faster. Use a dedicated chain cleaning fluid and a three-sided grunge brush. Put the bike on a rear stand, spray the cleaner onto the chain while rotating the rear wheel, and scrub all four sides. Wipe it dry with a rag.
+
+### 2. Lubricating
+
+Lubrication is best done when the chain is warm after a ride. Use a quality chain lube, not WD-40. As you rotate the rear wheel, spray the lube onto the inside of the chain, aiming for the O-rings or X-rings on the side plates. A little goes a long way; excess lube just flings off and makes a mess. Let it sit for a while to allow the carrier solvents to evaporate.
+
+### 3. Adjusting
+
+Your chain needs a specific amount of slack to account for suspension movement. Too tight, and it will strain your drivetrain. Too loose, and it could skip or come off. Check your owner's manual for the correct slack measurement (usually 1-1.5 inches).
+
+To adjust, loosen the rear axle nut. Use the adjuster bolts on the swingarm to move the wheel back, making small, equal turns on each side. Check the alignment marks to ensure the wheel is straight. Once the slack is correct, tighten the axle nut to the specified torque.
+`,
+  },
+  {
+    slug: 'home-network-cabling-guide',
+    title: 'Running Ethernet: A Hobbyist’s Guide to Cabling Your Home',
+    date: '2024-05-03',
+    category: 'HomeLab',
+    featuredImageId: 'network-cables',
+    excerpt: 'Wi-Fi is convenient, but nothing beats the speed and reliability of a wired connection. Learn the basics of running Ethernet cables throughout your house.',
+    content: `
+Wi-Fi is convenient, but for any serious homelab user, gamer, or media streamer, a wired network is non-negotiable. While running cables through your walls seems like a professional's job, it's a very manageable DIY project with the right tools and planning.
+
+## Planning Your Runs
+
+Before you drill a single hole, plan everything. Decide where you want your network drops. A central location, like a closet or basement, is the perfect spot for your "network hub" where your modem, router, and switch will live. This is where all your cable runs will terminate.
+
+## Tools & Materials
+
+- **Bulk Ethernet Cable:** Cat6 or Cat6a is the standard. Solid copper is a must for in-wall runs. Avoid "CCA" (Copper Clad Aluminum).
+- **Keystone Jacks and Wall Plates:** These provide a clean, professional finish for your network drops.
+- **Patch Panel:** This is where you'll terminate the cables at your network hub. It keeps everything organized.
+- **Punch-Down Tool:** For connecting the wires to keystone jacks and the patch panel.
+- **Fish Tape or Glow Rods:** Essential for pulling cables through walls and ceilings.
+
+## The Process
+
+1.  **Hub Setup:** Mount your patch panel in your chosen hub location.
+2.  **Cutting Holes:** At each drop location, use a low-voltage mounting bracket as a template to cut a hole in the drywall.
+3.  **Running the Cable:** This is the hardest part. Use fish tape to pull cables from the hub to each drop location. Go through the basement or attic whenever possible. Avoid running parallel to electrical wires to prevent interference.
+4.  **Termination:** At the wall plate, strip the cable jacket, untwist the pairs, and use the punch-down tool to connect the wires to the keystone jack (follow the T568B color code). Do the same at the patch panel.
+5.  **Testing:** Use a simple Ethernet cable tester to confirm all your connections are good before you plug in your expensive equipment.
+
+Running your own cable is a game-changer, providing rock-solid connectivity for your entire home.
+`,
   },
 ];
 

@@ -29,6 +29,66 @@
       "description": "Close-up of a person soldering a circuit board",
       "imageUrl": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzb2xkZXJpbmclMjBlbGVjdHJvbmljc3xlbnwwfHx8fDE3NjYxMzk3MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "soldering electronics"
+    },
+    {
+      "id": "linux-terminal",
+      "description": "A computer screen showing a Linux terminal with command-line text",
+      "imageUrl": "https://images.unsplash.com/photo-1593418845217-7a998bde268e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNXx8bGludXglMjB0ZXJtaW5hbHxlbnwwfHx8fDE3NjYyMzI0Mjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "linux terminal"
+    },
+    {
+      "id": "server-rack",
+      "description": "A network server rack with glowing lights and many cables",
+      "imageUrl": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzZXJ2ZXIlMjByYWNrfGVufDB8fHx8MTc2NjIzMjQ1NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "server rack"
+    },
+    {
+      "id": "engine-bay",
+      "description": "The engine bay of a car being worked on",
+      "imageUrl": "https://images.unsplash.com/photo-1552658142-32aa46187515?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjYXIlMjBlbmdpbmV8ZW58MHx8fHwxNzY2MjMyNDc4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "car engine"
+    },
+    {
+      "id": "docker-whale",
+      "description": "An illustration of the Docker whale logo with containers",
+      "imageUrl": "https://images.unsplash.com/photo-1634942537034-15a1344587a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkb2NrZXJ8ZW58MHx8fHwxNzY2MjMyNTAwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "docker logo"
+    },
+    {
+      "id": "custom-keyboard",
+      "description": "A custom mechanical keyboard with colorful keycaps",
+      "imageUrl": "https://images.unsplash.com/photo-1618384887928-16ec334cd956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtZWNoYW5pY2FsJTIwa2V5Ym9hcmR8ZW58MHx8fHwxNzY2MjMyNTE5fDA&ixlibrb-4.1.0&q=80&w=1080",
+      "imageHint": "mechanical keyboard"
+    },
+    {
+      "id": "welding",
+      "description": "A person welding metal with sparks flying",
+      "imageUrl": "https://images.unsplash.com/photo-1581092916376-29652c73088b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx3ZWxkaW5nfGVufDB8fHx8MTc2NjIzMjU0MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "welding"
+    },
+    {
+      "id": "network-cables",
+      "description": "A bundle of colorful ethernet network cables",
+      "imageUrl": "https://images.unsplash.com/photo-1584956391481-59e44146ae15?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxldGhlcm5ldCUyMGNhYmxlc3xlbnwwfHx8fDE3NjYyMzI1NjF8MA&ixlibrb-4.1.0&q=80&w=1080",
+      "imageHint": "ethernet cables"
+    },
+    {
+      "id": "retro-computer",
+      "description": "A vintage computer from the 1980s on a desk",
+      "imageUrl": "https://images.unsplash.com/photo-1517694712202-1428bc6f5b13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyZXRybyUyMGNvbXB1dGVyfGVufDB8fHx8MTc2NjIzMjU4Mnww&ixlibrb-4.1.0&q=80&w=1080",
+      "imageHint": "retro computer"
+    },
+    {
+      "id": "motorcycle-repair",
+      "description": "A person working on a motorcycle in a garage",
+      "imageUrl": "https://images.unsplash.com/photo-1568772585403-d25934d41464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtb3RvcmN5Y2xlJTIwcmVwYWlyfGVufDB8fHx8MTc2NjIzMjYwMnww&ixlibrb-4.1.0&q=80&w=1080",
+      "imageHint": "motorcycle repair"
+    },
+    {
+      "id": "nas-setup",
+      "description": "A home Network Attached Storage (NAS) device on a shelf",
+      "imageUrl": "https://images.unsplash.com/photo-1626233519822-f458bcb243c4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxuYXMlMjBzdG9yYWdlfGVufDB8fHx8MTc2NjIzMjYyNHww&ixlibrb-4.1.0&q=80&w=1080",
+      "imageHint": "nas storage"
     }
   ]
 }

@@ -11,7 +11,7 @@ export type Post = {
   category: Category;
   featuredImageId: string;
   excerpt: string;
-  content: React.ReactNode;
+  content: string;
 };
 
 export type CategoryInfo = {

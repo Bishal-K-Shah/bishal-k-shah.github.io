@@ -5,7 +5,9 @@ import { getPostBySlug, getPosts } from '@/lib/posts';
 import { getPlaceholderImageById } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
-import { Clock, Tag } from 'lucide-react';
+import { Clock } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import CodeBlock from '@/components/CodeBlock';
 
 type BlogPostPageProps = {
   params: {
@@ -67,7 +69,22 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
       )}
       
       <div className="prose prose-lg dark:prose-invert max-w-none prose-p:text-foreground/80 prose-headings:text-foreground prose-h2:font-bold prose-h2:text-2xl">
-        {post.content}
+        <ReactMarkdown
+          components={{
+            code({ node, className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || '');
+              return match ? (
+                <CodeBlock>{String(children).replace(/\\n$/, '')}</CodeBlock>
+              ) : (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            },
+          }}
+        >
+          {post.content}
+        </ReactMarkdown>
       </div>
     </article>
   );
