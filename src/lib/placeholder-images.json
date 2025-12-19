@@ -1,3 +1,34 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "classic-car",
+      "description": "A classic red car being restored in a garage",
+      "imageUrl": "https://images.unsplash.com/photo-1590522427073-1afdcb897df3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjbGFzc2ljJTIwY2FyfGVufDB8fHx8MTc2NjA4MDc5M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "classic car"
+    },
+    {
+      "id": "raspberry-pi",
+      "description": "A Raspberry Pi board with wires and components on a desk",
+      "imageUrl": "https://images.unsplash.com/photo-1631553127988-36343ac5bb0c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYXNwYmVycnklMjBwaXxlbnwwfHx8fDE3NjYwNTkyNzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "raspberry pi"
+    },
+    {
+      "id": "3d-printer",
+      "description": "A 3D printer in action, creating a plastic model",
+      "imageUrl": "https://images.unsplash.com/photo-1611505982706-9ebc79e5d3f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHwzZCUyMHByaW50ZXJ8ZW58MHx8fHwxNzY2MTM5NzI2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "3d printer"
+    },
+    {
+      "id": "modern-ev",
+      "description": "A modern electric sports car on a scenic road at sunset",
+      "imageUrl": "https://images.unsplash.com/photo-1639302610362-4c86747e8680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxlbGVjdHJpYyUyMGNhcnxlbnwwfHx8fDE3NjYwNjAzMzJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "electric car"
+    },
+    {
+      "id": "soldering-iron",
+      "description": "Close-up of a person soldering a circuit board",
+      "imageUrl": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzb2xkZXJpbmclMjBlbGVjdHJvbmljc3xlbnwwfHx8fDE3NjYxMzk3MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soldering electronics"
+    }
+  ]
 }
