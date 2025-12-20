@@ -7,7 +7,8 @@ import { CATEGORIES, Category } from "@/types";
 export default function Home() {
   const posts = getPosts();
   // We only pass simple data (strings), not objects with functions (icons)
-  const categories: Category[] = getCategories();
+  // getCategories returns string[], so we need to cast it to Category[]
+  const categories = getCategories() as Category[];
 
   return (
     <HomeClient initialPosts={posts} categoriesList={categories} />
