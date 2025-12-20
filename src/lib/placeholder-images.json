@@ -2,92 +2,92 @@
   "placeholderImages": [
     {
       "id": "classic-car",
-      "description": "A classic red car being restored in a garage",
-      "imageUrl": "https://images.unsplash.com/photo-1590522427073-1afdcb897df3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjbGFzc2ljJTIwY2FyfGVufDB8fHx8MTc2NjA4MDc5M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "A classic blue Chevrolet Camaro",
+      "imageUrl": "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "classic car"
     },
     {
       "id": "raspberry-pi",
-      "description": "A Raspberry Pi board with wires and components on a desk",
-      "imageUrl": "https://images.unsplash.com/photo-1631553127988-36343ac5bb0c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYXNwYmVycnklMjBwaXxlbnwwfHx8fDE3NjYwNTkyNzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Raspberry Pi board",
+      "imageUrl": "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "raspberry pi"
     },
     {
       "id": "3d-printer",
-      "description": "A 3D printer in action, creating a plastic model",
-      "imageUrl": "https://images.unsplash.com/photo-1611505982706-9ebc79e5d3f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHwzZCUyMHByaW50ZXJ8ZW58MHx8fHwxNzY2MTM5NzI2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "3D printing process",
+      "imageUrl": "https://images.unsplash.com/photo-1631541909061-71e349d1f203?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "3d printer"
     },
     {
       "id": "modern-ev",
-      "description": "A modern electric sports car on a scenic road at sunset",
-      "imageUrl": "https://images.unsplash.com/photo-1639302610362-4c86747e8680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxlbGVjdHJpYyUyMGNhcnxlbnwwfHx8fDE3NjYwNjAzMzJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Electric vehicle charging",
+      "imageUrl": "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "electric car"
     },
     {
       "id": "soldering-iron",
-      "description": "Close-up of a person soldering a circuit board",
-      "imageUrl": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzb2xkZXJpbmclMjBlbGVjdHJvbmljc3xlbnwwfHx8fDE3NjYxMzk3MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "soldering electronics"
+      "description": "Soldering electronic components",
+      "imageUrl": "https://images.unsplash.com/photo-1562877773-a37120131ec4?auto=format&fit=crop&w=1080&q=80",
+      "imageHint": "soldering"
     },
     {
       "id": "linux-terminal",
-      "description": "A computer screen showing a Linux terminal with command-line text",
-      "imageUrl": "https://images.unsplash.com/photo-1593418845217-7a998bde268e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNXx8bGludXglMjB0ZXJtaW5hbHxlbnwwfHx8fDE3NjYyMzI0Mjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Code on a screen",
+      "imageUrl": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "linux terminal"
     },
     {
       "id": "server-rack",
-      "description": "A network server rack with glowing lights and many cables",
-      "imageUrl": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzZXJ2ZXIlMjByYWNrfGVufDB8fHx8MTc2NjIzMjQ1NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Data center server rack",
+      "imageUrl": "https://images.unsplash.com/photo-1521542464131-cb30f7398bc6?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "server rack"
     },
     {
       "id": "engine-bay",
-      "description": "The engine bay of a car being worked on",
-      "imageUrl": "https://images.unsplash.com/photo-1552658142-32aa46187515?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjYXIlMjBlbmdpbmV8ZW58MHx8fHwxNzY2MjMyNDc4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Car engine close up",
+      "imageUrl": "https://images.unsplash.com/photo-1725289339928-06ee31684df5?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "car engine"
     },
     {
       "id": "docker-whale",
-      "description": "An illustration of the Docker whale logo with containers",
-      "imageUrl": "https://images.unsplash.com/photo-1634942537034-15a1344587a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkb2NrZXJ8ZW58MHx8fHwxNzY2MjMyNTAwfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "docker logo"
+      "description": "Shipping containers",
+      "imageUrl": "https://images.unsplash.com/photo-1605745341112-85968b19335b?auto=format&fit=crop&w=1080&q=80",
+      "imageHint": "containers"
     },
     {
       "id": "custom-keyboard",
-      "description": "A custom mechanical keyboard with colorful keycaps",
-      "imageUrl": "https://images.unsplash.com/photo-1618384887928-16ec334cd956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtZWNoYW5pY2FsJTIwa2V5Ym9hcmR8ZW58MHx8fHwxNzY2MjMyNTE5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Mechanical keyboard",
+      "imageUrl": "https://images.unsplash.com/photo-1595044426077-d36d9236d54a?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "mechanical keyboard"
     },
     {
       "id": "welding",
-      "description": "A person welding metal with sparks flying",
-      "imageUrl": "https://images.unsplash.com/photo-1581092916376-29652c73088b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx3ZWxkaW5nfGVufDB8fHx8MTc2NjIzMjU0MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Welding sparks",
+      "imageUrl": "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "welding"
     },
     {
       "id": "network-cables",
-      "description": "A bundle of colorful ethernet network cables",
-      "imageUrl": "https://images.unsplash.com/photo-1584956391481-59e44146ae15?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxldGhlcm5ldCUyMGNhYmxlc3xlbnwwfHx8fDE3NjYyMzI1NjF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "ethernet cables"
+      "description": "Ethernet cables",
+      "imageUrl": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1080&q=80",
+      "imageHint": "network cables"
     },
     {
       "id": "retro-computer",
-      "description": "A vintage computer from the 1980s on a desk",
-      "imageUrl": "https://images.unsplash.com/photo-1517694712202-1428bc6f5b13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyZXRybyUyMGNvbXB1dGVyfGVufDB8fHx8MTc2NjIzMjU4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Retro electronics",
+      "imageUrl": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "retro computer"
     },
     {
       "id": "motorcycle-repair",
-      "description": "A person working on a motorcycle in a garage",
-      "imageUrl": "https://images.unsplash.com/photo-1568772585403-d25934d41464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtb3RvcmN5Y2xlJTIwcmVwYWlyfGVufDB8fHx8MTc2NjIzMjYwMnww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "motorcycle repair"
+      "description": "Motorcycle details",
+      "imageUrl": "https://images.unsplash.com/photo-1634071257121-8cd59787ff1c?auto=format&fit=crop&w=1080&q=80",
+      "imageHint": "motorcycle"
     },
     {
       "id": "nas-setup",
-      "description": "A home Network Attached Storage (NAS) device on a shelf",
-      "imageUrl": "https://images.unsplash.com/photo-1626233519822-f458bcb243c4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxuYXMlMjBzdG9yYWdlfGVufDB8fHx8MTc2NjIzMjYyNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Hard drives for NAS",
+      "imageUrl": "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "nas storage"
     }
   ]
