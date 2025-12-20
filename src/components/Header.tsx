@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Menu, ChevronDown, Wrench, Server, Cpu, Terminal, Info } from "lucide-react";
+import { Menu, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,12 +15,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { getCategoriesWithIcons } from "@/lib/posts";
+import { CATEGORIES, CategoryInfo } from "@/types";
+import { categoryInfo } from "@/components/icons";
 
 export function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
-  const categories = getCategoriesWithIcons();
+  const categories: CategoryInfo[] = CATEGORIES.map(name => categoryInfo[name]);
 
   const routes = [
     { href: "/", label: "Home" },

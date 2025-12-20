@@ -1,0 +1,28 @@
+---
+title: 'Building Your First NAS: A Homelab Essential'
+date: '2024-07-18'
+category: 'HomeLab'
+featuredImageId: 'nas-setup'
+excerpt: 'Take control of your data by building a Network Attached Storage (NAS). We explore hardware choices and the best software options like TrueNAS and Unraid.'
+---
+
+A Network Attached Storage (NAS) is the heart of any good homelab. It's a central repository for your files, backups, and media, accessible from any device on your network. Building your own is a rewarding project that offers more power and flexibility than off-the-shelf solutions.
+
+## Hardware Considerations
+
+You don't need a supercomputer. For a basic file and media server, consider:
+
+- **Chassis:** A case with plenty of hard drive bays is crucial. The Fractal Design Node 304 or Node 804 are popular choices.
+- **CPU/Motherboard:** A modern Intel Core i3 or AMD Ryzen 3 is more than enough. Look for a motherboard with plenty of SATA ports.
+- **RAM:** 8GB is a good start, but 16GB is better, especially if you plan to use ZFS. Use ECC RAM for added data integrity if your platform supports it.
+- **Hard Drives:** Start with at least two drives for redundancy. NAS-specific drives like WD Red or Seagate IronWolf are designed for 24/7 operation.
+
+## Software: TrueNAS vs. Unraid
+
+The two main contenders for home NAS operating systems are TrueNAS and Unraid.
+
+**TrueNAS CORE/SCALE:** It's free, open-source, and built on the rock-solid ZFS filesystem. ZFS provides excellent data protection features like checksums, snapshots, and RAID-Z. However, expanding a ZFS pool can be less flexible than other solutions.
+
+**Unraid:** It's a paid product but offers incredible flexibility. You can mix and match hard drives of different sizes and add new drives to your array one at a time. It also has excellent Docker and VM support through its user-friendly web interface.
+
+Whichever you choose, a NAS will become an indispensable part of your digital life, safeguarding your data and serving your media needs.

@@ -1,0 +1,45 @@
+---
+title: 'The Power of Self-Hosting with Docker'
+date: '2024-06-07'
+category: 'HomeLab'
+featuredImageId: 'docker-whale'
+excerpt: 'Learn how Docker containers can simplify deploying and managing applications on your home server, from media servers to cloud storage.'
+---
+
+Self-hosting is about reclaiming control over your data and services. And the single most important tool for the modern self-hoster is Docker. It has revolutionized how we deploy and manage applications in a homelab.
+
+## What is Docker?
+
+Imagine you want to run a web application. Traditionally, you'd have to install a web server, a database, the application's language runtime, and all its dependencies directly onto your operating system. This can get messy and lead to conflicts.
+
+Docker solves this by packaging an application and all its dependencies into a single, isolated unit called a "container." This container can run on any system that has Docker installed, regardless of the underlying OS. It's like a lightweight, portable virtual machine.
+
+## Docker Compose: Your Best Friend
+
+While you can manage containers one by one, the real power comes from Docker Compose. It's a tool that uses a simple YAML file to define and run multi-container applications.
+
+Here is an example `docker-compose.yml` for running a Ghost blog:
+
+```yaml
+version: '3.8'
+services:
+  ghost:
+    image: ghost:latest
+    restart: always
+    ports:
+      - "2368:2368"
+    volumes:
+      - ./ghost_content:/var/lib/ghost/content
+    environment:
+      url: http://localhost:2368
+```
+
+With this file, a single command—`docker-compose up -d`—is all it takes to download the Ghost image and start the service. Updating is as simple as `docker-compose pull` and `docker-compose up -d`. This declarative approach makes managing even complex applications a breeze.
+
+## Awesome Self-Hosted Apps to Try
+
+- **Plex/Jellyfin:** Your personal Netflix.
+- **Nextcloud:** Your personal Google Drive/Photos.
+- **Pi-hole:** Network-wide ad blocking.
+- **Home Assistant:** The ultimate smart home hub.
+- **Vaultwarden:** A self-hosted Bitwarden password manager.

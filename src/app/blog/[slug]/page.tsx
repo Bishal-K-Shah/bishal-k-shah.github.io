@@ -5,7 +5,7 @@ import { getPlaceholderImageById } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
 import { Clock, Calendar, ChevronLeft } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { MDXRemote } from 'next-mdx-remote/rsc';
 import CodeBlock from '@/components/CodeBlock';
 import { use } from 'react';
 import { SocialShare } from '@/components/SocialShare';
@@ -103,7 +103,8 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         
         {/* Content */}
         <div className="prose prose-base sm:prose-lg dark:prose-invert max-w-none">
-          <ReactMarkdown
+          <MDXRemote
+            source={post.content}
             components={{
               // Headers with responsive text sizes
               h2: ({node, ...props}) => <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold mt-10 sm:mt-12 mb-4 sm:mb-6 font-headline tracking-tight text-foreground scroll-m-20 border-b pb-2" {...props} />,
@@ -123,7 +124,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
               a: ({node, ...props}) => <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors" {...props} />,
 
               // Code Blocks
-              code({ node, className, children, ...props }) {
+              code: ({ className, children, ...props }) => {
                 const match = /language-(\w+)/.exec(className || '');
                 return match ? (
                   <div className="my-8 rounded-lg overflow-hidden shadow-md border border-border/50">
@@ -136,9 +137,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                 );
               },
             }}
-          >
-            {post.content}
-          </ReactMarkdown>
+          />
         </div>
         
         {/* Footer Share */}

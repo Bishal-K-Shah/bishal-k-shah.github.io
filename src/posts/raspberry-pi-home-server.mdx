@@ -1,0 +1,45 @@
+---
+title: 'How to Setup a Raspberry Pi-Based Home Server'
+date: '2024-06-28'
+category: 'HomeLab'
+featuredImageId: 'raspberry-pi'
+excerpt: 'Turn a tiny, affordable Raspberry Pi into a powerful home server for file sharing, media streaming, and more.'
+---
+
+A home server can revolutionize how you manage your digital life, and you don't need a bulky, power-hungry machine to do it. The humble Raspberry Pi is more than capable of handling a variety of server duties.
+
+## What You'll Need
+
+- Raspberry Pi 4 or 5 (4GB or more recommended)
+- A good quality microSD card (32GB+)
+- Power supply and a case with cooling
+- An external hard drive for storage
+
+## Step 1: Install the Operating System
+
+We'll use Raspberry Pi OS Lite (64-bit) for a lightweight, headless setup. Use the Raspberry Pi Imager to flash the OS to your microSD card. In the advanced settings, be sure to enable SSH, set a hostname, and configure your user account.
+
+```bash
+# After booting, connect via SSH
+ssh your_username@your_hostname.local
+```
+
+## Step 2: Install Docker & Portainer
+
+Docker makes it incredibly easy to manage services in isolated containers. Portainer provides a nice web UI to manage your Docker environment.
+
+```bash
+# Install Docker
+curl -sSL https://get.docker.com | sh
+sudo usermod -aG docker your_username
+
+# Install Portainer
+docker volume create portainer_data
+docker run -d -p 8000:8000 -p 9443:9443 --name portainer \
+    --restart=always \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v portainer_data:/data \
+    portainer/portainer-ce:latest
+```
+
+Now you can access Portainer at `https://your_pi_ip:9443` and start deploying services like a Samba file share, a Plex media server, or a Pi-hole ad-blocker!
