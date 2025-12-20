@@ -1,6 +1,8 @@
 import { getPosts } from '@/lib/posts';
 import { MetadataRoute } from 'next';
 
+export const dynamic = 'force-static';
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getPosts();
   const baseUrl = 'https://bishal-k-shah.github.io/blog';
