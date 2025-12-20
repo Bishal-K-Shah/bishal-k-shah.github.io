@@ -129,7 +129,6 @@ function HomeContent() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {posts.slice(0, isMobile ? 3 : 6).map((post) => {
-              const Icon = categoryInfo[post.category]?.icon;
               return (
                 <Link key={post.slug} href={`/blog/${post.slug}`}>
                   <div className="group flex gap-3 p-3 rounded-lg border border-border/40 bg-card shadow-sm hover:shadow-md hover:border-primary/60 transition-all duration-200 cursor-pointer overflow-hidden">
@@ -143,12 +142,6 @@ function HomeContent() {
                           height={80}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
-                        {/* Category Badge on Image */}
-                        {Icon && (
-                          <div className="absolute top-1 left-1 bg-primary/90 rounded p-1">
-                            <Icon className="h-3 w-3 text-primary-foreground" />
-                          </div>
-                        )}
                       </div>
                     )}
                     {/* Content */}

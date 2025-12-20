@@ -67,14 +67,14 @@ export function Header() {
                 <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider">Browse by Topic</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {categories.map(({ name, icon: Icon }) => (
-                  <DropdownMenuItem key={name} asChild className="cursor-pointer">
+                  <DropdownMenuItem key={name} asChild className="cursor-pointer group">
                     {/* Since we don't have separate category pages yet, we link to Home with a query param or anchor. 
                         For now, linking to home is the safest client-side filtering approach unless we refactor. 
                         Ideally, this would go to /category/[slug]. 
                         I will assume the filter logic on Home handles this or we just link to Home for now.
                     */}
                     <Link href={`/?category=${name}`} className="flex items-center gap-2 py-2">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      <Icon className="h-4 w-4 text-muted-foreground group-focus:text-white group-hover:text-white transition-colors" />
                       <span>{name}</span>
                     </Link>
                   </DropdownMenuItem>
@@ -102,7 +102,7 @@ export function Header() {
           </SheetTrigger>
           <SheetContent side="right" className="w-[300px] sm:w-[400px] pr-0">
              <SheetHeader className="px-1 text-left">
-                <SheetTitle className="flex items-center gap-2 pb-4 border-b">
+                <SheetTitle className="flex items-center gap-2 pb-4 border-b text-xl font-bold tracking-tight">
                    Hobbyist's Hideaway
                 </SheetTitle>
              </SheetHeader>

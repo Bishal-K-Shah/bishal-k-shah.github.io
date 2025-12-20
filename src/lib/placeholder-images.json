@@ -15,7 +15,7 @@
     {
       "id": "3d-printer",
       "description": "3D printing process",
-      "imageUrl": "https://images.unsplash.com/photo-1631541909061-71e349d1f203?auto=format&fit=crop&w=1080&q=80",
+      "imageUrl": "https://images.unsplash.com/photo-1705475025559-ad8efdedc74f?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "3d printer"
     },
     {
@@ -89,6 +89,19 @@
       "description": "Hard drives for NAS",
       "imageUrl": "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "nas storage"
+    },
+    {
+      "id": "vw-check-engine-light",
+      "description": "VW",
+      "imageUrl": "https://images.unsplash.com/photo-1587142151322-54f87d1b7c12?auto=format&fit=crop&w=1080&q=80",
+      "imageHint": "VW"
+    },
+    {
+      "id": "obsidian-graph-view",
+      "description": "Obsidian",
+      "imageUrl": "https://images.unsplash.com/photo-1565449469297-7303f601bd66?auto=format&fit=crop&w=1080&q=80",
+      "imageHint": "Obsidian"
     }
+    
   ]
 }

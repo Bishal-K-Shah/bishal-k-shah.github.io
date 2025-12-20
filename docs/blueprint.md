@@ -6,6 +6,7 @@
 - Category Management: Implement a system to categorize blog posts into predefined categories (Automobile, Technology, Electronics, HomeLab). Each post should belong to at least one category to enable filtering and organization.
 - Homepage Layout: Design a visually appealing homepage that dynamically displays a mix of blog posts from various categories. Use a card-based layout or similar, with engaging featured images and brief excerpts. Include a filter bar to quickly narrow the selection to posts from one specific category.
 - Blog Post Examples: Include some sample blog posts, formatted and complete with featured images, as an example. Examples could include 'The revival of classic car', 'How to setup raspberry pi-based home server', 'A comprehensive guide to 3d printer kit for beginers'.
+- The site should be static and tailored to be deployed in Github pages
 
 ## Style Guidelines:
 
