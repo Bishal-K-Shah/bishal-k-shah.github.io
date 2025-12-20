@@ -82,3 +82,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+.dot-grid {
+  background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px);
+  background-size: 1rem 1rem; /* 16px by 16px grid */
+}
+
+.dark .dot-grid {
+  background-image: radial-gradient(circle, #374151 1px, transparent 1px);
+}
