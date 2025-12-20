@@ -185,7 +185,7 @@ const DotGrid = ({
   }, [buildGrid]);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || typeof window === 'undefined') return;
 
     const onMove = (e: MouseEvent) => {
       const now = performance.now();
