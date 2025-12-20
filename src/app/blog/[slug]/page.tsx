@@ -13,6 +13,7 @@ import { PostCard } from '@/components/PostCard';
 import { Newsletter } from '@/components/Newsletter';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ArticleStickyHeader } from '@/components/ArticleStickyHeader';
 
 type BlogPostPageProps = {
   params: Promise<{
@@ -49,20 +50,8 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Back Button & Progress (Optional future enhancement) */}
-      <div className="sticky top-16 z-30 w-full bg-background/80 backdrop-blur-sm border-b border-border/40 py-2">
-        <div className="container mx-auto px-4 max-w-5xl flex items-center justify-between">
-           <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground hover:text-primary">
-             <Link href="/">
-               <ChevronLeft className="mr-1 h-4 w-4" />
-               Back to Home
-             </Link>
-           </Button>
-           <span className="text-xs font-medium text-muted-foreground hidden sm:block truncate max-w-[200px]">
-             {post.title}
-           </span>
-        </div>
-      </div>
+      {/* Scroll-aware Sticky Header */}
+      <ArticleStickyHeader title={post.title} />
 
       <article className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-5xl">
         {/* Header Section */}

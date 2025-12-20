@@ -10,14 +10,22 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
+    
+    /* Primary: Dark Purple (#624CAB) -> HSL 256 38% 51% (Existing) */
     --primary: 256 38% 51%;
     --primary-foreground: 0 0% 98%;
+    
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    --accent: 222 39% 51%;
+    
+    /* Accent: Updated to a more vibrant Blue to pop against purple */
+    /* Old: 222 39% 51% */
+    /* New: Vibrant Royal Blue */
+    --accent: 221 83% 53%; 
     --accent-foreground: 0 0% 98%;
+    
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
@@ -45,14 +53,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
+    
     --primary: 256 38% 51%;
     --primary-foreground: 0 0% 98%;
+    
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 222 39% 51%;
+    
+    /* Dark Mode Accent: Brighter Blue for visibility */
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 98%;
+    
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
@@ -83,11 +96,31 @@
   }
 }
 
-.dot-grid {
-  background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px);
-  background-size: 1rem 1rem; /* 16px by 16px grid */
+.dot-grid-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0; /* Behind content */
+  overflow: hidden;
+  pointer-events: none; /* Let clicks pass through to content unless we want the shockwave to work everywhere */
+  
+  /* Fade out at the very top */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
 }
 
-.dark .dot-grid {
-  background-image: radial-gradient(circle, #374151 1px, transparent 1px);
+.dot-grid__wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.dot-grid__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
