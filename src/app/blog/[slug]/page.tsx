@@ -1,18 +1,15 @@
 import { notFound } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { getPostBySlug, getPosts } from '@/lib/posts';
-import { getPlaceholderImageById } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
-import { Clock, Calendar, ChevronLeft } from 'lucide-react';
+import { Clock, Calendar } from 'lucide-react';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import CodeBlock from '@/components/CodeBlock';
 import { use } from 'react';
 import { SocialShare } from '@/components/SocialShare';
 import { PostCard } from '@/components/PostCard';
 import { Newsletter } from '@/components/Newsletter';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { ArticleStickyHeader } from '@/components/ArticleStickyHeader';
 
 type BlogPostPageProps = {
@@ -36,7 +33,6 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
-  const featuredImage = getPlaceholderImageById(post.featuredImageId);
   const Icon = categoryInfo[post.category].icon;
 
   // Logic for Related Posts
@@ -90,12 +86,12 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         </header>
         
         {/* Featured Image */}
-        {featuredImage && (
+        {post.featuredImage && (
           <div className="mb-10 relative group rounded-xl overflow-hidden shadow-sm border border-border/50 aspect-video bg-muted">
              {/* eslint-disable-next-line @next/next/no-img-element */}
              <img
-              src={featuredImage.imageUrl}
-              alt={featuredImage.description}
+              src={post.featuredImage}
+              alt={post.title}
               className="w-full h-full object-cover"
             />
           </div>
@@ -122,6 +118,26 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
               
               // Links
               a: ({node, ...props}) => <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors" {...props} />,
+              
+              // Standard Images from Markdown (e.g., ![alt](src))
+              img: ({node, alt, src, title, ...props}) => (
+                <figure className="my-8">
+                  <div className="rounded-xl overflow-hidden border border-border/50 bg-muted shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={src} 
+                      alt={alt || "Blog post image"}
+                      className="w-full h-auto object-cover"
+                      {...props} 
+                    />
+                  </div>
+                  {title && (
+                    <figcaption className="mt-2 text-center text-sm text-muted-foreground italic">
+                      {title}
+                    </figcaption>
+                  )}
+                </figure>
+              ),
 
               // Code Blocks
               code: ({ className, children, ...props }) => {

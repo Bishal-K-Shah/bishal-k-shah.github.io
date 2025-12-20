@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { PostCard } from "@/components/PostCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getPlaceholderImageById } from "@/lib/placeholder-images";
 import { categoryInfo } from "@/components/icons"; // Import categoryInfo on the client side
 import type { Category, Post } from "@/types";
 import { Search, Sparkles, ArrowRight } from "lucide-react";
@@ -134,10 +133,10 @@ function HomeContent({ initialPosts, categoriesList }: HomeContentProps) {
                 <Link key={post.slug} href={`/blog/${post.slug}`}>
                   <div className="group flex gap-3 p-3 rounded-lg border border-border/40 bg-card shadow-sm hover:shadow-md hover:border-primary/60 transition-all duration-200 cursor-pointer overflow-hidden">
                     {/* Thumbnail */}
-                    {post.featuredImageId && (
+                    {post.featuredImage && (
                       <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted relative">
                         <Image
-                          src={getPlaceholderImageById(post.featuredImageId)?.imageUrl || ''}
+                          src={post.featuredImage}
                           alt={post.title}
                           width={80}
                           height={80}

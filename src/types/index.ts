@@ -9,7 +9,7 @@ export type Post = {
   title: string;
   date: string;
   category: Category;
-  featuredImageId: string;
+  featuredImage: string;
   excerpt: string;
   content: string;
 };

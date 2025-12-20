@@ -29,7 +29,7 @@ export const getPosts = (): Post[] => {
       title: data.title,
       date: data.date,
       category: data.category as Category,
-      featuredImageId: data.featuredImageId,
+      featuredImage: data.featuredImage, // Now reading featuredImage directly
       excerpt: data.excerpt,
       content: content,
     };
@@ -62,7 +62,7 @@ export const getPostBySlug = (slug: string): Post | undefined => {
     title: data.title,
     date: data.date,
     category: data.category as Category,
-    featuredImageId: data.featuredImageId,
+    featuredImage: data.featuredImage, // Now reading featuredImage directly
     excerpt: data.excerpt,
     content: content,
   };
