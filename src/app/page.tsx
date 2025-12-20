@@ -6,15 +6,20 @@ import { PostCard } from "@/components/PostCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getPosts, getCategoriesWithIcons } from "@/lib/posts";
+import { getPlaceholderImageById } from "@/lib/placeholder-images";
+import { categoryInfo } from "@/components/icons";
 import type { Category } from "@/types";
 import { Search, Sparkles, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import { format, parseISO } from "date-fns";
 import DotGrid from "@/components/DotGrid";
 
 function HomeContent() {
   const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<Category | "All">("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
 
   // Sync state with URL param on load
   useEffect(() => {
@@ -27,6 +32,16 @@ function HomeContent() {
       }
     }
   }, [searchParams]);
+
+  // Track mobile screen size
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640); // sm breakpoint is 640px
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const posts = getPosts();
   const categories = getCategoriesWithIcons();
@@ -102,11 +117,68 @@ function HomeContent() {
         </div>
       </section>
 
+      {/* Recent Posts Section - Hidden when searching */}
+      {!searchQuery && (
+      <section className="border-t bg-gradient-to-b from-muted/40 to-background py-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold font-headline">Recent Posts</h2>
+            <Link href="#all-posts" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+              View all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {posts.slice(0, isMobile ? 3 : 6).map((post) => {
+              const Icon = categoryInfo[post.category]?.icon;
+              return (
+                <Link key={post.slug} href={`/blog/${post.slug}`}>
+                  <div className="group flex gap-3 p-3 rounded-lg border border-border/40 bg-card shadow-sm hover:shadow-md hover:border-primary/60 transition-all duration-200 cursor-pointer overflow-hidden">
+                    {/* Thumbnail */}
+                    {post.featuredImageId && (
+                      <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted relative">
+                        <Image
+                          src={getPlaceholderImageById(post.featuredImageId)?.imageUrl || ''}
+                          alt={post.title}
+                          width={80}
+                          height={80}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        {/* Category Badge on Image */}
+                        {Icon && (
+                          <div className="absolute top-1 left-1 bg-primary/90 rounded p-1">
+                            <Icon className="h-3 w-3 text-primary-foreground" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {/* Content */}
+                    <div className="flex-1 flex flex-col justify-between min-w-0">
+                      <div>
+                        <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-primary transition-colors leading-tight">
+                          {post.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                          {post.excerpt}
+                        </p>
+                      </div>
+                      <p className="text-xs text-muted-foreground/70 font-medium mt-2">
+                        {format(parseISO(post.date), 'MMM d, yyyy')}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+      )}
+
       {/* Main Content */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
         
         {/* Category Filter Tabs */}
-        <div className="flex flex-col items-center mb-12">
+        <div id="all-posts" className="flex flex-col items-center mb-12">
            <div className="inline-flex flex-wrap justify-center gap-2 p-1 bg-muted/50 backdrop-blur-sm rounded-xl border border-border/50">
             <Button
               variant={selectedCategory === "All" ? "default" : "ghost"}
