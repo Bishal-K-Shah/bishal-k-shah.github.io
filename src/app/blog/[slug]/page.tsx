@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     };
   }
 
-  const baseUrl = 'https://bishal-k-shah.github.io/blog';
+  const baseUrl = 'https://bishalkshah.com.np';
   const url = `${baseUrl}/blog/${post.slug}`;
   
   return {
@@ -85,7 +85,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     .filter((p) => p.category === post.category && p.slug !== post.slug)
     .slice(0, 3);
 
-  const baseUrl = 'https://bishal-k-shah.github.io/blog'; 
+  const baseUrl = 'https://bishalkshah.com.np'; 
   const shareUrl = `${baseUrl}/blog/${post.slug}`;
 
   return (
