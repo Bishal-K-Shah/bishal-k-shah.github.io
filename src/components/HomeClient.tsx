@@ -55,6 +55,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileBrowseOpen, setIsMobileBrowseOpen] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Sync state with URL param on load
   useEffect(() => {
@@ -136,9 +137,27 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   const isNicheCategorySelected = selectedCategory !== "All" && !MAIN_CATEGORIES.includes(selectedCategory);
 
   return (
-    <div className="min-h-screen">
+    <div className={`min-h-screen ${isSearchFocused && isMobile ? 'pt-20' : ''}`}>
+      {/* Mobile-only fixed search header */}
+      {isMobile && isSearchFocused && (
+        <div className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b z-50 p-4 animate-in fade-in slide-in-from-top-4">
+          <div className="relative w-full max-w-lg mx-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input 
+              type="text" 
+              placeholder="Search for tutorials..." 
+              className="pl-10 h-12 rounded-full shadow-lg border-muted-foreground/20 bg-muted/50 focus-visible:ring-primary"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onBlur={() => setIsSearchFocused(false)}
+              autoFocus // Focus on this input when it appears
+            />
+          </div>
+        </div>
+      )}
+      
       {/* Hero Section with Dot Grid Background */}
-      <section className="relative overflow-hidden border-b bg-muted/20 pb-16 pt-24 md:pt-32 lg:pb-24">
+      <section className={`relative overflow-hidden border-b bg-muted/20 pb-16 pt-24 md:pt-32 lg:pb-24 transition-all duration-300 ${isSearchFocused && isMobile ? 'hidden' : 'block'}`}>
         <DotGrid
           dotSize={3}
           gap={24}
@@ -176,6 +195,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
                   className="pl-10 h-12 rounded-full shadow-lg border-muted-foreground/20 bg-background/80 backdrop-blur-sm focus-visible:ring-primary"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
                 />
               </div>
            </div>
