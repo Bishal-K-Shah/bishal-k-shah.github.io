@@ -1,7 +1,24 @@
-export default function PostLayout({
+import { getPostBySlug } from '@/lib/posts';
+import { StructuredData } from '@/components/StructuredData';
+import { notFound } from 'next/navigation';
+
+export default async function PostLayout({ 
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: { slug: string };
 }) {
-  return <div className="w-full bg-background">{children}</div>;
+  const post = getPostBySlug(params.slug);
+
+  if (!post) {
+    notFound();
+  }
+  
+  return (
+    <div className="w-full bg-background">
+      <StructuredData post={post} />
+      {children}
+    </div>
+  );
 }
