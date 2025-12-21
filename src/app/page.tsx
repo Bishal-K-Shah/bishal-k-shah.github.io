@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import { getPosts, getCategories } from "@/lib/posts";
+import { getPosts, getCategories, getCategoryTree } from "@/lib/posts";
 import HomeClient from "@/components/HomeClient";
-import { CATEGORIES, Category } from "@/types";
+import { Category, CategoryTree } from "@/types";
 
 // This is a Server Component
 export default function Home() {
@@ -9,8 +9,13 @@ export default function Home() {
   // We only pass simple data (strings), not objects with functions (icons)
   // getCategories returns string[], so we need to cast it to Category[]
   const categories = getCategories() as Category[];
+  const categoryTree = getCategoryTree();
 
   return (
-    <HomeClient initialPosts={posts} categoriesList={categories} />
+    <HomeClient 
+      initialPosts={posts} 
+      categoriesList={categories} 
+      categoryTree={categoryTree}
+    />
   );
 }

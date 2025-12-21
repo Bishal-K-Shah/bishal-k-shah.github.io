@@ -3,7 +3,7 @@ import { format, parseISO } from 'date-fns';
 import { getPostBySlug, getPosts } from '@/lib/posts';
 import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
-import { Clock, Calendar } from 'lucide-react';
+import { Clock, Calendar, Hash } from 'lucide-react';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import CodeBlock from '@/components/CodeBlock';
 import { use } from 'react';
@@ -77,7 +77,8 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
-  const Icon = categoryInfo[post.category].icon;
+  const categoryData = categoryInfo[post.category];
+  const Icon = categoryData?.icon || Hash;
 
   // Logic for Related Posts
   const allPosts = getPosts();

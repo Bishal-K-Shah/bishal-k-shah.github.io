@@ -5,14 +5,16 @@ import { Post } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Hash } from 'lucide-react';
 
 type PostCardProps = {
   post: Post;
 };
 
 export function PostCard({ post }: PostCardProps) {
-  const Icon = categoryInfo[post.category].icon;
+  // Handle dynamic categories that might not be in our icon map
+  const categoryData = categoryInfo[post.category];
+  const Icon = categoryData?.icon || Hash; // Fallback to Hash icon
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
@@ -45,12 +47,18 @@ export function PostCard({ post }: PostCardProps) {
         <CardContent>
           <p className="text-muted-foreground line-clamp-3">{post.excerpt}</p>
         </CardContent>
-        <CardFooter>
-          <div className="flex items-center text-sm font-semibold text-primary">
-            Read more
-            <ArrowUpRight className="h-4 w-4 ml-1 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
-          </div>
-        </CardFooter>
+        {post.tags && post.tags.length > 0 && (
+          <CardFooter className="px-6 pb-4 pt-0 gap-2 flex-wrap">
+            {post.tags.slice(0, 2).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs font-normal">
+                #{tag}
+              </Badge>
+            ))}
+            {post.tags.length > 2 && (
+              <span className="text-xs text-muted-foreground">+{post.tags.length - 2}</span>
+            )}
+          </CardFooter>
+        )}
       </Link>
     </Card>
   );

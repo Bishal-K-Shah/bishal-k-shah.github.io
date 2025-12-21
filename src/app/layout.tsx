@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/Header';
+import { getCategoryTree } from '@/lib/posts';
 
 export const metadata: Metadata = {
   title: "Hobbyist's Hideaway",
@@ -13,6 +14,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const categoryTree = getCategoryTree();
+
   return (
     <html lang="en" className="h-full">
       <head>
@@ -22,7 +25,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
-        <Header />
+        <Header categoryTree={categoryTree} />
         <main className="flex-grow">
           {children}
         </main>

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { Post, CATEGORIES, CategoryInfo, Category } from '@/types';
+import { Post, MAIN_CATEGORIES, CategoryInfo, Category, CategoryTree } from '@/types';
 import { categoryInfo } from '@/components/icons';
 
 const postsDirectory = path.join(process.cwd(), 'src/posts');
@@ -29,7 +29,8 @@ export const getPosts = (): Post[] => {
       title: data.title,
       date: data.date,
       category: data.category as Category,
-      featuredImage: data.featuredImage, // Now reading featuredImage directly
+      tags: data.tags || [],
+      featuredImage: data.featuredImage, 
       excerpt: data.excerpt,
       content: content,
     };
@@ -62,16 +63,46 @@ export const getPostBySlug = (slug: string): Post | undefined => {
     title: data.title,
     date: data.date,
     category: data.category as Category,
-    featuredImage: data.featuredImage, // Now reading featuredImage directly
+    tags: data.tags || [],
+    featuredImage: data.featuredImage,
     excerpt: data.excerpt,
     content: content,
   };
 };
 
-export const getCategories = (): string[] => {
-  return CATEGORIES;
+// Returns a Map of Category -> Unique Tags
+export const getCategoryTree = (): CategoryTree => {
+  const posts = getPosts();
+  const tree: CategoryTree = {};
+
+  posts.forEach(post => {
+    if (!tree[post.category]) {
+      tree[post.category] = [];
+    }
+    
+    if (post.tags) {
+      post.tags.forEach(tag => {
+        if (!tree[post.category].includes(tag)) {
+          tree[post.category].push(tag);
+        }
+      });
+    }
+  });
+
+  // Sort tags alphabetically
+  Object.keys(tree).forEach(category => {
+    tree[category].sort();
+  });
+
+  return tree;
 };
 
+// Backwards compatibility for now, returns just the MAIN categories
+export const getCategories = (): string[] => {
+  return MAIN_CATEGORIES;
+};
+
+// Returns MAIN categories with their icons
 export const getCategoriesWithIcons = (): CategoryInfo[] => {
-  return CATEGORIES.map(name => categoryInfo[name]);
+  return MAIN_CATEGORIES.map(name => categoryInfo[name]);
 }
