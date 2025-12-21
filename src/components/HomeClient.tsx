@@ -299,18 +299,18 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
           {(selectedTag || isNicheCategorySelected) && (
             <div className="flex flex-wrap items-center justify-center gap-2 mt-4 animate-in fade-in slide-in-from-top-2">
                {isNicheCategorySelected && (
-                 <Badge variant="secondary" className="pl-3 pr-1 py-1 text-sm bg-primary/10 text-primary hover:bg-primary/20">
+                 <Badge variant="secondary" className="pl-3 pr-1 py-1 text-sm bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors">
                    Category: {selectedCategory} 
-                   <Button variant="ghost" size="icon" className="h-4 w-4 ml-2 hover:bg-transparent" onClick={() => updateFilters("All", null)}>
+                   <Button variant="ghost" size="icon" className="h-4 w-4 ml-2 hover:bg-transparent hover:text-primary" onClick={() => updateFilters("All", null)}>
                       <X className="h-3 w-3" />
                    </Button>
                  </Badge>
                )}
                {selectedTag && (
-                 <Badge variant="secondary" className="pl-3 pr-1 py-1 text-sm bg-accent text-accent-foreground">
+                 <Badge variant="secondary" className="pl-3 pr-1 py-1 text-sm bg-accent text-accent-foreground hover:bg-accent/80 hover:text-accent-foreground transition-colors">
                    <TagIcon className="h-3 w-3 mr-1" />
                    {selectedTag}
-                   <Button variant="ghost" size="icon" className="h-4 w-4 ml-2 hover:bg-transparent" onClick={clearTag}>
+                   <Button variant="ghost" size="icon" className="h-4 w-4 ml-2 hover:bg-transparent hover:text-accent-foreground" onClick={clearTag}>
                       <X className="h-3 w-3" />
                    </Button>
                  </Badge>
