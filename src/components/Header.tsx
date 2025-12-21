@@ -144,7 +144,7 @@ export function Header({ categoryTree }: HeaderProps) {
               
               <div className="py-2">
                 <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Categories</h4>
-                <div className="flex flex-col gap-2 pl-4 border-l-2 border-muted ml-1">
+                <div className="flex flex-col gap-2 pl-4 border-l-2 border-primary ml-1">
                    {categories.map((category) => (
                       <div key={category} className="flex flex-col gap-1">
                         <Link
