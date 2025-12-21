@@ -21,7 +21,7 @@ type BlogPostPageProps = {
 };
 
 export async function generateStaticParams() {
-  const posts = getPosts();
+  const posts = await getPosts();
   return posts.map((post) => ({
     slug: post.slug,
   }));
@@ -29,7 +29,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     return {
@@ -74,9 +74,9 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   };
 }
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
-  const { slug } = use(params);
-  const post = getPostBySlug(slug);
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     notFound();
@@ -86,7 +86,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
   const Icon = categoryData?.icon || Hash;
 
   // Logic for Related Posts
-  const allPosts = getPosts();
+  const allPosts = await getPosts();
   const relatedPosts = allPosts
     .filter((p) => p.category === post.category && p.slug !== post.slug)
     .slice(0, 3);

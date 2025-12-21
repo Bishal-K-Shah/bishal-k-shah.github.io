@@ -3,8 +3,8 @@ import { MetadataRoute } from 'next';
 
 export const dynamic = 'force-static';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const posts = getPosts();
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const posts = await getPosts();
   const baseUrl = 'https://bishalkshah.com.np';
 
   const blogPosts = posts.map((post) => ({

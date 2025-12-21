@@ -6,7 +6,7 @@ import { categoryInfo } from '@/components/icons';
 
 const postsDirectory = path.join(process.cwd(), 'src/posts');
 
-export const getPosts = (): Post[] => {
+export const getPosts = async (): Promise<Post[]> => {
   if (!fs.existsSync(postsDirectory)) {
       return [];
   }
@@ -48,7 +48,7 @@ export const getPosts = (): Post[] => {
   });
 };
 
-export const getPostBySlug = (slug: string): Post | undefined => {
+export const getPostBySlug = async (slug: string): Promise<Post | undefined> => {
   const fullPath = path.join(postsDirectory, `${slug}.mdx`);
   
   if (!fs.existsSync(fullPath)) {
@@ -71,8 +71,8 @@ export const getPostBySlug = (slug: string): Post | undefined => {
 };
 
 // Returns a Map of Category -> Unique Tags
-export const getCategoryTree = (): CategoryTree => {
-  const posts = getPosts();
+export const getCategoryTree = async (): Promise<CategoryTree> => {
+  const posts = await getPosts();
   const tree: CategoryTree = {};
 
   posts.forEach(post => {

@@ -4,12 +4,12 @@ import HomeClient from "@/components/HomeClient";
 import { Category, CategoryTree } from "@/types";
 
 // This is a Server Component
-export default function Home() {
-  const posts = getPosts();
+export default async function Home() {
+  const posts = await getPosts();
   // We only pass simple data (strings), not objects with functions (icons)
   // getCategories returns string[], so we need to cast it to Category[]
   const categories = getCategories() as Category[];
-  const categoryTree = getCategoryTree();
+  const categoryTree = await getCategoryTree();
 
   return (
     <HomeClient 

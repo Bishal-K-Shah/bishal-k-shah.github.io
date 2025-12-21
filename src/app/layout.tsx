@@ -9,12 +9,12 @@ export const metadata: Metadata = {
   description: 'A personal blog about automobile, technology, electronics, and homelab projects.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const categoryTree = getCategoryTree();
+  const categoryTree = await getCategoryTree();
 
   return (
     <html lang="en" className="h-full">
