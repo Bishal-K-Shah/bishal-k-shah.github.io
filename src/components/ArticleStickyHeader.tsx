@@ -38,7 +38,7 @@ export function ArticleStickyHeader({ title }: ArticleStickyHeaderProps) {
   return (
     <div
       className={cn(
-        "sticky top-16 z-30 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 py-2 transition-all duration-300 transform",
+        "hidden md:block sticky top-16 z-30 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 py-2 transition-all duration-300 transform",
         isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
       )}
     >

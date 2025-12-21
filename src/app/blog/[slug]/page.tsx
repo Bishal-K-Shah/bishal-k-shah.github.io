@@ -12,6 +12,7 @@ import { PostCard } from '@/components/PostCard';
 import { Newsletter } from '@/components/Newsletter';
 import { ArticleStickyHeader } from '@/components/ArticleStickyHeader';
 import { Metadata } from 'next';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 type BlogPostPageProps = {
   params: Promise<{
@@ -96,6 +97,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
       <article className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-5xl">
         {/* Header Section */}
+        <Breadcrumb category={post.category} slug={post.slug} title={post.title} />
         <header className="mb-8 text-center sm:text-left">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-4">
             <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-medium border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors">
