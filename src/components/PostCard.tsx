@@ -5,7 +5,7 @@ import { Post } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
-import { ArrowUpRight, Hash } from 'lucide-react';
+import { ArrowUpRight, Hash, Tag } from 'lucide-react';
 
 type PostCardProps = {
   post: Post;
@@ -50,8 +50,9 @@ export function PostCard({ post }: PostCardProps) {
         {post.tags && post.tags.length > 0 && (
           <CardFooter className="px-6 pb-4 pt-0 gap-2 flex-wrap">
             {post.tags.slice(0, 2).map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs font-normal">
-                #{tag}
+              <Badge key={tag} variant="outline" className="text-xs font-normal pl-2 pr-2.5 py-0.5 flex items-center gap-1">
+                <Tag className="w-3 h-3 text-muted-foreground" />
+                {tag}
               </Badge>
             ))}
             {post.tags.length > 2 && (

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { categoryInfo } from "@/components/icons"; 
 import { Category, Post, CategoryTree, MAIN_CATEGORIES } from "@/types";
-import { Search, Sparkles, ArrowRight, X, Tag as TagIcon, LayoutGrid } from "lucide-react";
+import { Search, Sparkles, ArrowRight, X, Tag as TagIcon, LayoutGrid, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
@@ -25,6 +25,20 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface HomeContentProps {
   initialPosts: Post[];
@@ -40,6 +54,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  const [isMobileBrowseOpen, setIsMobileBrowseOpen] = useState(false);
 
   // Sync state with URL param on load
   useEffect(() => {
@@ -97,6 +112,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
     if (tag) params.set("tag", tag);
     
     router.push(`/?${params.toString()}`);
+    setIsMobileBrowseOpen(false);
   };
 
   const handleCategoryClick = (category: Category | "All") => {
@@ -241,7 +257,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
                   variant={selectedCategory === name ? "default" : "ghost"}
                   size="sm"
                   onClick={() => handleCategoryClick(name)}
-                  className="rounded-lg h-9"
+                  className="rounded-lg h-9 hidden sm:inline-flex" // Hide main tabs on mobile if we want to save space, but keeping them is better for quick access
                 >
                   {Icon && <Icon className="mr-2 h-4 w-4" />}
                   {capitalize(name)}
@@ -249,50 +265,128 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
               )
             })}
 
-            {/* "Browse" Menu (Dropdown) */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className={isNicheCategorySelected ? "bg-accent text-accent-foreground rounded-lg h-9" : "rounded-lg h-9"}>
-                  <LayoutGrid className="mr-2 h-4 w-4" />
-                  Browse
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider">Browse by Topic</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {Object.keys(categoryTree).sort().map(cat => {
-                   const tags = categoryTree[cat];
-                   const hasTags = tags && tags.length > 0;
-                   
-                   if (hasTags) {
-                     return (
-                       <DropdownMenuSub key={cat}>
-                         <DropdownMenuSubTrigger className="cursor-pointer group">
-                           <span className="group-focus:text-accent-foreground group-hover:text-accent-foreground group-data-[state=open]:text-accent-foreground">{capitalize(cat)}</span>
-                         </DropdownMenuSubTrigger>
-                         <DropdownMenuSubContent className="p-1">
-                            {/* Main Category Link - acts as "View All" */}
-                            <DropdownMenuItem onClick={() => updateFilters(cat, null)} className="font-bold cursor-pointer">
-                               {capitalize(cat)}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {tags.map(tag => (
-                              <DropdownMenuItem key={tag} onClick={() => updateFilters(cat, tag)} className="cursor-pointer">
-                                {capitalize(tag)}
+            {/* Desktop Browse (Dropdown) */}
+            <div className="hidden md:flex">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className={isNicheCategorySelected ? "bg-accent text-accent-foreground rounded-lg h-9" : "rounded-lg h-9"}>
+                    <LayoutGrid className="mr-2 h-4 w-4" />
+                    Browse
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider">Browse by Topic</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {Object.keys(categoryTree).sort().map(cat => {
+                     const tags = categoryTree[cat];
+                     const hasTags = tags && tags.length > 0;
+                     
+                     if (hasTags) {
+                       return (
+                         <DropdownMenuSub key={cat}>
+                           <DropdownMenuSubTrigger className="cursor-pointer group">
+                             <span className="group-focus:text-accent-foreground group-hover:text-accent-foreground group-data-[state=open]:text-accent-foreground">{capitalize(cat)}</span>
+                           </DropdownMenuSubTrigger>
+                           <DropdownMenuSubContent className="p-1">
+                              {/* Main Category Link - acts as "View All" */}
+                              <DropdownMenuItem onClick={() => updateFilters(cat, null)} className="font-bold cursor-pointer">
+                                 {capitalize(cat)}
                               </DropdownMenuItem>
-                            ))}
-                         </DropdownMenuSubContent>
-                       </DropdownMenuSub>
+                              <DropdownMenuSeparator />
+                              {tags.map(tag => (
+                                <DropdownMenuItem key={tag} onClick={() => updateFilters(cat, tag)} className="cursor-pointer">
+                                  {capitalize(tag)}
+                                </DropdownMenuItem>
+                              ))}
+                           </DropdownMenuSubContent>
+                         </DropdownMenuSub>
+                       )
+                     }
+                     return (
+                       <DropdownMenuItem key={cat} onClick={() => updateFilters(cat, null)} className="cursor-pointer group">
+                         <span className="group-focus:text-accent-foreground group-hover:text-accent-foreground">{capitalize(cat)}</span>
+                       </DropdownMenuItem>
                      )
-                   }
-                   return (
-                     <DropdownMenuItem key={cat} onClick={() => updateFilters(cat, null)} className="cursor-pointer group">
-                       <span className="group-focus:text-accent-foreground group-hover:text-accent-foreground">{capitalize(cat)}</span>
-                     </DropdownMenuItem>
-                   )
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Mobile Browse (Sheet/Drawer) */}
+            <div className="md:hidden">
+              <Sheet open={isMobileBrowseOpen} onOpenChange={setIsMobileBrowseOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm" className={isNicheCategorySelected ? "bg-accent text-accent-foreground rounded-lg h-9" : "rounded-lg h-9"}>
+                    <LayoutGrid className="mr-2 h-4 w-4" />
+                    Browse
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[80vh] rounded-t-xl p-0">
+                   <SheetHeader className="px-6 py-4 border-b">
+                      <SheetTitle className="text-left flex items-center gap-2">
+                        <LayoutGrid className="h-5 w-5" /> Browse Topics
+                      </SheetTitle>
+                   </SheetHeader>
+                   <ScrollArea className="h-full p-4 pb-20">
+                      <Accordion type="single" collapsible className="w-full">
+                         {Object.keys(categoryTree).sort().map(cat => {
+                            const tags = categoryTree[cat];
+                            const hasTags = tags && tags.length > 0;
+                            const Icon = categoryInfo[cat]?.icon;
+
+                            if (hasTags) {
+                              return (
+                                <AccordionItem key={cat} value={cat} className="border-b-0 mb-2">
+                                   <AccordionTrigger className="hover:no-underline py-3 px-2 rounded-lg hover:bg-muted">
+                                      <div className="flex items-center gap-3">
+                                        {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
+                                        <span className="font-semibold text-lg">{capitalize(cat)}</span>
+                                      </div>
+                                   </AccordionTrigger>
+                                   <AccordionContent className="pb-2 pt-1 pl-4">
+                                      <div className="flex flex-col gap-2 border-l-2 border-muted pl-4">
+                                        <button 
+                                          onClick={() => updateFilters(cat, null)}
+                                          className="text-base font-bold text-left py-2 hover:text-primary transition-colors flex items-center gap-2"
+                                        >
+                                          View All {capitalize(cat)} <ChevronRight className="h-3 w-3" />
+                                        </button>
+                                        {tags.map(tag => (
+                                          <button 
+                                            key={tag} 
+                                            onClick={() => updateFilters(cat, tag)}
+                                            className="text-base text-muted-foreground text-left py-2 hover:text-primary transition-colors"
+                                          >
+                                            {capitalize(tag)}
+                                          </button>
+                                        ))}
+                                      </div>
+                                   </AccordionContent>
+                                </AccordionItem>
+                              )
+                            }
+
+                            // If no tags, render as a direct button masquerading as a row
+                            return (
+                              <div key={cat} className="border-b-0 mb-2">
+                                <button 
+                                  onClick={() => updateFilters(cat, null)}
+                                  className="flex w-full items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors"
+                                >
+                                   <div className="flex items-center gap-3">
+                                      {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
+                                      <span className="font-semibold text-lg">{capitalize(cat)}</span>
+                                   </div>
+                                </button>
+                              </div>
+                            )
+                         })}
+                      </Accordion>
+                   </ScrollArea>
+                </SheetContent>
+              </Sheet>
+            </div>
+
           </div>
 
           {/* Active Filters Feedback */}
