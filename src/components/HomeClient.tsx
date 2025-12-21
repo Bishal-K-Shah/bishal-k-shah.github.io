@@ -253,7 +253,8 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
       )}
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      {/* The top padding is reduced on mobile when the search is active to reduce the gap between the fixed search bar and the content. */}
+      <div className={`container mx-auto px-4 sm:px-6 lg:px-8 ${isSearchFocused && isMobile ? 'pt-0 pb-16' : 'py-16'}`}>
         
         {/* Category Filter Tabs */}
         <div id="all-posts" className="flex flex-col items-center mb-8">
