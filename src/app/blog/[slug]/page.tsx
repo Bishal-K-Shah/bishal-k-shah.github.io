@@ -1,3 +1,4 @@
+import React from 'react';
 import { notFound } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { getPostBySlug, getPosts } from '@/lib/posts';
@@ -157,7 +158,25 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               h3: ({ ...props}) => <h3 className="text-lg sm:text-xl md:text-2xl font-medium mt-6 sm:mt-8 mb-3 sm:mb-4 font-headline tracking-tight text-foreground scroll-m-20" {...props} />,
               
               // Paragraphs
-              p: ({ ...props}) => <p className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground text-base sm:text-lg" {...props} />,
+              p: ({ children, ...props }) => {
+                // This logic prevents next-mdx-remote from wrapping images in p tags, which causes a hydration error.
+                const childrenArray = React.Children.toArray(children);
+                if (
+                  childrenArray.length === 1 &&
+                  React.isValidElement(childrenArray[0]) &&
+                  childrenArray[0].type === 'img'
+                ) {
+                  return <>{children}</>;
+                }
+                return (
+                  <p
+                    className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground text-base sm:text-lg"
+                    {...props}
+                  >
+                    {children}
+                  </p>
+                );
+              },
               
               // Lists
               ul: ({ ...props}) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground" {...props} />,

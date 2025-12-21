@@ -1,12 +1,15 @@
+"use client";
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Twitter, Linkedin, Share2 } from 'lucide-react';
+import { Twitter, Linkedin, Share2, Copy } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
 
 type SocialShareProps = {
   url: string;
@@ -14,8 +17,17 @@ type SocialShareProps = {
 };
 
 export function SocialShare({ url, title }: SocialShareProps) {
+  const { toast } = useToast();
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url);
+    toast({
+      title: 'Link Copied!',
+      description: 'The article link has been copied to your clipboard.',
+    });
+  };
 
   const shareLinks = [
     {
@@ -29,6 +41,12 @@ export function SocialShare({ url, title }: SocialShareProps) {
       icon: Linkedin,
       href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
       colorClass: 'hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30',
+    },
+    {
+      name: 'Copy link',
+      icon: Copy,
+      colorClass: 'hover:text-slate-600 hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-950/30',
+      onClick: handleCopy,
     },
     {
       name: 'Share on Reddit',
@@ -46,21 +64,32 @@ export function SocialShare({ url, title }: SocialShareProps) {
           {shareLinks.map((link) => (
             <Tooltip key={link.name}>
               <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className={`h-9 w-9 rounded-full transition-all duration-300 ${link.colorClass}`}
-                  asChild
-                >
-                  <a
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={link.name}
+                {link.href ? (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={`h-9 w-9 rounded-full transition-all duration-300 ${link.colorClass}`}
+                    asChild
+                  >
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={link.name}
+                    >
+                      <link.icon className="h-4 w-4" />
+                    </a>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={`h-9 w-9 rounded-full transition-all duration-300 ${link.colorClass}`}
+                    onClick={link.onClick}
                   >
                     <link.icon className="h-4 w-4" />
-                  </a>
-                </Button>
+                  </Button>
+                )}
               </TooltipTrigger>
               <TooltipContent side="top">
                 <p>{link.name}</p>
