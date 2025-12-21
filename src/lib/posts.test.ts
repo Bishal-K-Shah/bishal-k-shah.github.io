@@ -18,7 +18,7 @@ describe('getCategoryTree', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
   });
 
-  it('should correctly build a category tree from posts', () => {
+  it('should correctly build a category tree from posts', async () => {
     // 1. Mock the file list
     vi.mocked(fs.readdirSync).mockReturnValue(['post1.mdx', 'post2.mdx', 'post3.mdx'] as any);
 
@@ -60,7 +60,7 @@ describe('getCategoryTree', () => {
       } as any);
 
     // 4. Run the function
-    const tree = postsLib.getCategoryTree();
+    const tree = await postsLib.getCategoryTree();
 
     // 5. Assertions
     expect(tree).toEqual({
@@ -72,30 +72,30 @@ describe('getCategoryTree', () => {
     expect(tree.Electronics).toEqual(['Arduino', 'Sensors', 'Soldering'].sort());
   });
 
-  it('should handle posts without tags', () => {
-    vi.mocked(fs.readdirSync).mockReturnValue(['post1.mdx']);
+  it('should handle posts without tags', async () => {
+    vi.mocked(fs.readdirSync).mockReturnValue(['post1.mdx'] as any);
     vi.mocked(fs.readFileSync).mockReturnValue('');
     vi.mocked(matter).mockReturnValue({ 
       data: { category: 'HomeLab', title: 'A', date: '2023' }, 
       content: '' 
     } as any);
 
-    const tree = postsLib.getCategoryTree();
+    const tree = await postsLib.getCategoryTree();
 
     expect(tree).toEqual({
       HomeLab: [],
     });
   });
 
-  it('should handle new/dynamic categories', () => {
-    vi.mocked(fs.readdirSync).mockReturnValue(['post1.mdx']);
+  it('should handle new/dynamic categories', async () => {
+    vi.mocked(fs.readdirSync).mockReturnValue(['post1.mdx'] as any);
     vi.mocked(fs.readFileSync).mockReturnValue('');
     vi.mocked(matter).mockReturnValue({ 
       data: { category: 'My New Hobby', title: 'A', date: '2023', tags: ['Fun'] }, 
       content: '' 
     } as any);
 
-    const tree = postsLib.getCategoryTree();
+    const tree = await postsLib.getCategoryTree();
 
     expect(tree).toHaveProperty('My New Hobby');
     expect(tree['My New Hobby']).toContain('Fun');
