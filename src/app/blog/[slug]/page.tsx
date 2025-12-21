@@ -6,7 +6,6 @@ import { categoryInfo } from '@/components/icons';
 import { Clock, Calendar, Hash } from 'lucide-react';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import CodeBlock from '@/components/CodeBlock';
-import { use } from 'react';
 import { SocialShare } from '@/components/SocialShare';
 import { PostCard } from '@/components/PostCard';
 import { Newsletter } from '@/components/Newsletter';
@@ -154,24 +153,24 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             source={post.content}
             components={{
               // Headers with responsive text sizes
-              h2: ({node, ...props}) => <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold mt-10 sm:mt-12 mb-4 sm:mb-6 font-headline tracking-tight text-foreground scroll-m-20 border-b pb-2" {...props} />,
-              h3: ({node, ...props}) => <h3 className="text-lg sm:text-xl md:text-2xl font-medium mt-6 sm:mt-8 mb-3 sm:mb-4 font-headline tracking-tight text-foreground scroll-m-20" {...props} />,
+              h2: ({ ...props}) => <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold mt-10 sm:mt-12 mb-4 sm:mb-6 font-headline tracking-tight text-foreground scroll-m-20 border-b pb-2" {...props} />,
+              h3: ({ ...props}) => <h3 className="text-lg sm:text-xl md:text-2xl font-medium mt-6 sm:mt-8 mb-3 sm:mb-4 font-headline tracking-tight text-foreground scroll-m-20" {...props} />,
               
               // Paragraphs
-              p: ({node, ...props}) => <p className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground text-base sm:text-lg" {...props} />,
+              p: ({ ...props}) => <p className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground text-base sm:text-lg" {...props} />,
               
               // Lists
-              ul: ({node, ...props}) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground" {...props} />,
-              ol: ({node, ...props}) => <ol className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground" {...props} />,
+              ul: ({ ...props}) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground" {...props} />,
+              ol: ({ ...props}) => <ol className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground" {...props} />,
               
               // Blockquotes
-              blockquote: ({node, ...props}) => <blockquote className="mt-6 border-l-4 border-primary pl-6 italic bg-muted/40 py-2 pr-4 rounded-r-lg" {...props} />,
+              blockquote: ({ ...props}) => <blockquote className="mt-6 border-l-4 border-primary pl-6 italic bg-muted/40 py-2 pr-4 rounded-r-lg" {...props} />,
               
               // Links
-              a: ({node, ...props}) => <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors" {...props} />,
+              a: ({ ...props}) => <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors" {...props} />,
               
               // Standard Images from Markdown (e.g., ![alt](src))
-              img: ({node, alt, src, title, ...props}) => (
+              img: ({ alt, src, title, ...props}) => (
                 <figure className="my-8">
                   <div className="rounded-xl overflow-hidden border border-border/50 bg-muted shadow-sm">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
