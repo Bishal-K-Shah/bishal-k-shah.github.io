@@ -124,3 +124,100 @@
   height: 100%;
   display: block;
 }
+
+/* =============================================
+   Scroll Reveal Animations
+   ============================================= */
+
+/* Base scroll reveal - slide up and fade in */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Scale variant - for CTA sections */
+.scroll-reveal-scale {
+  opacity: 0;
+  transform: translateY(32px) scale(0.96);
+  transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal-scale--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Fade only variant */
+.scroll-reveal-fade {
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: opacity;
+}
+
+.scroll-reveal-fade--visible {
+  opacity: 1;
+}
+
+/* Slide from left variant */
+.scroll-reveal-left {
+  opacity: 0;
+  transform: translateX(-24px);
+  transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal-left--visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Slide from right variant */
+.scroll-reveal-right {
+  opacity: 0;
+  transform: translateX(24px);
+  transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal-right--visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* =============================================
+   Reduced Motion Support
+   Respect user's motion preferences
+   ============================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal,
+  .scroll-reveal-scale,
+  .scroll-reveal-fade,
+  .scroll-reveal-left,
+  .scroll-reveal-right {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .scroll-reveal--visible,
+  .scroll-reveal-scale--visible,
+  .scroll-reveal-fade--visible,
+  .scroll-reveal-left--visible,
+  .scroll-reveal-right--visible {
+    opacity: 1;
+    transform: none;
+  }
+}

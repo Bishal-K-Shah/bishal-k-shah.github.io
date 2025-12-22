@@ -13,6 +13,7 @@ import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import DotGrid from "@/components/DotGrid";
 import { Badge } from "@/components/ui/badge";
+import { useHeroFade, useScrollReveal, useStaggerReveal } from "@/hooks/use-scroll-reveal";
 import { capitalize } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -60,6 +61,14 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
 
   const isInitialRender = useRef(true);
 
+  // Scroll animation hooks (those not depending on computed values)
+  const heroContentRef = useHeroFade<HTMLDivElement>();
+  const { ref: recentPostsRef, isVisible: recentPostsVisible, getItemDelay: getRecentDelay } = useStaggerReveal<HTMLDivElement>(
+    isMobile ? 3 : 6,
+    { threshold: 0.1, staggerDelay: 80 }
+  );
+  const { ref: ctaRef, isVisible: ctaVisible } = useScrollReveal<HTMLDivElement>({ threshold: 0.2 });
+
   // Sync state with URL param on load
   useEffect(() => {
     const categoryParam = searchParams.get("category");
@@ -91,7 +100,14 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
 
     // Scroll when a category or tag is selected
     if (selectedCategory !== "All" || selectedTag) {
-      postsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Add a small delay when tag is selected to allow the active filters badge to animate in first
+      // This prevents scroll misalignment on mobile
+      const scrollDelay = selectedTag ? 150 : 0;
+      const timeoutId = setTimeout(() => {
+        postsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, scrollDelay);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [selectedCategory, selectedTag]);
   
@@ -122,6 +138,12 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
       return matchesCategory && matchesTag && matchesSearch;
     });
   }, [initialPosts, selectedCategory, selectedTag, searchQuery]);
+
+  // Post grid scroll animation hook (depends on filteredPosts)
+  const { ref: postGridRef, isVisible: postGridVisible, getItemDelay: getGridDelay } = useStaggerReveal<HTMLDivElement>(
+    filteredPosts.length,
+    { threshold: 0.05, rootMargin: '0px 0px -100px 0px', staggerDelay: 60 }
+  );
 
   // Update URL helper
   const updateFilters = (category: string | "All", tag: string | null) => {
@@ -242,7 +264,10 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
           className="absolute inset-0 pointer-events-auto"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/60 to-background pointer-events-none" />
-        <div className={`container relative mx-auto px-4 text-center z-10 pointer-events-none ${isMobile && isSearchFocused ? 'hidden' : ''}`}> 
+        <div 
+          ref={heroContentRef}
+          className={`container relative mx-auto px-4 text-center z-10 pointer-events-none will-change-transform ${isMobile && isSearchFocused ? 'hidden' : ''}`}
+        > 
            <div className="inline-flex items-center rounded-full border bg-background/50 px-3 py-1 text-sm font-medium text-muted-foreground backdrop-blur-md mb-6 shadow-sm pointer-events-auto">
               <Sparkles className="mr-2 h-4 w-4 text-primary" />
               <span className="hidden sm:inline">Discover projects, guides, and stories.</span>
@@ -312,59 +337,75 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
       </section>
 
       {/* Recent Posts Section - Hidden when searching or filtering by tag */}
-      {!searchQuery && (      <section className="border-t bg-gradient-to-b from-muted/40 to-background py-8">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold font-headline">Recent Posts</h2>
-            <Link href="#all-posts" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
-              View all <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {initialPosts.slice(0, isMobile ? 3 : 6).map((post) => {
-              return (
-                <Link key={post.slug} href={`/blog/${post.slug}`}>
-                  <div className="group flex gap-3 p-3 rounded-lg border border-border/40 bg-card shadow-sm hover:shadow-md hover:border-primary/60 transition-all duration-200 cursor-pointer overflow-hidden">
-                    {/* Thumbnail */}
-                    {post.featuredImage && (
-                      <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted relative">
-                        <Image
-                          src={post.featuredImage}
-                          alt={post.title}
-                          width={80}
-                          height={80}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-                    {/* Content */}
-                    <div className="flex-1 flex flex-col justify-between min-w-0">
-                      <div>
-                        <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-primary transition-colors leading-tight">
-                          {post.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
-                          {post.excerpt}
+      {!searchQuery && (
+        <section ref={recentPostsRef} className="border-t bg-gradient-to-b from-muted/40 to-background py-8">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold font-headline">Recent Posts</h2>
+              <button 
+                onClick={() => {
+                  // Reset to "All" category and clear any tag
+                  updateFilters("All", null);
+                  // Scroll to posts section after a brief delay for state update
+                  setTimeout(() => {
+                    postsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 50);
+                }}
+                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+              >
+                View all <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {initialPosts.slice(0, isMobile ? 3 : 6).map((post, index) => {
+                return (
+                  <Link 
+                    key={post.slug} 
+                    href={`/blog/${post.slug}`}
+                    className={`scroll-reveal ${recentPostsVisible ? 'scroll-reveal--visible' : ''}`}
+                    style={{ transitionDelay: `${getRecentDelay(index)}ms` }}
+                  >
+                    <div className="group flex gap-3 p-3 rounded-lg border border-border/40 bg-card shadow-sm hover:shadow-md hover:border-primary/60 transition-all duration-200 cursor-pointer overflow-hidden">
+                      {/* Thumbnail */}
+                      {post.featuredImage && (
+                        <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted relative">
+                          <Image
+                            src={post.featuredImage}
+                            alt={post.title}
+                            width={80}
+                            height={80}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                        </div>
+                      )}
+                      {/* Content */}
+                      <div className="flex-1 flex flex-col justify-between min-w-0">
+                        <div>
+                          <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-primary transition-colors leading-tight">
+                            {post.title}
+                          </h3>
+                          <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                            {post.excerpt}
+                          </p>
+                        </div>
+                        <p className="text-xs text-muted-foreground/70 font-medium mt-2">
+                          {format(parseISO(post.date), 'MMM d, yyyy')}
                         </p>
                       </div>
-                      <p className="text-xs text-muted-foreground/70 font-medium mt-2">
-                        {format(parseISO(post.date), 'MMM d, yyyy')}
-                      </p>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       )}
 
       {/* Main Content */}
       <div ref={postsSectionRef} className={`container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-10 ${isSearchFocused && isMobile ? 'pt-10 pb-16' : 'py-16'}`}>
         
         {/* Category Filter Tabs */}
-        <div id="all-posts" className="flex flex-col items-center mb-8">
+        <div id="all-posts" className="flex flex-col items-center mb-8 scroll-mt-4">
            <div className="inline-flex flex-wrap justify-center gap-2 p-1 bg-muted/50 backdrop-blur-sm rounded-xl border border-border/50">
             <Button
               variant={selectedCategory === "All" ? "default" : "ghost"}
@@ -546,9 +587,15 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
 
         {/* Results Grid */}
         {filteredPosts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-16">
-            {filteredPosts.map((post) => (
-              <PostCard key={post.slug} post={post} />
+          <div ref={postGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-16">
+            {filteredPosts.map((post, index) => (
+              <div 
+                key={post.slug}
+                className={`scroll-reveal ${postGridVisible ? 'scroll-reveal--visible' : ''}`}
+                style={{ transitionDelay: `${getGridDelay(index)}ms` }}
+              >
+                <PostCard post={post} />
+              </div>
             ))}
           </div>
         ) : (
@@ -570,7 +617,10 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
         )}
 
         {/* Newsletter / CTA Section */}
-        <div className="rounded-3xl bg-primary text-primary-foreground p-8 md:p-12 text-center relative overflow-hidden">
+        <div 
+          ref={ctaRef}
+          className={`rounded-3xl bg-primary text-primary-foreground p-8 md:p-12 text-center relative overflow-hidden scroll-reveal-scale ${ctaVisible ? 'scroll-reveal-scale--visible' : ''}`}
+        >
            <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none"></div>
            <div className="relative z-10 max-w-2xl mx-auto">
              <h2 className="text-3xl font-bold mb-4 font-headline">Never Miss a Project</h2>
