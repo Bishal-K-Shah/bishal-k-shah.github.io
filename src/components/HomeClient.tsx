@@ -144,6 +144,11 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
     const newUrl = `/?${params.toString()}`;
     router.push(newUrl, { scroll: false });
     setIsMobileBrowseOpen(false);
+
+    // If on mobile and a filter is applied, hide the search bar
+    if (isMobile) {
+      setIsSearchFocused(false);
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -205,7 +210,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
               onChange={handleSearchChange}
               autoFocus // Focus on this input when it appears
             />
-            <Button 
+            <Button
               variant="ghost" 
               size="icon" 
               className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full text-muted-foreground"
@@ -213,6 +218,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
               onClick={() => {
                 setSearchQuery("");
                 setIsSearchFocused(false);
+                window.scrollTo(0, 0); 
               }}
             >
               <X className="h-5 w-5" />
@@ -355,7 +361,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
       )}
 
       {/* Main Content */}
-      <div ref={postsSectionRef} className={`container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20 ${isSearchFocused && isMobile ? 'pt-10 pb-16' : 'py-16'}`}>
+      <div ref={postsSectionRef} className={`container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-10 ${isSearchFocused && isMobile ? 'pt-10 pb-16' : 'py-16'}`}>
         
         {/* Category Filter Tabs */}
         <div id="all-posts" className="flex flex-col items-center mb-8">
