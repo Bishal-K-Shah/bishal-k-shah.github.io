@@ -191,7 +191,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   };
 
   return (
-    <div className={`min-h-screen ${isSearchFocused && isMobile ? 'pt-20' : ''}`}>
+    <div className="min-h-screen">
       {/* Mobile-only fixed search header */}
       {isMobile && isSearchFocused && (
         <div className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b z-50 p-4 animate-in fade-in slide-in-from-top-4">
@@ -203,7 +203,6 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
               className="pl-10 h-12 rounded-full shadow-lg border-muted-foreground/20 bg-muted/50 focus-visible:ring-primary pr-10"
               value={searchQuery}
               onChange={handleSearchChange}
-              onBlur={() => setIsSearchFocused(false)}
               autoFocus // Focus on this input when it appears
             />
             <Button 
@@ -307,8 +306,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
       </section>
 
       {/* Recent Posts Section - Hidden when searching or filtering by tag */}
-      {!searchQuery && !selectedTag && (
-      <section className="border-t bg-gradient-to-b from-muted/40 to-background py-8">
+      {!searchQuery && (      <section className="border-t bg-gradient-to-b from-muted/40 to-background py-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold font-headline">Recent Posts</h2>
@@ -357,7 +355,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
       )}
 
       {/* Main Content */}
-      <div ref={postsSectionRef} className={`container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-6 ${isSearchFocused && isMobile ? 'pt-0 pb-16' : 'py-16'}`}>
+      <div ref={postsSectionRef} className={`container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20 ${isSearchFocused && isMobile ? 'pt-10 pb-16' : 'py-16'}`}>
         
         {/* Category Filter Tabs */}
         <div id="all-posts" className="flex flex-col items-center mb-8">
