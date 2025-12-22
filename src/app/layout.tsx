@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
 import { getCategoryTree } from '@/lib/posts';
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default async function RootLayout({
         <main className="flex-grow">
           {children}
         </main>
+        <Footer />
         <Toaster />
       </body>
     </html>

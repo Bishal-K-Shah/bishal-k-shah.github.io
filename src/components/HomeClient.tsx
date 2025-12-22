@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useEffect, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { PostCard } from "@/components/PostCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { categoryInfo } from "@/components/icons"; 
 import { Category, Post, CategoryTree, MAIN_CATEGORIES } from "@/types";
-import { Search, Sparkles, ArrowRight, X, Tag as TagIcon, LayoutGrid, ChevronRight } from "lucide-react";
+import { Search, Sparkles, ArrowRight, X, Tag as TagIcon, LayoutGrid, ChevronRight, Hash } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
@@ -49,6 +49,7 @@ interface HomeContentProps {
 function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const postsSectionRef = useRef<HTMLDivElement>(null);
   
   const [selectedCategory, setSelectedCategory] = useState<Category | "All">("All");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -56,6 +57,8 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileBrowseOpen, setIsMobileBrowseOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  const isInitialRender = useRef(true);
 
   // Sync state with URL param on load
   useEffect(() => {
@@ -78,6 +81,20 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
     }
   }, [searchParams, categoryTree]);
 
+  // Scroll to posts when filter is applied
+  useEffect(() => {
+    // Skip scrolling on the initial page load
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+
+    // Scroll when a category or tag is selected
+    if (selectedCategory !== "All" || selectedTag) {
+      postsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedCategory, selectedTag]);
+  
   // Track mobile screen size
   useEffect(() => {
     const handleResize = () => {
@@ -108,12 +125,35 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
 
   // Update URL helper
   const updateFilters = (category: string | "All", tag: string | null) => {
-    const params = new URLSearchParams();
-    if (category !== "All") params.set("category", category);
-    if (tag) params.set("tag", tag);
+    const params = new URLSearchParams(window.location.search);
+    if (category !== "All") {
+      params.set("category", category);
+    } else {
+      params.delete("category");
+    }
+
+    if (tag) {
+      params.set("tag", tag);
+    } else {
+      params.delete("tag");
+    }
     
-    router.push(`/?${params.toString()}`);
+    // Clear search when filters are applied
+    setSearchQuery(""); 
+
+    const newUrl = `/?${params.toString()}`;
+    router.push(newUrl, { scroll: false });
     setIsMobileBrowseOpen(false);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    // If there's a query, clear the filters in the URL
+    if (query) {
+      router.push(`/`, { scroll: false }); 
+    }
   };
 
   const handleCategoryClick = (category: Category | "All") => {
@@ -136,6 +176,20 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   // Determine if we are in a "Niche" category (not in main list)
   const isNicheCategorySelected = selectedCategory !== "All" && !MAIN_CATEGORIES.includes(selectedCategory);
 
+  const getHeroSectionClasses = () => {
+    const baseClasses = "relative overflow-hidden border-b bg-muted/20 transition-all duration-300";
+
+    if (isMobile) {
+      return `${baseClasses} ${isSearchFocused ? 'hidden' : 'pt-24 pb-16'}`;
+    }
+
+    if (searchQuery) {
+      return `${baseClasses} pt-16 pb-20`;
+    }
+
+    return `${baseClasses} pt-24 md:pt-32 pb-16 lg:pb-24`;
+  };
+
   return (
     <div className={`min-h-screen ${isSearchFocused && isMobile ? 'pt-20' : ''}`}>
       {/* Mobile-only fixed search header */}
@@ -146,18 +200,30 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
             <Input 
               type="text" 
               placeholder="Search for tutorials..." 
-              className="pl-10 h-12 rounded-full shadow-lg border-muted-foreground/20 bg-muted/50 focus-visible:ring-primary"
+              className="pl-10 h-12 rounded-full shadow-lg border-muted-foreground/20 bg-muted/50 focus-visible:ring-primary pr-10"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               onBlur={() => setIsSearchFocused(false)}
               autoFocus // Focus on this input when it appears
             />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full text-muted-foreground"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                setSearchQuery("");
+                setIsSearchFocused(false);
+              }}
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       )}
       
       {/* Hero Section with Dot Grid Background */}
-      <section className={`relative overflow-hidden border-b bg-muted/20 pb-16 pt-24 md:pt-32 lg:pb-24 transition-all duration-300 ${isSearchFocused && isMobile ? 'hidden' : 'block'}`}>
+      <section className={getHeroSectionClasses()}>
         <DotGrid
           dotSize={3}
           gap={24}
@@ -171,7 +237,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
           className="absolute inset-0 pointer-events-auto"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/60 to-background pointer-events-none" />
-        <div className="container relative mx-auto px-4 text-center z-10 pointer-events-none"> 
+        <div className={`container relative mx-auto px-4 text-center z-10 pointer-events-none ${isMobile && isSearchFocused ? 'hidden' : ''}`}> 
            <div className="inline-flex items-center rounded-full border bg-background/50 px-3 py-1 text-sm font-medium text-muted-foreground backdrop-blur-md mb-6 shadow-sm pointer-events-auto">
               <Sparkles className="mr-2 h-4 w-4 text-primary" />
               <span className="hidden sm:inline">Discover projects, guides, and stories.</span>
@@ -187,23 +253,61 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
            </p>
 
            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto pointer-events-auto">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input 
-                  type="text" 
-                  placeholder="Search for tutorials..." 
-                  className="pl-10 h-12 rounded-full shadow-lg border-muted-foreground/20 bg-background/80 backdrop-blur-sm focus-visible:ring-primary"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                />
-              </div>
+              {isMobile ? (
+                <div className="relative w-full">
+                  <Button 
+                    variant="outline" 
+                    className={`w-full h-12 rounded-full shadow-lg border-muted-foreground/20 bg-background/80 backdrop-blur-sm flex items-center justify-start pl-4 pr-10 ${searchQuery ? 'text-foreground' : 'text-muted-foreground'}`}
+                    onClick={() => setIsSearchFocused(true)}
+                  >
+                    <Search className="h-5 w-5 mr-3 flex-shrink-0" />
+                    <span className="truncate">
+                      {searchQuery || 'Search for tutorials...'}
+                    </span>
+                  </Button>
+                  {searchQuery && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full text-muted-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent the search bar from focusing
+                        setSearchQuery("");
+                      }}
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="relative w-full">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input 
+                    type="text" 
+                    placeholder="Search for tutorials..." 
+                    className="pl-10 pr-10 h-12 rounded-full shadow-lg border-muted-foreground/20 bg-background/80 backdrop-blur-sm focus-visible:ring-primary"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onFocus={() => setIsSearchFocused(true)}
+                  />
+                  {searchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full text-muted-foreground"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  )}
+                </div>
+              )}
            </div>
         </div>
       </section>
 
-      {/* Recent Posts Section - Hidden when searching or filtering */}
-      {!searchQuery && selectedCategory === "All" && !selectedTag && (
+      {/* Recent Posts Section - Hidden when searching or filtering by tag */}
+      {!searchQuery && !selectedTag && (
       <section className="border-t bg-gradient-to-b from-muted/40 to-background py-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6">
@@ -253,8 +357,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
       )}
 
       {/* Main Content */}
-      {/* The top padding is reduced on mobile when the search is active to reduce the gap between the fixed search bar and the content. */}
-      <div className={`container mx-auto px-4 sm:px-6 lg:px-8 ${isSearchFocused && isMobile ? 'pt-0 pb-16' : 'py-16'}`}>
+      <div ref={postsSectionRef} className={`container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-6 ${isSearchFocused && isMobile ? 'pt-0 pb-16' : 'py-16'}`}>
         
         {/* Category Filter Tabs */}
         <div id="all-posts" className="flex flex-col items-center mb-8">
@@ -278,7 +381,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
                   variant={selectedCategory === name ? "default" : "ghost"}
                   size="sm"
                   onClick={() => handleCategoryClick(name)}
-                  className="rounded-lg h-9 hidden sm:inline-flex" // Hide main tabs on mobile if we want to save space, but keeping them is better for quick access
+                  className="rounded-lg h-9"
                 >
                   {Icon && <Icon className="mr-2 h-4 w-4" />}
                   {capitalize(name)}
@@ -353,14 +456,14 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
                          {Object.keys(categoryTree).sort().map(cat => {
                             const tags = categoryTree[cat];
                             const hasTags = tags && tags.length > 0;
-                            const Icon = categoryInfo[cat]?.icon;
-
+                            const Icon = categoryInfo[cat]?.icon || Hash;
+                            
                             if (hasTags) {
                               return (
                                 <AccordionItem key={cat} value={cat} className="border-b-0 mb-2">
                                    <AccordionTrigger className="hover:no-underline py-3 px-2 rounded-lg hover:bg-muted">
                                       <div className="flex items-center gap-3">
-                                        {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
+                                        <Icon className="h-5 w-5 text-muted-foreground" />
                                         <span className="font-semibold text-lg">{capitalize(cat)}</span>
                                       </div>
                                    </AccordionTrigger>
@@ -395,7 +498,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
                                   className="flex w-full items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors"
                                 >
                                    <div className="flex items-center gap-3">
-                                      {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
+                                      <Icon className="h-5 w-5 text-muted-foreground" />
                                       <span className="font-semibold text-lg">{capitalize(cat)}</span>
                                    </div>
                                 </button>
