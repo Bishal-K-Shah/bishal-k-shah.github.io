@@ -127,7 +127,7 @@ export function Header({ categoryTree }: HeaderProps) {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] sm:w-[400px] pr-0 overflow-y-auto">
+          <SheetContent side="right" className="w-[300px] sm:w-[400px] pr-0 overflow-y-auto" aria-describedby={undefined}>
              <SheetHeader className="px-1 text-left">
                 <SheetTitle className="flex items-center gap-2 pb-4 border-b text-xl font-bold tracking-tight">
                    Hobbyist's Hideaway

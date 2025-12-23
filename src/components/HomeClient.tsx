@@ -121,10 +121,11 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   }, [initialPosts, selectedCategory, selectedTag, searchQuery]);
 
   // Post grid scroll animation hook (depends on filteredPosts)
+  // Use less restrictive rootMargin to ensure posts are visible on initial mobile load
   const { ref: postGridRef, isVisible: postGridVisible, getItemDelay: getGridDelay } =
     useStaggerReveal<HTMLDivElement>(filteredPosts.length, {
-      threshold: 0.05,
-      rootMargin: '0px 0px -100px 0px',
+      threshold: 0.01,
+      rootMargin: '50px 0px 0px 0px',
       staggerDelay: 60,
     });
 

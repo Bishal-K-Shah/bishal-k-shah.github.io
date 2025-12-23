@@ -38,3 +38,4 @@ export function NewsletterCTA({ ctaRef, isVisible }: NewsletterCTAProps) {
   );
 }
 
+

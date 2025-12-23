@@ -32,6 +32,7 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
 
   const ref = useRef<T>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const hasTriggered = useRef(false);
 
   useEffect(() => {
     const element = ref.current;
@@ -44,9 +45,30 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
       return;
     }
 
+    // On mobile, check if element is already in viewport on mount
+    // This fixes the issue where elements below the fold don't trigger on initial load
+    const isMobile = window.innerWidth < 640;
+    if (isMobile && !hasTriggered.current) {
+      const rect = element.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      // Check if any part of the element is visible in the viewport
+      if (rect.top < windowHeight && rect.bottom > 0) {
+        hasTriggered.current = true;
+        if (delay > 0) {
+          setTimeout(() => setIsVisible(true), delay);
+        } else {
+          setIsVisible(true);
+        }
+        if (triggerOnce) {
+          return; // No need for observer if already visible and triggerOnce
+        }
+      }
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !hasTriggered.current) {
+          hasTriggered.current = true;
           if (delay > 0) {
             setTimeout(() => setIsVisible(true), delay);
           } else {
@@ -56,7 +78,8 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
           if (triggerOnce) {
             observer.unobserve(element);
           }
-        } else if (!triggerOnce) {
+        } else if (!triggerOnce && !entry.isIntersecting) {
+          hasTriggered.current = false;
           setIsVisible(false);
         }
       },
@@ -158,4 +181,5 @@ export function useHeroFade<T extends HTMLElement = HTMLDivElement>() {
 
   return ref;
 }
+
 

@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { getCategoryTree } from '@/lib/posts';
 
 const baseUrl = 'https://bishalkshah.com.np';
@@ -72,17 +73,24 @@ export default async function RootLayout({
     <html lang="en" className="h-full">
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#8b5cf6" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Hobbyist's Hideaway" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased min-h-screen flex flex-col">
+      <body className="font-body antialiased min-h-screen flex flex-col" suppressHydrationWarning>
         <Header categoryTree={categoryTree} />
         <main className="flex-grow">
           {children}
         </main>
         <Footer />
         <Toaster />
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

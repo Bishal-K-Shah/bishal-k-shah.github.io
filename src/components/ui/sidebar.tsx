@@ -205,6 +205,7 @@ const Sidebar = React.forwardRef<
               } as React.CSSProperties
             }
             side={side}
+            aria-describedby={undefined}
           >
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
