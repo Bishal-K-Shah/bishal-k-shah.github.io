@@ -60,7 +60,7 @@ export function CategoryTabs({
 
   return (
     <div id="all-posts" className="flex flex-col items-center mb-8 scroll-mt-4">
-      <div className="inline-flex flex-wrap justify-center gap-2 p-1 bg-muted/50 backdrop-blur-sm rounded-xl border border-border/50">
+      <div className="inline-flex flex-wrap justify-center gap-2 px-1 py-2 bg-muted/50 backdrop-blur-sm rounded-xl border border-border/50">
         <Button
           variant={selectedCategory === 'All' ? 'default' : 'ghost'}
           size="sm"
