@@ -5,9 +5,60 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { getCategoryTree } from '@/lib/posts';
 
+const baseUrl = 'https://bishalkshah.com.np';
+
 export const metadata: Metadata = {
-  title: "Hobbyist's Hideaway",
-  description: 'A personal blog about automobile, technology, electronics, and homelab projects.',
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: "Hobbyist's Hideaway | Homelab, DIY & Tech Blog",
+    template: "%s | Hobbyist's Hideaway"
+  },
+  description: "Hobbyist's Hideaway is your go-to resource for Homelab setups, DIY electronics, Car repairs, and coding tutorials. Practical guides for hobbyists and makers.",
+  keywords: ["Homelab", "DIY Electronics", "Automobile", "Coding", "Self-hosting", "Linux", "Makers"],
+  authors: [{ name: "Bishal" }],
+  creator: "Bishal",
+  publisher: "Hobbyist's Hideaway",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: baseUrl,
+    siteName: "Hobbyist's Hideaway",
+    title: "Hobbyist's Hideaway | Homelab, DIY & Tech Blog",
+    description: "Your go-to resource for Homelab, DIY electronics, Automobile articles, and coding tutorials.",
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: "Hobbyist's Hideaway - Homelab, DIY & Tech Blog",
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Hobbyist's Hideaway | Homelab, DIY & Tech Blog",
+    description: "Your go-to resource for Homelab, DIY electronics, Automobile articles, and coding tutorials.",
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default async function RootLayout({

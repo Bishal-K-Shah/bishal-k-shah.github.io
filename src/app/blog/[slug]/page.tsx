@@ -13,6 +13,7 @@ import { Newsletter } from '@/components/Newsletter';
 import { ArticleStickyHeader } from '@/components/ArticleStickyHeader';
 import { Metadata } from 'next';
 import { Breadcrumb } from '@/components/Breadcrumb';
+import { StructuredData } from '@/components/StructuredData';
 
 type BlogPostPageProps = {
   params: {
@@ -47,6 +48,8 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     alternates: {
       canonical: url,
     },
+    authors: [{ name: "Bishal Kumar Shah" }],
+    category: post.category,
     openGraph: {
       title: post.title,
       description: post.excerpt,
@@ -55,7 +58,9 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       locale: 'en_US',
       type: 'article',
       publishedTime: post.date,
-      authors: ["Hobbyist's Hideaway"],
+      modifiedTime: post.date,
+      authors: ["Bishal Kumar Shah"],
+      tags: post.tags,
       images: [
         {
           url: post.featuredImage,
@@ -70,6 +75,13 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       title: post.title,
       description: post.excerpt,
       images: [post.featuredImage],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
     },
   };
 }
@@ -96,6 +108,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Structured Data for SEO */}
+      <StructuredData post={post} />
+
       {/* Scroll-aware Sticky Header */}
       <ArticleStickyHeader title={post.title} />
 

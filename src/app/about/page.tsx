@@ -2,6 +2,16 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Server, Wrench, Terminal, Cpu } from 'lucide-react';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "About",
+  description: "Learn more about Hobbyist's Hideaway, a sanctuary for makers, tinkers, and tech enthusiasts. Discover our mission to document journeys in tech, mechanics, and electronics.",
+  openGraph: {
+    title: "About | Hobbyist's Hideaway",
+    description: "Learn more about Hobbyist's Hideaway, our mission, and the topics we cover.",
+  },
+};
 
 export default function AboutPage() {
   return (

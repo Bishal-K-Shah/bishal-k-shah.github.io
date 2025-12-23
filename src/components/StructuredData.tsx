@@ -11,14 +11,14 @@ export function StructuredData({ post }: StructuredDataProps) {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': 'BlogPosting',
     mainEntityOfPage: {
       '@type': 'WebPage',
       '@id': url,
     },
     headline: post.title,
     description: post.excerpt,
-    image: post.featuredImage,
+    image: post.featuredImage ? `${baseUrl}${post.featuredImage.startsWith('/') ? '' : '/'}${post.featuredImage}` : `${baseUrl}/og-image.png`,
     author: {
       '@type': 'Organization',
       name: "Hobbyist's Hideaway",
@@ -29,11 +29,13 @@ export function StructuredData({ post }: StructuredDataProps) {
       name: "Hobbyist's Hideaway",
       logo: {
         '@type': 'ImageObject',
-        url: `${baseUrl}/favicon.ico`,
+        url: `${baseUrl}/favicon.svg`,
       },
     },
     datePublished: post.date,
     dateModified: post.date,
+    keywords: post.tags?.join(', '),
+    articleSection: post.category,
   };
 
   return (
