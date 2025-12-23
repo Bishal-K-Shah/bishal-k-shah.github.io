@@ -161,12 +161,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               p: ({ children, ...props }) => {
                 // This logic prevents next-mdx-remote from wrapping images in p tags, which causes a hydration error.
                 const childrenArray = React.Children.toArray(children);
-                if (
-                  childrenArray.length === 1 &&
-                  React.isValidElement(childrenArray[0]) &&
-                  childrenArray[0].type === 'img'
-                ) {
-                  return <>{children}</>;
+                if (childrenArray.length === 1 && React.isValidElement(childrenArray[0])) {
+                  const child = childrenArray[0];
+                  // Check for native img tag OR custom img component (function with src prop)
+                  if (
+                    child.type === 'img' ||
+                    (typeof child.type === 'function' && 'src' in (child.props || {}))
+                  ) {
+                    return <>{children}</>;
+                  }
                 }
                 return (
                   <p

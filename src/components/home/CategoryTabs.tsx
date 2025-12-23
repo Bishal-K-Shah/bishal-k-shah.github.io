@@ -177,7 +177,7 @@ export function CategoryTabs({
                 Browse
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[80vh] rounded-t-xl p-0">
+            <SheetContent side="bottom" className="h-[80vh] rounded-t-xl p-0" aria-describedby={undefined}>
               <SheetHeader className="px-6 py-4 border-b">
                 <SheetTitle className="text-left flex items-center gap-2">
                   <LayoutGrid className="h-5 w-5" /> Browse Topics
