@@ -1,0 +1,122 @@
+---
+title: 'Network-Wide Ad Blocking with Pi-hole: Clean Up Every Device'
+date: '2025-01-21'
+category: 'HomeLab'
+tags: ['Pi-hole', 'Networking']
+featuredImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1080&q=80'
+excerpt: 'Set up Pi-hole on your home network to block ads, trackers, and malicious domains across every device—phones, TVs, consoles, and more.'
+---
+
+Online ads and trackers are everywhere—on smartphones, smart TVs, game consoles, and even IoT devices. Browser ad‑blockers help, but they don’t cover everything. **Pi-hole** is a powerful solution that runs on your network and blocks unwanted domains at the DNS level, protecting **every device** that uses your home internet connection.  
+
+In this guide, you’ll learn how Pi-hole works, what hardware you need, and how to integrate it into your home network or homelab without breaking anything.
+
+![Raspberry Pi on a desk](https://images.pexels.com/photos/1105379/pexels-photo-1105379.jpeg?auto=compress&cs=tinysrgb&w=1080 "Raspberry Pi as a lightweight network appliance")
+
+## How Pi-hole Works: DNS-Level Ad Blocking
+
+Pi-hole acts as a DNS resolver for your network:
+
+- Your devices ask Pi-hole to resolve domain names.
+- Pi-hole checks those domains against one or more **blocklists**.
+- If a domain is on a list (ad server, tracker, malicious host), Pi-hole returns a non‑routable address instead of the real IP.
+- Ads and tracking scripts fail to load, keeping pages cleaner and often faster.
+
+Because this happens at the **DNS** layer, it works across:
+
+- Browsers and apps.
+- Smart TVs and streaming sticks.
+- Consoles and IoT devices that don’t support ad‑blocking plugins.
+
+## Hardware Requirements for Pi-hole
+
+Pi-hole is lightweight and runs well on:
+
+- **Raspberry Pi** (even older models).
+- Small Linux VMs or containers in your homelab.
+- Low‑power mini PCs or spare hardware.
+
+Typical resource usage:
+
+- Very low CPU and RAM footprint.
+- Minimal disk I/O once running.
+
+Many homelab enthusiasts simply run Pi-hole as a **Docker container** on an existing server or NAS.
+
+![Network cable and router](https://cdn.pixabay.com/photo/2018/04/19/10/37/network-3332165_960_720.jpg)
+
+## Installing Pi-hole (High-Level Steps)
+
+Pi-hole provides a convenient installation script for supported Linux distributions:
+
+1. Install a lightweight Linux OS on your Pi or VM.
+2. Update packages and set a **static IP address** on your network.
+3. Run the official Pi-hole installation command from the documentation.
+4. Choose upstream DNS providers (e.g., Cloudflare, Quad9).
+5. Select initial blocklists (you can add more later).
+
+Alternatively, use the official Docker image and map ports and volumes as recommended in the Pi-hole docs.
+
+## Integrating Pi-hole with Your Home Network
+
+There are two common approaches:
+
+### 1. Per-Device DNS Configuration
+
+- Manually set the DNS server on individual devices (PCs, phones, consoles).
+- Good for testing or partial deployment.
+- Easy to roll back if something goes wrong.
+
+### 2. Router-Level DNS Configuration
+
+- Change the LAN DNS setting on your router to point to Pi-hole’s IP.
+- All devices that receive DHCP from your router will start using Pi-hole.
+- Provides true **network-wide ad blocking**.
+
+For reliability, consider configuring your router’s DHCP to list Pi-hole as the primary DNS and your router or a secondary resolver as a backup.
+
+## Managing Blocklists and Whitelisting
+
+After installation, you can access the Pi-hole **web dashboard**:
+
+- View queries, blocked domains, and top clients.
+- Add or remove blocklists to tune aggressiveness.
+- Whitelist domains that are incorrectly blocked.
+
+Some streaming services and apps are sensitive to aggressive blocking. If something breaks:
+
+1. Check the Pi-hole query log.
+2. Identify which domains are being blocked.
+3. Temporarily disable blocking or whitelist specific domains as needed.
+
+## Privacy and Security Benefits
+
+Beyond just reducing clutter:
+
+- You block many **tracking domains** that follow you across the web.
+- You can add lists that target **malware and phishing** hosts.
+- Logs show which devices are making unusual or suspicious DNS queries.
+
+For privacy‑minded homelab users, Pi-hole becomes both a comfort feature and a lightweight security layer.
+
+## Considerations and Limitations
+
+Pi-hole isn’t a silver bullet:
+
+- It can’t block everything—especially content served from the same domains as legitimate services.
+- Some apps may behave poorly if key analytics or CDN domains are blocked.
+- DNS‑over‑HTTPS (DoH) in browsers can bypass local DNS unless configured appropriately.
+
+Still, it dramatically reduces noise and tracking across your network when configured thoughtfully.
+
+## Pi-hole Network-Wide Ad Blocking Checklist
+
+1. Choose hardware (Raspberry Pi, VM, or container).
+2. Install Pi-hole and set a static IP.
+3. Configure upstream DNS and initial blocklists.
+4. Point your router or selected devices to Pi-hole for DNS.
+5. Monitor the dashboard and adjust whitelists and blocklists as needed.
+
+Once Pi-hole is part of your home network, you’ll notice fewer ads, cleaner UIs, and a quieter browsing experience across all your devices—making it one of the highest‑impact, low‑effort upgrades you can add to your homelab.
+
+

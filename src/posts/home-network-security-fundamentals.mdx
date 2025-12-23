@@ -1,0 +1,118 @@
+---
+title: 'Home Network Security Fundamentals: Lock Down Your Wi-Fi and Homelab'
+date: '2025-01-22'
+category: 'HomeLab'
+tags: ['Security', 'Networking']
+featuredImage: 'https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=1080&q=80'
+excerpt: 'Secure your home Wi-Fi, router, and homelab services with practical network security fundamentals tailored to modern households and hobbyists.'
+---
+
+Our homes are more connected than ever: laptops, phones, smart TVs, cameras, game consoles, and a growing fleet of IoT gadgets. For homelab enthusiasts, there might also be NAS boxes, hypervisors, and self‑hosted services running 24/7. All of this makes **home network security** more important than ever—especially in countries like Australia where remote work and online services are now the norm.  
+
+This guide covers practical **home network security fundamentals**: from Wi‑Fi settings and router hardening to segmentation for your homelab and smart devices.
+
+![Home router and security lock icon](https://images.pexels.com/photos/5380664/pexels-photo-5380664.jpeg?auto=compress&cs=tinysrgb&w=1080 "Concept of home network security and Wi-Fi protection")
+
+## Start with Your Router: The Gateway to Everything
+
+Your router is the first line of defence between your home network and the internet.
+
+Key steps:
+
+- **Change default admin credentials** immediately.
+- Disable remote administration from the internet unless absolutely necessary.
+- Keep firmware **up to date** to patch security vulnerabilities.
+
+If your ISP‑supplied router is locked down or missing key features, consider placing your own router or firewall appliance behind it and using the ISP device in bridge or passthrough mode if possible.
+
+## Secure Your Wi-Fi Properly
+
+Wi‑Fi is often the weakest point in a home network because it’s literally broadcast into the street.
+
+Best practices:
+
+- Use **WPA3** where supported; otherwise, WPA2‑AES (no WEP, no TKIP).
+- Set a strong Wi‑Fi passphrase—long and non‑obvious.
+- Consider separate SSIDs for:
+  - Main trusted devices (PCs, phones, laptops).
+  - Guest devices.
+  - IoT and smart home gadgets.
+
+Segmenting Wi‑Fi networks reduces the blast radius if one device or group of devices is compromised.
+
+![Wi-Fi router on a desk](https://cdn.pixabay.com/photo/2016/11/29/11/25/connection-1869302_960_720.png)
+
+## Network Segmentation for Homelabs and IoT
+
+If you run a homelab with servers, VMs, and test environments, it’s wise to avoid putting everything on the same flat LAN as your personal devices.
+
+Consider:
+
+- Creating **VLANs** or separate subnets for:
+  - Homelab servers and services.
+  - IoT devices (cameras, plugs, bulbs, TVs).
+  - Guest Wi‑Fi.
+- Restricting which networks can talk to each other with firewall rules.
+
+For example, your main devices might be allowed to reach your homelab dashboard, but IoT gadgets should not be able to access your NAS admin interface.
+
+## Locking Down Remote Access and Port Forwarding
+
+Exposing services directly to the internet via simple port forwarding is increasingly risky.
+
+- Avoid exposing admin interfaces (router UI, NAS, cameras) directly.
+- Prefer using **VPN access** (like WireGuard) to reach your home network from outside.
+- If you must expose a web service, use:
+  - Strong authentication.
+  - HTTPS via reverse proxy (e.g., Traefik, Nginx Proxy Manager).
+  - Regular updates and monitoring.
+
+Scan your own public IP occasionally (using reputable tools) to see which ports are open—you might be surprised by what’s reachable.
+
+## Device Hygiene: Updates and Defaults
+
+Every device on your network is a potential entry point.
+
+Good habits:
+
+- Change default usernames and passwords on cameras, routers, and smart devices.
+- Keep firmware and software **up to date**.
+- Remove or disable services you don’t use (e.g., Telnet, old remote management apps).
+
+On PCs and laptops:
+
+- Run reputable antivirus/anti‑malware solutions.
+- Enable operating system firewalls.
+- Be cautious with random attachments and USB drives.
+
+## DNS, Ad Blocking, and Threat Intelligence
+
+Tools like **Pi-hole** or DNS‑based filtering services can add a layer of protection:
+
+- Block known malicious domains and trackers.
+- Reduce exposure to phishing and malware ads.
+
+For an extra edge, consider using DNS providers that integrate threat intelligence, such as Quad9 or some paid security‑focused DNS services.
+
+## Backups and Recovery
+
+Security isn’t only about prevention; it’s also about resilience.
+
+- Keep **regular backups** of important data (3‑2‑1 rule: 3 copies, 2 media, 1 offsite).
+- Test that you can actually restore from backups.
+- Document your network layout and critical device logins in a secure password manager.
+
+In Australia, where natural disasters like bushfires and floods are real risks, having offsite or cloud backups of irreplaceable data is especially important.
+
+## Home Network Security Fundamentals Checklist
+
+1. Harden your router: change defaults, update firmware, disable unnecessary remote access.
+2. Secure Wi‑Fi with WPA2/3 and strong passphrases; separate guest and IoT networks.
+3. Segment your homelab and IoT using VLANs or separate subnets where possible.
+4. Minimise port forwarding; use VPNs and reverse proxies for remote access.
+5. Keep all devices updated and remove unused services or accounts.
+6. Add DNS‑level blocking and maintain reliable backups of key data.
+
+By following these **home network security fundamentals**, you build a strong foundation that protects both everyday users in your household and the more experimental side of your homelab projects.
+
+

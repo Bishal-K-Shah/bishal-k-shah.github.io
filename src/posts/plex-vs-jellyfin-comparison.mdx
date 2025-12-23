@@ -1,0 +1,141 @@
+---
+title: 'Plex vs Jellyfin: Best Media Server for Your Homelab in 2025'
+date: '2025-01-20'
+category: 'HomeLab'
+tags: ['Media Server', 'Self-Hosting']
+featuredImage: 'https://images.unsplash.com/photo-1585951237318-9ea5e175b891?auto=format&fit=crop&w=1080&q=80'
+excerpt: 'Compare Plex and Jellyfin for your homelab media server—features, streaming quality, hardware requirements, and privacy considerations.'
+---
+
+If you’ve built a **homelab** or home server, setting up a personal **media server** is almost a rite of passage. Two of the most popular options in 2025 are **Plex** and **Jellyfin**. Both let you stream your movies, TV shows, music, and photos to TVs, phones, and tablets—but they take very different approaches to licensing, features, and privacy.  
+
+This Plex vs Jellyfin comparison will help you decide which is better for your setup, whether you’re running a low‑power box in a cupboard or a full‑blown rack server in the garage.
+
+![Home media server setup](https://images.pexels.com/photos/6898859/pexels-photo-6898859.jpeg?auto=compress&cs=tinysrgb&w=1080 "Person browsing media library on a TV")
+
+## Plex Overview: Polished Experience with Optional Premium
+
+**Plex** has been around for years and built a reputation on:
+
+- A slick, polished user interface.
+- Wide device support (smart TVs, consoles, mobile apps, streaming sticks).
+- Features like remote streaming, automatic metadata, and live TV/DVR.
+
+Plex is free at the core but offers **Plex Pass**, a paid subscription that unlocks:
+
+- Hardware‑accelerated transcoding (on many platforms).
+- Mobile sync and offline downloads.
+- More advanced user management and features.
+
+Plex uses a central account system and can integrate free ad‑supported streaming content alongside your own library.
+
+## Jellyfin Overview: Fully Open Source and Self-Hosted
+
+**Jellyfin** is a community‑driven, fully open‑source media server forked from Emby many years ago.
+
+Key traits:
+
+- No subscriptions—**all features are free**.
+- Completely self‑hosted with no mandatory cloud account.
+- Active plugin ecosystem and community support.
+
+Jellyfin focuses strongly on **privacy and control**. There’s no centralised tracking, and your server can run entirely within your local network if you prefer.
+
+![Server rack with homelab gear](https://cdn.pixabay.com/photo/2016/02/26/18/10/server-1225159_960_720.jpg)
+
+## Installation and Hardware Requirements
+
+Both Plex and Jellyfin run well on:
+
+- Dedicated PCs or mini PCs.
+- NAS devices (depending on model and support).
+- Docker containers on homelab hosts.
+
+Plex has:
+
+- Official packages for many NAS brands.
+- Native installers for Windows, macOS, and Linux.
+- Well‑documented Docker images.
+
+Jellyfin also offers:
+
+- Cross‑platform installers and Docker images.
+- Good documentation for Linux‑based home servers and containers.
+
+For 1080p streaming to a few devices, a modest CPU is often enough—especially if your clients can handle **direct play**. For multiple concurrent transcodes, look for CPUs with strong iGPU support or consider a discrete GPU/accelerator where supported.
+
+## User Interface and Client Support
+
+### Plex UX Strengths
+
+- Highly polished apps on smart TVs, streaming sticks, and mobile devices.
+- Intuitive layout for non‑technical family members.
+- Extra features like trailers, extras, and mood‑based music mixes.
+
+### Jellyfin UX Strengths
+
+- Clean, improving UI with a focus on your own media.
+- No ads or upsells to external content.
+- Customisable themes and community skins.
+
+Client support for Jellyfin has grown rapidly, with apps for major platforms, but Plex still leads in sheer breadth and polish of official clients.
+
+## Transcoding, Direct Play, and Performance
+
+The biggest performance factors for media servers are:
+
+- **Direct Play:** Sending media to clients in a format they can handle natively.
+- **Transcoding:** Re‑encoding media on‑the‑fly to match client capabilities or bandwidth.
+
+Plex:
+
+- Offers robust transcoding with good hardware acceleration support (especially with Plex Pass).
+- Handles mixed device environments gracefully.
+
+Jellyfin:
+
+- Also supports hardware acceleration through VAAPI, NVENC, Quick Sync, and others, depending on platform.
+- May require a bit more manual configuration in homelab contexts, especially for GPU passthrough in Docker or virtual machines.
+
+If you mostly play well‑encoded H.264/H.265 files on modern clients, both can be configured to minimise heavy transcoding.
+
+## Privacy and Cloud Dependence
+
+This is where the **Plex vs Jellyfin** decision often becomes personal.
+
+### Plex
+
+- Uses central Plex accounts for server discovery and remote access.
+- Mixes your personal library with optional online content and services.
+- Has improved privacy controls over the years, but still relies on cloud connectivity for some features.
+
+### Jellyfin
+
+- No central account needed; entirely self‑hosted.
+- You control where and how the server is exposed to the internet.
+- Appeals strongly to privacy‑minded users and self‑hosting enthusiasts.
+
+If you prefer a maximum‑control, minimum‑cloud philosophy in your homelab, Jellyfin aligns well with that mindset.
+
+## Which Media Server Should You Choose?
+
+Consider:
+
+- **Ease of use for family members:** Plex often wins here with its polished clients.
+- **Subscription vs free:** Jellyfin gives you everything without an ongoing fee.
+- **Privacy:** Jellyfin favours local control; Plex is more cloud‑integrated.
+- **Ecosystem fit:** If you already use lots of open‑source homelab tools, Jellyfin may slot in more naturally.
+
+Many hobbyists even run **both**—Plex for household or remote streaming, Jellyfin as a fully open‑source alternative for experimentation.
+
+## Plex vs Jellyfin Homelab Checklist
+
+1. Assess your hardware (NAS, PC, or server) and network capabilities.
+2. Decide how much you value plug‑and‑play polish vs open‑source control.
+3. Test both Plex and Jellyfin in Docker or on a spare machine.
+4. Compare streaming quality, responsiveness, and ease of use on your devices.
+5. Pick the one that best fits your homelab philosophy—or keep both for different roles.
+
+Whichever you choose, running your own **media server** is one of the most rewarding homelab projects, turning your collection into a private streaming service tailored exactly to your tastes.
+
+
