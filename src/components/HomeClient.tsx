@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, Suspense, useRef, useCallback } from 'rea
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Category, Post, CategoryTree } from '@/types';
 import { useHeroFade, useScrollReveal, useStaggerReveal } from '@/hooks/use-scroll-reveal';
+import { Button } from '@/components/ui/button';
 
 // Import extracted components
 import {
@@ -34,6 +35,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   const [isMobileBrowseOpen, setIsMobileBrowseOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isSearchClosing, setIsSearchClosing] = useState(false);
+  const [visiblePostsCount, setVisiblePostsCount] = useState(15);
 
   const isInitialRender = useRef(true);
   const wasSearchFocusedRef = useRef(false);
@@ -100,7 +102,10 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   // Track mobile screen size
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      // Reset visible posts count when switching between mobile/desktop
+      setVisiblePostsCount(mobile ? 8 : 15);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -120,10 +125,26 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
     });
   }, [initialPosts, selectedCategory, selectedTag, searchQuery]);
 
-  // Post grid scroll animation hook (depends on filteredPosts)
+  // Reset visible posts count when filters change
+  useEffect(() => {
+    setVisiblePostsCount(isMobile ? 8 : 15);
+  }, [selectedCategory, selectedTag, searchQuery, isMobile]);
+
+  // Posts to display (limited on both mobile and desktop)
+  const displayedPosts = useMemo(() => {
+    return filteredPosts.slice(0, visiblePostsCount);
+  }, [filteredPosts, visiblePostsCount]);
+
+  const hasMorePosts = filteredPosts.length > visiblePostsCount;
+
+  const handleLoadMore = useCallback(() => {
+    setVisiblePostsCount((prev) => prev + (isMobile ? 8 : 9));
+  }, [isMobile]);
+
+  // Post grid scroll animation hook (depends on displayedPosts)
   // Use less restrictive rootMargin to ensure posts are visible on initial mobile load
   const { ref: postGridRef, isVisible: postGridVisible, getItemDelay: getGridDelay } =
-    useStaggerReveal<HTMLDivElement>(filteredPosts.length, {
+    useStaggerReveal<HTMLDivElement>(displayedPosts.length, {
       threshold: 0.01,
       rootMargin: '50px 0px 0px 0px',
       staggerDelay: 60,
@@ -272,12 +293,26 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
 
         {/* Results Grid */}
         <PostGrid
-          posts={filteredPosts}
+          posts={displayedPosts}
           gridRef={postGridRef}
           isVisible={postGridVisible}
           getItemDelay={getGridDelay}
           onClearFilters={handleClearAllFilters}
         />
+
+        {/* Load More Button - Mobile Only */}
+        {hasMorePosts && (
+          <div className="flex justify-center mt-8 pb-16">
+            <Button
+              onClick={handleLoadMore}
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+            >
+              View More
+            </Button>
+          </div>
+        )}
 
         {/* Newsletter CTA */}
         <NewsletterCTA ctaRef={ctaRef} isVisible={ctaVisible} />
