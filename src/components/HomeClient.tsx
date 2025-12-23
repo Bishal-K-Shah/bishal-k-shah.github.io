@@ -300,8 +300,8 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
           onClearFilters={handleClearAllFilters}
         />
 
-        {/* Load More Button - Mobile Only */}
-        {hasMorePosts && (
+        {/* Load More Button */}
+        {hasMorePosts ? (
           <div className="flex justify-center mt-8 pb-16">
             <Button
               onClick={handleLoadMore}
@@ -312,6 +312,8 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
               View More
             </Button>
           </div>
+        ) : (
+          <div className="mt-8 pb-16" />
         )}
 
         {/* Newsletter CTA */}
