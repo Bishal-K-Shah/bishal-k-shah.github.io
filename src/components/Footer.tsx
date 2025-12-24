@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Github, Linkedin, Rss, Send, Sparkles, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,19 @@ export function Footer() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8">
           
+          {/* Logo Column - Desktop only */}
+          <div className="hidden lg:block lg:col-span-2">
+            <Link href="/" className="inline-block">
+              <Image
+                src="/logo.png"
+                alt="Hobbyist's Hideaway Logo"
+                width={120}
+                height={120}
+                className="h-32 w-32 object-contain"
+              />
+            </Link>
+          </div>
+          
           {/* Newsletter Signup - First on mobile for prominence */}
           <div className="order-1 lg:order-3 lg:col-span-4 bg-gradient-to-br from-primary/5 to-primary/10 p-5 sm:p-6 rounded-2xl border border-primary/20">
             <h4 className="font-semibold text-foreground flex items-center gap-2 text-base">
@@ -41,7 +55,7 @@ export function Footer() {
             </form>
           </div>
 
-          {/* About & Logo Section */}
+          {/* About Section */}
           <div className="order-2 lg:order-1 lg:col-span-4 text-center lg:text-left">
             <Link href="/" className="inline-flex items-center gap-2 group mb-3">
               <span className="text-xl font-bold font-headline tracking-tight text-foreground">
@@ -63,8 +77,6 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Spacer - Hidden on mobile */}
-          <div className="hidden lg:block lg:col-span-2"></div>
 
           {/* Links Section */}
           <div className="order-3 lg:order-2 lg:col-span-2 text-center lg:text-left">
