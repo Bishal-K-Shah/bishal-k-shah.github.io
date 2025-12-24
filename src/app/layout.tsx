@@ -11,7 +11,7 @@ const baseUrl = 'https://bishalkshah.com.np';
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "Hobbyist's Hideaway | Homelab, DIY & Tech Blog",
+    default: "Hobbyist's Hideaway | Homelab, Auto Repair, DIY, Electronics & Tech Blog ",
     template: "%s | Hobbyist's Hideaway"
   },
   description: "Hobbyist's Hideaway is your go-to resource for Homelab setups, DIY electronics, Car repairs, and coding tutorials. Practical guides for hobbyists and makers.",
@@ -29,20 +29,20 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: baseUrl,
     siteName: "Hobbyist's Hideaway",
-    title: "Hobbyist's Hideaway | Homelab, DIY & Tech Blog",
+    title: "Hobbyist's Hideaway | Homelab, Auto Repair, DIY, Electronics & Tech Blog ",
     description: "Your go-to resource for Homelab, DIY electronics, Automobile articles, and coding tutorials.",
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: "Hobbyist's Hideaway - Homelab, DIY & Tech Blog",
+        alt: "Hobbyist's Hideaway - Homelab, Auto Repair, DIY, Electronics & Tech Blog ",
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Hobbyist's Hideaway | Homelab, DIY & Tech Blog",
+    title: "Hobbyist's Hideaway | Homelab, Auto Repair, DIY, Electronics & Tech Blog ",
     description: "Your go-to resource for Homelab, DIY electronics, Automobile articles, and coding tutorials.",
     images: ['/og-image.png'],
   },
@@ -72,7 +72,9 @@ export default async function RootLayout({
   return (
     <html lang="en" className="h-full">
       <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#8b5cf6" />
         <meta name="mobile-web-app-capable" content="yes" />

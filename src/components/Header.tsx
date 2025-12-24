@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn, capitalize } from "@/lib/utils";
 import { Menu, ChevronDown } from "lucide-react";
@@ -31,10 +32,25 @@ export function Header({ categoryTree }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8 relative">
         
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link href="/" className="flex items-center gap-2 group md:flex-row">
+          <Image
+            src="/logo.png"
+            alt="Hobbyist's Hideaway Logo"
+            width={50}
+            height={50}
+            className="h-10 w-10 md:h-12 md:w-12 object-contain"
+            priority
+          />
+          <span className="hidden md:inline text-xl font-bold font-headline tracking-tight">
+            Hobbyist's Hideaway
+          </span>
+        </Link>
+        
+        {/* Centered text for mobile */}
+        <Link href="/" className="md:hidden absolute left-1/2 transform -translate-x-1/2">
           <span className="text-xl font-bold font-headline tracking-tight">
             Hobbyist's Hideaway
           </span>
@@ -122,7 +138,7 @@ export function Header({ categoryTree }: HeaderProps) {
 
         {/* Mobile Menu */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild className="md:hidden">
+          <SheetTrigger asChild className="md:hidden absolute right-4 md:relative md:right-0">
             <Button variant="ghost" size="icon" aria-label="Menu">
               <Menu className="h-6 w-6" />
             </Button>
@@ -130,7 +146,14 @@ export function Header({ categoryTree }: HeaderProps) {
           <SheetContent side="right" className="w-[300px] sm:w-[400px] pr-0 overflow-y-auto" aria-describedby={undefined}>
              <SheetHeader className="px-1 text-left">
                 <SheetTitle className="flex items-center gap-2 pb-4 border-b text-xl font-bold tracking-tight">
-                   Hobbyist's Hideaway
+                  <Image
+                    src="/logo.png"
+                    alt="Hobbyist's Hideaway Logo"
+                    width={24}
+                    height={24}
+                    className="h-6 w-6 object-contain"
+                  />
+                  Hobbyist's Hideaway
                 </SheetTitle>
              </SheetHeader>
             <nav className="flex flex-col gap-4 mt-8 px-1">
