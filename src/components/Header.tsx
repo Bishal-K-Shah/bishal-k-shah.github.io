@@ -50,8 +50,8 @@ export function Header({ categoryTree }: HeaderProps) {
         </Link>
         
         {/* Centered text for mobile */}
-        <Link href="/" className="md:hidden absolute left-1/2 transform -translate-x-1/2">
-          <span className="text-xl font-bold font-headline tracking-tight">
+        <Link href="/" className="md:hidden absolute left-1/2 transform -translate-x-1/2 z-10">
+          <span className="text-lg sm:text-xl font-bold font-headline tracking-tight whitespace-nowrap">
             Hobbyist's Hideaway
           </span>
         </Link>
