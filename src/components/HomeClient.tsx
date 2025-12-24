@@ -100,12 +100,22 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   }, [selectedCategory, selectedTag, isMobile]);
 
   // Track mobile screen size
+  const prevIsMobileRef = useRef<boolean | null>(null);
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 640;
+      // On initial load, set the correct count for the screen size
+      // After that, only reset when actually switching between mobile/desktop
+      if (prevIsMobileRef.current === null) {
+        // Initial setup
+        setVisiblePostsCount(mobile ? 8 : 15);
+      } else if (prevIsMobileRef.current !== mobile) {
+        // Switching between mobile/desktop
+        setVisiblePostsCount(mobile ? 8 : 15);
+      }
+      // Don't reset on regular resize events (like address bar hide/show)
+      prevIsMobileRef.current = mobile;
       setIsMobile(mobile);
-      // Reset visible posts count when switching between mobile/desktop
-      setVisiblePostsCount(mobile ? 8 : 15);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -125,10 +135,14 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
     });
   }, [initialPosts, selectedCategory, selectedTag, searchQuery]);
 
-  // Reset visible posts count when filters change
+  // Reset visible posts count when filters change (not when isMobile changes)
   useEffect(() => {
-    setVisiblePostsCount(isMobile ? 8 : 15);
-  }, [selectedCategory, selectedTag, searchQuery, isMobile]);
+    setVisiblePostsCount((prev) => {
+      // Only reset if filters actually changed, use current screen size
+      const defaultCount = window.innerWidth < 640 ? 8 : 15;
+      return defaultCount;
+    });
+  }, [selectedCategory, selectedTag, searchQuery]);
 
   // Posts to display (limited on both mobile and desktop)
   const displayedPosts = useMemo(() => {
@@ -305,9 +319,8 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
           <div className="flex justify-center mt-8 pb-16">
             <Button
               onClick={handleLoadMore}
-              variant="outline"
-              size="lg"
-              className="w-full sm:w-auto"
+              variant="default"
+              className="h-11 sm:h-10 px-5 w-full sm:w-auto"
             >
               View More
             </Button>
