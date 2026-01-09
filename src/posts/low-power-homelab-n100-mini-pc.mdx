@@ -1,0 +1,542 @@
+---
+title: 'Low-Power Homelab: Building a 15W Server with N100 Mini PCs'
+date: '2026-01-25'
+category: 'HomeLab'
+tags: ['n100', 'low-power', 'mini-pc', 'proxmox', 'energy-efficient', 'homelab']
+featuredImage: 'https://www.servethehome.com/wp-content/uploads/2023/12/CWWK-CW-MBX-AS12N-35-Power-Supply-800x563.jpg'
+excerpt: 'Discover how Intel N100 mini PCs can replace power-hungry servers, running your entire homelab on just 15W while delivering impressive performance for self-hosted services.'
+---
+
+Running a 24/7 homelab server used to mean accepting high electricity bills. A typical desktop PC running as a server can consume 100-200W continuously, costing hundreds of dollars per year in electricity. But what if you could run your entire homelab stack—Docker containers, virtual machines, media servers, and more—on just 15 watts?
+
+Enter the **Intel N100** processor. This low-power chip has revolutionized the mini PC market, offering desktop-class performance at a fraction of the power consumption. Combined with modern mini PC designs, you can build a silent, efficient homelab that costs less than $50 per year to run.
+
+## The Power Consumption Problem
+
+### Traditional Server Costs
+
+A typical homelab setup might include:
+- **Desktop PC Server**: 100-150W idle, 200W+ under load
+- **Annual Cost** (at $0.12/kWh): $105-$157 idle, $210+ under load
+- **24/7 Operation**: Adds up quickly over years
+
+### The Mini PC Solution
+
+Modern mini PCs with efficient processors like the N100:
+- **Idle Power**: 8-12W
+- **Load Power**: 15-20W
+- **Annual Cost**: $8-$21 (at $0.12/kWh)
+- **Savings**: $100-150+ per year compared to traditional servers
+
+Over 5 years, that's $500-750 in electricity savings—often more than the cost of the hardware itself.
+
+![Mini PC on desk](https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?auto=format&fit=crop&w=1080&q=80 "Compact mini PC setup")
+
+## Understanding the Intel N100
+
+The Intel N100 is part of Intel's Alder Lake-N series, designed specifically for low-power applications. Despite its efficiency focus, it's surprisingly capable.
+
+### N100 Specifications
+
+- **Architecture**: Alder Lake (same as 12th/13th gen Core)
+- **Cores**: 4 efficiency cores (no performance cores)
+- **Threads**: 4
+- **Base Clock**: 800 MHz
+- **Boost Clock**: 3.4 GHz
+- **TDP**: 6W (configurable)
+- **Integrated Graphics**: Intel UHD Graphics (24 EUs)
+- **Memory Support**: DDR5-4800, DDR4-3200, LPDDR5-4800
+- **PCIe**: 9 lanes (PCIe 3.0)
+
+### Performance Characteristics
+
+The N100 excels at:
+- **Lightweight workloads**: Web servers, file servers, DNS
+- **Container hosting**: Docker, Podman
+- **Media serving**: Jellyfin, Plex (with hardware transcoding)
+- **Virtualization**: Light VMs, Proxmox
+- **Network services**: Pi-hole, AdGuard Home, VPNs
+
+It struggles with:
+- **Heavy computation**: Video encoding (software), large compilations
+- **High concurrency**: Many simultaneous heavy tasks
+- **Gaming**: Not designed for gaming workloads
+
+### N100 vs Raspberry Pi 5
+
+| Feature | N100 Mini PC | Raspberry Pi 5 |
+|---------|--------------|----------------|
+| CPU Performance | ~3x faster | Baseline |
+| Power Consumption | 8-15W | 3-5W |
+| RAM Options | Up to 32GB | Up to 8GB |
+| Storage | NVMe SSD (fast) | microSD (slow) |
+| PCIe | Yes (NVMe, expansion) | Limited |
+| x86 Compatibility | Native | ARM (emulation needed) |
+| Price | $100-200 | $75-100 |
+| Best For | General homelab | IoT, embedded |
+
+The N100 offers significantly better performance for general homelab use, with x86 compatibility meaning you can run standard Linux distributions and Docker images without ARM compatibility concerns.
+
+## Choosing the Right Mini PC
+
+### Popular N100 Mini PC Options
+
+**Beelink Mini S12 Pro:**
+- N100, 16GB RAM, 500GB SSD
+- Price: ~$200
+- Good build quality, well-supported
+
+**Trigkey Green G4:**
+- N100, 16GB RAM, 500GB SSD
+- Price: ~$180
+- Similar to Beelink, good value
+
+**GMKtec NucBox G3:**
+- N100, 16GB RAM, 512GB SSD
+- Price: ~$190
+- Compact design, good cooling
+
+**Generic Chinese Mini PCs:**
+- Various brands, similar specs
+- Price: $100-150
+- Quality varies, but often good value
+
+### What to Look For
+
+**RAM:**
+- Minimum: 8GB (for basic services)
+- Recommended: 16GB (for comfortable virtualization)
+- Maximum: 32GB (some models support this)
+
+**Storage:**
+- NVMe SSD slot (essential for performance)
+- SATA port (optional, for additional storage)
+- Avoid models with only eMMC storage
+
+**Connectivity:**
+- 2.5GbE Ethernet (some models have this)
+- USB 3.0+ ports
+- HDMI/DisplayPort outputs
+
+**Cooling:**
+- Passive or quiet active cooling
+- Good thermal design (check reviews)
+
+## Operating System Options
+
+### Proxmox VE (Recommended)
+
+Proxmox is a powerful virtualization platform perfect for homelabs:
+
+**Advantages:**
+- Full virtualization (KVM) and containers (LXC)
+- Web-based management interface
+- Built-in backup and replication
+- Excellent for learning enterprise virtualization
+
+**Installation:**
+
+```bash
+# Download Proxmox VE ISO
+# Create bootable USB
+# Boot mini PC from USB
+# Follow installation wizard
+
+# After installation, access web UI at:
+# https://your-ip:8006
+```
+
+**Resource Allocation:**
+- Proxmox overhead: ~1GB RAM, minimal CPU
+- Leaves plenty for VMs and containers
+- Can run 5-10 lightweight containers easily
+
+### Ubuntu Server
+
+For a simpler, container-focused setup:
+
+```bash
+# Install Ubuntu Server 22.04 LTS
+# Install Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+
+# Install Docker Compose
+sudo apt install docker-compose-plugin
+```
+
+**Advantages:**
+- Simpler setup
+- Lower overhead
+- Great for Docker-only workloads
+- Easy to manage
+
+### Unraid
+
+If you need storage management:
+
+- Excellent for NAS functionality
+- Docker and VM support
+- Easy storage pooling
+- Web-based management
+
+**Considerations:**
+- Paid license ($59+)
+- More resource overhead than Proxmox
+- Best for storage-heavy use cases
+
+## Setting Up Proxmox on N100
+
+### Installation Steps
+
+1. **Download Proxmox VE ISO** from proxmox.com
+2. **Create bootable USB** using Balena Etcher or similar
+3. **Boot mini PC** from USB
+4. **Follow installer**:
+   - Select target disk (NVMe SSD)
+   - Set root password
+   - Configure network
+   - Complete installation
+
+5. **Access Web Interface**:
+   - Navigate to `https://your-ip:8006`
+   - Login with `root` and your password
+
+### Initial Configuration
+
+**Update System:**
+```bash
+# SSH into Proxmox
+ssh root@your-ip
+
+# Update package lists
+apt update && apt upgrade -y
+```
+
+**Configure Storage:**
+- Datacenter → Storage → Add
+- Add local storage for VMs
+- Configure backup storage if available
+
+**Create First Container:**
+- Create CT → Select template (Ubuntu, Debian, etc.)
+- Allocate resources (512MB RAM, 1 CPU core)
+- Install and configure
+
+## Service Deployment Examples
+
+### Docker on Proxmox LXC
+
+Create an LXC container for Docker:
+
+```bash
+# Create privileged container
+# Template: Ubuntu 22.04
+# Resources: 2GB RAM, 2 CPU cores, 20GB disk
+
+# In container:
+apt update && apt install -y docker.io docker-compose
+systemctl enable docker
+```
+
+**Docker Compose Stack:**
+
+```yaml
+version: '3.8'
+
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: unless-stopped
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    ports:
+      - "8096:8096"
+    volumes:
+      - ./jellyfin:/config
+      - /mnt/media:/media:ro
+    devices:
+      - /dev/dri:/dev/dri
+    restart: unless-stopped
+
+  pihole:
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80"
+    environment:
+      - TZ=America/New_York
+      - WEBPASSWORD=yourpassword
+    volumes:
+      - ./pihole:/etc/pihole
+    restart: unless-stopped
+
+volumes:
+  portainer_data:
+```
+
+### Media Server Setup
+
+Jellyfin with hardware transcoding:
+
+```bash
+# Verify GPU is available
+ls -la /dev/dri/
+
+# Should show: card0, renderD128
+
+# In Jellyfin container, enable:
+# Hardware acceleration: VAAPI
+# Device: /dev/dri/renderD128
+```
+
+The N100's integrated graphics can handle 1-2 simultaneous 1080p transcodes, perfect for small households.
+
+### Network Services
+
+**Pi-hole / AdGuard Home:**
+- Minimal resources (512MB RAM)
+- Perfect for N100
+- Can handle entire network
+
+**VPN Server (WireGuard):**
+- Very efficient
+- Low CPU usage
+- Great for remote access
+
+**Reverse Proxy (Traefik/Nginx):**
+- Lightweight
+- Handles routing for all services
+- Essential for multi-service setup
+
+## Power Consumption Measurements
+
+### Idle Power
+
+**Typical N100 Mini PC:**
+- Idle (desktop): 8-10W
+- Idle (headless server): 6-8W
+- With SSD and RAM populated: +1-2W
+
+### Load Power
+
+**Light Load (few containers):**
+- 10-12W
+
+**Medium Load (media transcoding):**
+- 15-18W
+
+**Heavy Load (all cores maxed):**
+- 20-25W (rare, thermal throttling may occur)
+
+### Real-World Example
+
+**Setup:**
+- Beelink Mini S12 Pro (N100, 16GB, 500GB SSD)
+- Proxmox with 8 LXC containers
+- Services: Jellyfin, Pi-hole, WireGuard, Traefik, Portainer, etc.
+
+**Measurements:**
+- Idle: 9W
+- Normal operation: 11-13W
+- Media transcoding: 16W
+- **Average**: ~12W
+
+**Annual Cost** (at $0.12/kWh):
+- 12W × 24h × 365d = 105 kWh
+- 105 kWh × $0.12 = **$12.60/year**
+
+Compare to a 100W desktop server: **$105/year** - savings of **$92.40/year**
+
+## Performance Benchmarks
+
+### CPU Performance
+
+**Cinebench R23:**
+- Single-core: ~800-900 points
+- Multi-core: ~2500-2800 points
+
+**Real-World Tasks:**
+- Docker container startup: Less than 2 seconds
+- Web server response: Excellent
+- File operations: Fast (with NVMe)
+- Media transcoding: 1-2 streams (1080p)
+
+### Memory Performance
+
+With 16GB RAM, you can comfortably run:
+- 5-10 Docker containers
+- 2-3 lightweight VMs
+- Multiple network services
+- Media server with transcoding
+
+### Storage Performance
+
+NVMe SSDs in these mini PCs typically achieve:
+- Read: 500-2000 MB/s (depending on drive)
+- Write: 400-1500 MB/s
+- Much faster than Raspberry Pi's microSD
+
+## Optimization Tips
+
+### Power Management
+
+**Linux Power Settings:**
+```bash
+# Set CPU governor to powersave (when idle)
+echo powersave | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+
+# Or use balanced (better performance)
+echo ondemand | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+```
+
+**Disable Unused Services:**
+- Remove desktop environments if running headless
+- Disable unnecessary systemd services
+- Use minimal base installations
+
+### Thermal Management
+
+**Monitor Temperatures:**
+```bash
+# Install sensors
+sudo apt install lm-sensors
+sensors
+
+# Watch temperatures
+watch -n 1 sensors
+```
+
+**Cooling Considerations:**
+- Most mini PCs have adequate cooling
+- Ensure good ventilation
+- Consider external fan if running hot
+- Thermal throttling occurs around 80-90°C
+
+### Resource Allocation
+
+**Container Sizing:**
+- Start with minimal resources
+- Monitor usage and adjust
+- Over-provisioning wastes resources
+- Use Proxmox resource limits
+
+## Limitations and Considerations
+
+### What N100 Can't Do
+
+**Heavy Workloads:**
+- Large video encoding projects
+- Complex data processing
+- High-concurrency web applications
+- Multiple simultaneous heavy VMs
+
+**Gaming:**
+- Not designed for gaming
+- Integrated graphics are basic
+- Better options exist for gaming servers
+
+### When to Consider Alternatives
+
+**Upgrade if you need:**
+- More than 2-3 simultaneous media transcodes
+- Heavy computational workloads
+- More than 32GB RAM
+- PCIe expansion cards
+- Multiple VMs with high resource needs
+
+**Consider:**
+- Intel N305 (8 cores, more performance)
+- AMD Ryzen mini PCs (better multi-core)
+- Traditional desktop/server hardware
+
+## Cost Analysis
+
+### Initial Investment
+
+**N100 Mini PC Setup:**
+- Mini PC (16GB, 500GB): $180-200
+- Additional storage (optional): $50-100
+- **Total**: $230-300
+
+### Operating Costs
+
+**Electricity** (5 years, $0.12/kWh):
+- N100: ~$63
+- Traditional 100W server: ~$525
+- **Savings**: $462
+
+### Total Cost of Ownership (5 years)
+
+- **N100**: $293-363
+- **Traditional Server**: $625-725
+- **Savings**: $332-432
+
+The N100 pays for itself in electricity savings within 2-3 years.
+
+## Real-World Homelab Examples
+
+### Example 1: Basic Services Stack
+
+**Services:**
+- Pi-hole (DNS filtering)
+- WireGuard (VPN)
+- Portainer (Docker management)
+- Traefik (reverse proxy)
+- Jellyfin (media server, occasional use)
+
+**Resources:**
+- RAM usage: ~4GB
+- CPU usage: Less than 10% average
+- Power: ~10W average
+
+### Example 2: Development Environment
+
+**Services:**
+- GitLab (code hosting)
+- Jenkins (CI/CD)
+- PostgreSQL (database)
+- Redis (cache)
+- Multiple development containers
+
+**Resources:**
+- RAM usage: ~12GB
+- CPU usage: 20-40% average
+- Power: ~13W average
+
+### Example 3: Media-Centric Setup
+
+**Services:**
+- Jellyfin (media server)
+- Radarr/Sonarr (media management)
+- qBittorrent (downloads)
+- Prowlarr (indexer)
+- Pi-hole
+
+**Resources:**
+- RAM usage: ~8GB
+- CPU usage: 15-30% (higher during transcoding)
+- Power: ~14W average, 18W during transcoding
+
+## Conclusion
+
+The Intel N100 represents a sweet spot for homelab enthusiasts who want capable hardware without the power consumption penalty. These mini PCs can replace traditional servers for most homelab use cases while consuming 85-90% less power.
+
+Whether you're running a few Docker containers or a full Proxmox virtualization setup, an N100 mini PC offers:
+- **Low power consumption**: 8-15W typical
+- **Good performance**: Handles most homelab workloads
+- **Silent operation**: Fanless or near-silent designs
+- **Small footprint**: Fits anywhere
+- **Cost effective**: Saves money on electricity
+
+For many homelabbers, an N100 mini PC is the perfect balance of performance, efficiency, and cost. It's not the most powerful option, but for 90% of homelab use cases, it's more than enough—and the electricity savings make it an excellent investment.
+
+*For more detailed comparisons and benchmarks, check out [Jeff Geerling's N100 analysis](https://www.jeffgeerling.com/blog/2025/intel-n100-better-value-raspberry-pi) and [XDA Developers' silent home server build](https://www.xda-developers.com/built-silent-home-server-using-intel-n100-mini-pc/).*
+

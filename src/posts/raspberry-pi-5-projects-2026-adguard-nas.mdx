@@ -1,0 +1,570 @@
+---
+title: 'Raspberry Pi 5 Projects for 2026: From AdGuard to NAS'
+date: '2026-02-05'
+category: 'Electronics'
+tags: ['raspberry-pi-5', 'adguard', 'nas', 'pcie', 'self-hosting', 'diy']
+featuredImage: 'https://www.geeky-gadgets.com/wp-content/uploads/2024/04/building-a-DIY-Raspberry-Pi-5-NAS-2024.jpg'
+excerpt: "Explore powerful Raspberry Pi 5 projects including AdGuard Home setup, NAS builds with PCIe SSDs, and other self-hosted services that take advantage of the Pi 5's improved performance."
+---
+
+The Raspberry Pi 5 represents a significant leap forward from previous models. With a faster CPU, more RAM options, and—most importantly—**PCIe support**, the Pi 5 can now handle projects that were previously impractical or impossible. Whether you're building a network-wide ad blocker, a fast NAS, or a comprehensive homelab, the Pi 5 has the power to make it happen.
+
+This guide explores practical, real-world projects that take full advantage of the Raspberry Pi 5's capabilities, from simple network services to more advanced storage solutions.
+
+## What Makes Pi 5 Special?
+
+### Key Improvements Over Pi 4
+
+**Performance:**
+- **CPU**: 2.4GHz quad-core Cortex-A76 (vs 1.8GHz A72 in Pi 4)
+- **Performance**: ~2-3x faster in real-world tasks
+- **RAM**: Up to 8GB LPDDR4X (faster than Pi 4)
+- **GPU**: VideoCore VII with improved video acceleration
+
+**New Features:**
+- **PCIe 2.0**: Single lane PCIe interface (game changer!)
+- **Dual 4K displays**: Can drive two 4K monitors simultaneously
+- **Faster USB**: USB 3.0 with better bandwidth
+- **Power button**: Built-in power management
+- **RTC**: Real-time clock (with battery backup)
+
+**PCIe Support:**
+The PCIe interface opens up possibilities:
+- NVMe SSDs (much faster than microSD)
+- Network cards (2.5GbE, 10GbE)
+- SATA expansion cards
+- Custom PCIe devices
+
+![Raspberry Pi 5 board](https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?auto=format&fit=crop&w=1080&q=80 "Raspberry Pi 5 development board")
+
+## Project 1: AdGuard Home - Network-Wide Ad Blocking
+
+**AdGuard Home** is a powerful, self-hosted network-wide ad and tracker blocker. It's more feature-rich than Pi-hole and runs excellently on the Raspberry Pi 5.
+
+### Why AdGuard Home Over Pi-hole?
+
+**Advantages:**
+- Modern, actively developed
+- Better web interface
+- More filtering options
+- Built-in DoH/DoT support
+- Query log with better search
+- Statistics and analytics
+
+**Performance:**
+- Handles thousands of queries per second
+- Lower resource usage than Pi-hole
+- Faster response times
+
+### Installation
+
+**Step 1: Install Raspberry Pi OS**
+
+Use Raspberry Pi Imager to flash Raspberry Pi OS (64-bit) to a microSD card. Enable SSH and configure WiFi during imaging.
+
+**Step 2: Update System**
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo reboot
+```
+
+**Step 3: Install AdGuard Home**
+
+```bash
+# Download AdGuard Home
+curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -v
+
+# Or install manually
+wget https://static.adguard.com/adguardhome/release/AdGuardHome_linux_arm64.tar.gz
+tar xvf AdGuardHome_linux_arm64.tar.gz
+cd AdGuardHome
+sudo ./AdGuardHome -s install
+```
+
+**Step 4: Configure**
+
+1. Access AdGuard Home at `http://raspberry-pi-ip:3000`
+2. Complete the setup wizard
+3. Set admin interface port (3000) and DNS port (53)
+4. Create admin account
+
+**Step 5: Configure Your Router**
+
+Point your router's DNS settings to your Raspberry Pi's IP address. This makes AdGuard Home the DNS server for your entire network.
+
+### Advanced Configuration
+
+**Custom Filter Lists:**
+
+Add additional blocklists in Settings → DNS settings → DNS blocklists:
+
+```
+https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+https://someonewhocares.org/hosts/zero/hosts
+https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts
+```
+
+**DNS-over-HTTPS (DoH):**
+
+Enable encrypted DNS in Settings → DNS settings:
+
+- Use Cloudflare, Google, or Quad9 DoH servers
+- Protects DNS queries from ISP snooping
+- Improves privacy
+
+**Client Management:**
+
+- Assign static IPs to devices
+- Create custom rules per device
+- Block specific domains for kids' devices
+- Whitelist domains that break with ad blocking
+
+### Performance on Pi 5
+
+**Resource Usage:**
+- CPU: &lt;5% average, spikes to 10-15% during heavy filtering
+- RAM: ~100-200MB
+- Network: Handles 1000+ queries/second easily
+
+**Real-World Performance:**
+- Response time: &lt;10ms typically
+- No noticeable lag in browsing
+- Handles entire household simultaneously
+
+## Project 2: NAS with PCIe NVMe SSD
+
+The Pi 5's PCIe interface makes it possible to build a fast NAS using NVMe SSDs instead of slow USB drives or microSD cards.
+
+### Hardware Requirements
+
+**Essential:**
+- Raspberry Pi 5 (8GB recommended)
+- PCIe to NVMe adapter (M.2 HAT)
+- NVMe SSD (500GB-2TB recommended)
+- External drive enclosure or case
+- Power supply (27W official or compatible)
+- microSD card (for boot, can boot from NVMe later)
+
+**Optional:**
+- Additional USB drives for backup
+- Cooling solution (Pi 5 can get warm)
+- Network switch (if connecting multiple devices)
+
+### PCIe HAT Installation
+
+**Step 1: Install PCIe HAT**
+
+1. Power off Pi 5
+2. Connect PCIe HAT to Pi 5's PCIe connector
+3. Install NVMe SSD into HAT
+4. Secure with provided screws
+5. Power on Pi 5
+
+**Step 2: Enable PCIe in Config**
+
+```bash
+# Edit boot config
+sudo nano /boot/firmware/config.txt
+
+# Add these lines:
+dtparam=pciex1
+dtoverlay=pcie
+
+# Reboot
+sudo reboot
+```
+
+**Step 3: Verify NVMe Detection**
+
+```bash
+# Check if NVMe is detected
+lsblk
+
+# Should show /dev/nvme0n1
+# Format if needed
+sudo mkfs.ext4 /dev/nvme0n1
+
+# Create mount point
+sudo mkdir /mnt/nvme
+sudo mount /dev/nvme0n1 /mnt/nvme
+```
+
+### Setting Up Samba (SMB) Shares
+
+**Install Samba:**
+
+```bash
+sudo apt install samba samba-common-bin -y
+```
+
+**Configure Samba:**
+
+```bash
+sudo nano /etc/samba/smb.conf
+```
+
+Add share configuration:
+
+```ini
+[Storage]
+   comment = Main Storage
+   path = /mnt/nvme
+   browseable = yes
+   writable = yes
+   guest ok = no
+   valid users = pi
+   create mask = 0664
+   directory mask = 0775
+```
+
+**Create Samba User:**
+
+```bash
+sudo smbpasswd -a pi
+```
+
+**Restart Samba:**
+
+```bash
+sudo systemctl restart smbd
+sudo systemctl enable smbd
+```
+
+**Access from Windows/Mac:**
+- Windows: `\\raspberry-pi-ip\Storage`
+- Mac: `smb://raspberry-pi-ip/Storage`
+
+### Performance Benchmarks
+
+**NVMe vs USB 3.0 vs microSD:**
+
+| Storage Type | Read Speed | Write Speed | Random IO |
+|-------------|------------|-------------|-----------|
+| NVMe (PCIe) | 400-500 MB/s | 300-400 MB/s | Excellent |
+| USB 3.0 SSD | 100-150 MB/s | 80-120 MB/s | Good |
+| microSD | 20-40 MB/s | 15-30 MB/s | Poor |
+
+**Real-World NAS Performance:**
+- File transfers: 80-100 MB/s (gigabit Ethernet limited)
+- Multiple simultaneous users: Handles 3-5 users easily
+- Media streaming: Smooth 4K playback
+- Database workloads: Much faster than USB/microSD
+
+### Additional NAS Features
+
+**NFS Shares (for Linux):**
+
+```bash
+sudo apt install nfs-kernel-server -y
+
+# Export directory
+echo "/mnt/nvme *(rw,sync,no_subtree_check)" | sudo tee -a /etc/exports
+sudo exportfs -ra
+sudo systemctl restart nfs-kernel-server
+```
+
+**FTP Server:**
+
+```bash
+sudo apt install vsftpd -y
+# Configure in /etc/vsftpd.conf
+```
+
+**WebDAV (for cloud-like access):**
+
+```bash
+sudo apt install apache2 -y
+# Configure WebDAV module
+```
+
+## Project 3: Home Assistant Server
+
+Home Assistant is a popular open-source home automation platform. The Pi 5's improved performance makes it run much smoother than on Pi 4.
+
+### Installation with Docker
+
+```bash
+# Install Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker pi
+
+# Create directories
+mkdir -p ~/homeassistant/config
+
+# Run Home Assistant
+docker run -d \
+  --name homeassistant \
+  --privileged \
+  --restart=unless-stopped \
+  -e TZ=America/New_York \
+  -v ~/homeassistant/config:/config \
+  -v /run/dbus:/run/dbus:ro \
+  --network=host \
+  ghcr.io/home-assistant/home-assistant:stable
+```
+
+Access at `http://raspberry-pi-ip:8123`
+
+### Performance Improvements
+
+**Pi 5 vs Pi 4:**
+- Startup time: ~30% faster
+- UI responsiveness: Much smoother
+- Add-on performance: Better
+- Database operations: Faster
+- Can handle more integrations
+
+## Project 4: Media Server (Jellyfin)
+
+While not as powerful as a dedicated server, the Pi 5 can handle light media serving.
+
+### Installation
+
+```bash
+# Install Jellyfin
+curl https://repo.jellyfin.org/install-debuntu.sh | sudo bash
+sudo apt install jellyfin -y
+
+# Access at http://raspberry-pi-ip:8096
+```
+
+### Limitations
+
+**What Pi 5 Can Do:**
+- Direct play (no transcoding): Excellent
+- Light transcoding: 1 stream, 1080p
+- Multiple direct plays: 3-5 streams
+
+**What Pi 5 Can't Do:**
+- Heavy transcoding (4K, multiple streams)
+- Complex audio transcoding
+- High bitrate 4K streaming
+
+**Best Use Case:**
+- Pre-transcoded media
+- Lower bitrate content
+- Small household
+- Backup media server
+
+## Project 5: Development Server
+
+The Pi 5's improved performance makes it a viable development server.
+
+### Setup for Development
+
+**Install Development Tools:**
+
+```bash
+# Node.js
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Python
+sudo apt install python3-pip python3-venv -y
+
+# Docker (already installed)
+# Git
+sudo apt install git -y
+```
+
+**Git Server:**
+
+```bash
+# Create git user
+sudo adduser git
+sudo su - git
+mkdir ~/.ssh
+chmod 700 ~/.ssh
+
+# Add your SSH key
+nano ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+
+# Create repository
+mkdir -p ~/repos/myproject.git
+cd ~/repos/myproject.git
+git init --bare
+```
+
+**CI/CD with GitHub Actions Runner:**
+
+```bash
+# Download runner
+mkdir actions-runner && cd actions-runner
+curl -o actions-runner-linux-arm64-2.311.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.311.0/actions-runner-linux-arm64-2.311.0.tar.gz
+tar xzf ./actions-runner-linux-arm64-2.311.0.tar.gz
+
+# Configure
+./config.sh --url https://github.com/yourusername/yourrepo --token YOUR_TOKEN
+
+# Install as service
+sudo ./svc.sh install
+sudo ./svc.sh start
+```
+
+## Project 6: Network Monitoring
+
+Monitor your network with tools like Grafana and Prometheus.
+
+### Installation
+
+```bash
+# Docker Compose setup
+mkdir ~/monitoring && cd ~/monitoring
+
+# Create docker-compose.yml
+cat > docker-compose.yml << EOF
+version: '3.8'
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+volumes:
+  prometheus_data:
+  grafana_data:
+EOF
+
+docker-compose up -d
+```
+
+## Performance Optimization Tips
+
+### Overclocking (Advanced)
+
+**Warning:** Overclocking can void warranty and cause instability.
+
+```bash
+# Edit config
+sudo nano /boot/firmware/config.txt
+
+# Add overclock settings
+over_voltage=2
+arm_freq=3000
+gpu_freq=750
+```
+
+### Cooling
+
+**Active Cooling:**
+- Official Pi 5 active cooler recommended
+- Third-party cooling solutions available
+- Monitor temperature: `vcgencmd measure_temp`
+
+**Passive Cooling:**
+- Heat sinks on CPU and RAM
+- Good case ventilation
+- Adequate airflow
+
+### Boot from NVMe
+
+Once NVMe is working, you can boot directly from it:
+
+```bash
+# Update bootloader
+sudo rpi-eeprom-update -a
+sudo reboot
+
+# After reboot, install OS to NVMe
+# Use Raspberry Pi Imager with "Use custom storage" option
+```
+
+**Benefits:**
+- Faster boot times
+- Better reliability than microSD
+- More storage for OS
+
+## Comparison: Pi 5 vs Alternatives
+
+### Pi 5 vs Intel N100 Mini PC
+
+| Feature | Pi 5 | N100 Mini PC |
+|---------|------|--------------|
+| Price | $75-100 | $150-200 |
+| Performance | Good | Better |
+| PCIe | Limited (1 lane) | Full PCIe |
+| RAM | Up to 8GB | Up to 32GB |
+| Power | 5-7W | 8-15W |
+| Best For | Learning, IoT | Production homelab |
+
+### When to Choose Pi 5
+
+**Choose Pi 5 if:**
+- Learning and experimentation
+- Budget is primary concern
+- ARM compatibility is fine
+- Lower power is important
+- Community support matters
+
+**Choose N100 if:**
+- Need maximum performance
+- Require x86 compatibility
+- Need more RAM
+- Production use case
+
+## Troubleshooting
+
+### PCIe Not Detected
+
+```bash
+# Check config.txt
+cat /boot/firmware/config.txt | grep pcie
+
+# Should show:
+# dtparam=pciex1
+# dtoverlay=pcie
+
+# Check dmesg
+dmesg | grep -i pcie
+```
+
+### Performance Issues
+
+- Check temperature (throttling occurs at 85°C)
+- Ensure adequate power supply (27W recommended)
+- Close unnecessary services
+- Monitor resource usage: `htop`
+
+### Network Issues
+
+- Use wired Ethernet when possible
+- Check cable quality
+- Verify router/switch ports
+- Test with different network equipment
+
+## Conclusion
+
+The Raspberry Pi 5's improved performance and PCIe support open up new possibilities for homelab projects. From network-wide ad blocking with AdGuard Home to fast NAS builds with NVMe SSDs, the Pi 5 can handle real-world workloads that were challenging on previous models.
+
+Key advantages:
+- **PCIe support**: Enables NVMe SSDs and other PCIe devices
+- **Better performance**: 2-3x faster than Pi 4
+- **More RAM**: Up to 8GB for demanding applications
+- **Active development**: Large community and ecosystem
+
+While it's not a replacement for high-end servers, the Pi 5 is perfect for:
+- Learning and experimentation
+- Light to medium workloads
+- Budget-conscious homelabs
+- Specific use cases (ad blocking, light NAS, etc.)
+
+Whether you're building your first homelab or adding to an existing setup, the Raspberry Pi 5 offers an excellent balance of performance, features, and cost.
+
+*For more low-power NAS ideas, check out [How-To Geek's Raspberry Pi NAS guide](https://www.howtogeek.com/low-power-nas-out-of-a-raspberry-pi/) and explore the Raspberry Pi community forums for project inspiration.*
+

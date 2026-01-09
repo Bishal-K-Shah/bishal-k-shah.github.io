@@ -1,0 +1,527 @@
+---
+title: 'The Ultimate 2026 Media Stack: Migrating from Plex to Jellyfin + Arrs'
+date: '2026-01-20'
+category: 'HomeLab'
+tags: ['jellyfin', 'plex', 'radarr', 'sonarr', 'media-server', 'self-hosting']
+featuredImage: 'https://tristam.ie/wp-content/uploads/2025/05/plex-to-jellyfin-1-768x456.png?auto=format&fit=crop&w=1080&q=80'
+excerpt: 'Complete guide to migrating from Plex to Jellyfin and setting up the perfect automated media stack with Radarr, Sonarr, and Jellyfin for 2026.'
+---
+
+If you've been running Plex for years, you might have noticed some changes. The platform has shifted toward monetization, with more features locked behind Plex Pass, increased focus on ad-supported content, and growing privacy concerns. Meanwhile, **Jellyfin** has matured into a fully-featured, completely open-source alternative that gives you everything Plex offers—and more—without any subscriptions or cloud dependencies.
+
+Combined with the **Arr suite** (Radarr, Sonarr, Prowlarr), you can build the ultimate automated media stack that rivals any commercial streaming service, all running on your own hardware.
+
+## Why Migrate from Plex to Jellyfin?
+
+### The Plex Problem
+
+**Monetization Push:**
+- More features require Plex Pass subscription
+- Increased emphasis on ad-supported streaming content
+- Premium features that were once free now cost money
+
+**Privacy Concerns:**
+- Centralized account system requires cloud connectivity
+- Data collection and analytics
+- Remote access requires Plex's servers as intermediaries
+
+**Vendor Lock-in:**
+- Your library metadata is tied to Plex's ecosystem
+- Limited customization options
+- Closed-source code limits community contributions
+
+### The Jellyfin Advantage
+
+**100% Free and Open Source:**
+- All features available without subscription
+- Active community development
+- Transparent codebase you can audit and modify
+
+**Complete Privacy:**
+- No mandatory cloud accounts
+- Runs entirely on your hardware
+- You control all data and metadata
+
+**Better for Homelabs:**
+- Integrates seamlessly with other self-hosted services
+- Extensive plugin ecosystem
+- Highly customizable interface and functionality
+
+![Media server setup with multiple drives](https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1080&q=80 "Home media server with storage drives")
+
+## Understanding the Complete Media Stack
+
+A modern automated media stack consists of several components working together:
+
+### Core Components
+
+**Jellyfin** - Media server and player
+- Organizes and streams your media library
+- Handles transcoding, metadata, and user management
+- Provides clients for all major platforms
+
+**Radarr** - Movie collection manager
+- Monitors movie releases
+- Automatically downloads and organizes movies
+- Integrates with download clients
+
+**Sonarr** - TV series collection manager
+- Tracks TV show episodes
+- Automatically downloads new episodes
+- Manages series metadata and organization
+
+**Prowlarr** - Indexer manager
+- Centralizes indexer configuration
+- Supports Usenet and torrent indexers
+- Simplifies adding new sources
+
+**Download Clients** (qBittorrent, Transmission, etc.)
+- Handles actual file downloads
+- Integrates with Radarr/Sonarr
+
+## Planning Your Migration
+
+### Pre-Migration Checklist
+
+1. **Backup Your Plex Data**
+   - Export your library structure
+   - Note custom collections and playlists
+   - Document user accounts and permissions
+
+2. **Inventory Your Media**
+   - List all movies, TV shows, and other content
+   - Note file locations and naming conventions
+   - Identify any special metadata or custom artwork
+
+3. **Hardware Assessment**
+   - Ensure your server can handle Jellyfin (similar requirements to Plex)
+   - Check transcoding capabilities (CPU/GPU)
+   - Verify storage capacity
+
+4. **Network Considerations**
+   - Plan for remote access setup (reverse proxy recommended)
+   - Consider SSL certificates for secure access
+   - Document port requirements
+
+## Installing Jellyfin
+
+### Docker Installation (Recommended)
+
+The easiest way to run Jellyfin is with Docker. Here's a complete `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    ports:
+      - "8096:8096"
+      - "8920:8920"  # HTTPS
+    volumes:
+      - ./jellyfin/config:/config
+      - ./jellyfin/cache:/cache
+      - /path/to/your/media:/data/media:ro
+      - /path/to/your/movies:/data/movies:ro
+      - /path/to/your/tv:/data/tv:ro
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://your-domain.com
+    devices:
+      - /dev/dri:/dev/dri  # For hardware transcoding (Intel/AMD)
+    networks:
+      - media-network
+
+networks:
+  media-network:
+    driver: bridge
+```
+
+Start Jellyfin:
+
+```bash
+docker-compose up -d
+```
+
+Access Jellyfin at `http://localhost:8096` and complete the initial setup wizard.
+
+### Native Installation
+
+**Linux (Ubuntu/Debian):**
+
+```bash
+# Add Jellyfin repository
+sudo apt install apt-transport-https
+wget -O - https://repo.jellyfin.org/jellyfin_team.gpg.key | sudo apt-key add -
+echo "deb [arch=$( dpkg --print-architecture )] https://repo.jellyfin.org/$( awk -F'=' '/^ID=/{ print $NF }' /etc/os-release ) $( awk -F'=' '/^VERSION_CODENAME=/{ print $NF }' /etc/os-release ) main" | sudo tee /etc/apt/sources.list.d/jellyfin.list
+
+# Install Jellyfin
+sudo apt update
+sudo apt install jellyfin
+```
+
+**Windows/macOS:**
+Download the installer from [jellyfin.org](https://jellyfin.org/downloads)
+
+## Hardware Transcoding Setup
+
+One of Jellyfin's strongest features is excellent hardware transcoding support. This is crucial for serving multiple clients simultaneously.
+
+### Intel Quick Sync
+
+For Intel processors with integrated graphics:
+
+```yaml
+# In docker-compose.yml
+devices:
+  - /dev/dri:/dev/dri
+```
+
+In Jellyfin settings:
+1. Dashboard → Playback → Transcoding
+2. Enable "Hardware acceleration"
+3. Select "Video Acceleration API (VAAPI)" or "Intel QuickSync"
+
+### NVIDIA GPU
+
+For NVIDIA GPUs:
+
+```yaml
+# In docker-compose.yml
+runtime: nvidia
+environment:
+  - NVIDIA_VISIBLE_DEVICES=all
+```
+
+Install NVIDIA Container Toolkit:
+
+```bash
+# Ubuntu/Debian
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+sudo systemctl restart docker
+```
+
+In Jellyfin, select "NVIDIA NVENC" for hardware acceleration.
+
+### Testing Transcoding
+
+To verify transcoding works:
+1. Play a video in a format your client doesn't support natively
+2. Check Jellyfin dashboard → Playback → Active Encodings
+3. Verify hardware acceleration is being used
+
+## Setting Up the Arr Suite
+
+The Arr applications work together to automate your media collection. Here's a complete Docker Compose setup:
+
+```yaml
+version: '3.8'
+
+services:
+  # Jellyfin (from above)
+  jellyfin:
+    # ... previous configuration
+
+  # Radarr - Movie Manager
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    ports:
+      - "7878:7878"
+    volumes:
+      - ./radarr/config:/config
+      - /path/to/your/movies:/movies
+      - /path/to/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+    networks:
+      - media-network
+
+  # Sonarr - TV Series Manager
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    ports:
+      - "8989:8989"
+    volumes:
+      - ./sonarr/config:/config
+      - /path/to/your/tv:/tv
+      - /path/to/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+    networks:
+      - media-network
+
+  # Prowlarr - Indexer Manager
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    ports:
+      - "9696:9696"
+    volumes:
+      - ./prowlarr/config:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
+    networks:
+      - media-network
+
+  # qBittorrent - Download Client
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    volumes:
+      - ./qbittorrent/config:/config
+      - /path/to/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - WEBUI_PORT=8080
+    networks:
+      - media-network
+
+networks:
+  media-network:
+    driver: bridge
+```
+
+### Initial Configuration
+
+**1. Configure Prowlarr:**
+- Access at `http://localhost:9696`
+- Add indexers (Usenet or torrent trackers)
+- Configure download client (qBittorrent)
+
+**2. Configure Radarr:**
+- Access at `http://localhost:7878`
+- Settings → Media Management → Root Folders → Add `/movies`
+- Settings → Download Clients → Add qBittorrent
+- Settings → Indexers → Add Prowlarr
+
+**3. Configure Sonarr:**
+- Access at `http://localhost:8989`
+- Settings → Media Management → Root Folders → Add `/tv`
+- Settings → Download Clients → Add qBittorrent
+- Settings → Indexers → Add Prowlarr
+
+**4. Link to Jellyfin:**
+- In Radarr/Sonarr: Settings → Connect → Add Jellyfin
+- Enter Jellyfin URL and API key (found in Jellyfin Dashboard → API)
+
+## Migrating Your Library
+
+### Step 1: Export Plex Metadata (Optional)
+
+While you can't directly import Plex data into Jellyfin, you can:
+
+1. Use tools like `plex-export` to export your library structure
+2. Document custom collections and playlists manually
+3. Note any special metadata you've added
+
+### Step 2: Point Jellyfin to Your Media
+
+1. In Jellyfin Dashboard → Libraries
+2. Add Library → Choose content type (Movies, TV Shows, etc.)
+3. Add folder path (your existing media location)
+4. Configure metadata settings
+5. Let Jellyfin scan and organize
+
+### Step 3: Reorganize Media (If Needed)
+
+Jellyfin works best with organized folder structures:
+
+```
+/movies
+  /Movie Name (Year)
+    Movie Name (Year).mkv
+    Movie Name (Year).en.srt
+
+/tv
+  /Show Name
+    /Season 01
+      Show Name - S01E01 - Episode Title.mkv
+```
+
+Tools like `filebot` or `tidy` can help reorganize existing media.
+
+### Step 4: Import Metadata
+
+Jellyfin will automatically:
+- Fetch metadata from TheMovieDB, TheTVDB, etc.
+- Download artwork and posters
+- Organize episodes and seasons
+- Match files to database entries
+
+You can manually refresh metadata for specific items if needed.
+
+## Advanced Jellyfin Configuration
+
+### User Management
+
+Create user accounts with appropriate permissions:
+
+1. Dashboard → Users → Add User
+2. Set username, password, and display name
+3. Configure access to specific libraries
+4. Set playback restrictions (max bitrate, etc.)
+
+### Plugins
+
+Jellyfin has a growing plugin ecosystem:
+
+- **Trakt**: Sync watch history with Trakt.tv
+- **LDAP Authentication**: Integrate with LDAP/Active Directory
+- **MusicBrainz**: Enhanced music metadata
+- **Auto Organize**: Automatically organize new media
+
+Install plugins from Dashboard → Plugins.
+
+### Custom Branding
+
+Customize Jellyfin's appearance:
+
+1. Dashboard → Display → Custom CSS
+2. Add custom CSS for branding
+3. Upload custom logos and splash screens
+
+## Remote Access Setup
+
+### Reverse Proxy with Nginx
+
+For secure remote access, use a reverse proxy:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name jellyfin.yourdomain.com;
+
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+
+    location / {
+        proxy_pass http://localhost:8096;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+### Using Traefik
+
+If you're already using Traefik:
+
+```yaml
+services:
+  jellyfin:
+    # ... existing config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.yourdomain.com`)"
+      - "traefik.http.routers.jellyfin.entrypoints=websecure"
+      - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
+```
+
+## Automation Workflow
+
+Once everything is configured, your media stack works automatically:
+
+1. **Add Content**: Search for a movie/show in Radarr/Sonarr
+2. **Monitor**: The Arr apps monitor for releases
+3. **Download**: When available, content is automatically downloaded
+4. **Organize**: Files are moved to proper locations and renamed
+5. **Notify**: Jellyfin is notified and scans for new content
+6. **Available**: Content appears in Jellyfin library automatically
+
+## Performance Optimization
+
+### Transcoding Settings
+
+Optimize transcoding for your use case:
+
+- **Hardware Acceleration**: Always enable if available
+- **Transcoding Quality**: Balance quality vs. performance
+- **Concurrent Streams**: Monitor server resources
+
+### Storage Optimization
+
+- Use SSD for Jellyfin cache and metadata
+- Organize media on HDDs for cost-effective storage
+- Consider network storage (NFS/SMB) for large libraries
+
+### Network Optimization
+
+- Use wired connections for servers
+- Configure proper network segmentation
+- Consider dedicated VLAN for media traffic
+
+## Troubleshooting Common Issues
+
+### Transcoding Failures
+
+- Verify hardware acceleration is working
+- Check GPU drivers are up to date
+- Review Jellyfin logs for specific errors
+- Test with software transcoding as fallback
+
+### Library Not Updating
+
+- Manually trigger library scan
+- Check file permissions
+- Verify media paths are correct
+- Review Jellyfin logs
+
+### Arr Apps Not Communicating
+
+- Verify all services are on the same Docker network
+- Check API keys are correct
+- Ensure ports are properly exposed
+- Review connection settings in each app
+
+## Comparison: Plex vs Jellyfin 2026
+
+| Feature | Plex | Jellyfin |
+|---------|------|----------|
+| Cost | Free (limited) / Plex Pass ($5-10/mo) | 100% Free |
+| Open Source | No | Yes |
+| Cloud Account Required | Yes | No |
+| Hardware Transcoding | Plex Pass required | Free |
+| Plugins | Limited | Extensive |
+| Customization | Limited | Extensive |
+| Privacy | Cloud-dependent | Fully local |
+| Mobile Apps | Excellent | Good (improving) |
+
+## Conclusion
+
+Migrating from Plex to Jellyfin represents a shift toward true self-hosting and data ownership. Combined with the Arr suite, you can build a media stack that's more powerful, more private, and completely free.
+
+The initial setup requires some effort, but the result is a system that:
+- Gives you complete control
+- Costs nothing to run (beyond hardware)
+- Respects your privacy
+- Automates media collection
+- Rivals commercial streaming services
+
+Whether you're frustrated with Plex's monetization, concerned about privacy, or simply want to explore open-source alternatives, Jellyfin in 2026 is a mature, capable platform ready for production use.
+
+*For detailed migration guides and community support, check out resources like [Florian Jensen's Plex to Jellyfin migration guide](https://florianjensen.com/2024/08/21/how-to-migrate-from-plex-to-jellyfin/) and the active Jellyfin community forums.*
+

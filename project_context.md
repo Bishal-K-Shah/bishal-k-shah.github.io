@@ -66,6 +66,7 @@ type CategoryTree = Record<string, string[]>; // Category → Tags[]
 - **UI Library**: React 18.3.1
 - **Styling**: Tailwind CSS 3.4.1 with custom theme
 - **Content**: MDX (via `next-mdx-remote`)
+- **MDX Plugins**: remark-gfm (GitHub Flavored Markdown - tables, strikethrough, etc.)
 - **Animations**: GSAP 3.14.2 with ScrollTrigger
 - **UI Components**: Radix UI (via shadcn/ui)
 - **Icons**: Lucide React
@@ -237,7 +238,8 @@ src/
 
 **MDX Rendering**:
 - Uses `next-mdx-remote/rsc` for server-side rendering
-- Custom component mapping: h2/h3 (responsive), p (spacing), img (figure with caption), code (CodeBlock), lists/blockquotes/links (styled)
+- `remark-gfm` plugin for GitHub Flavored Markdown support
+- Custom component mapping: h2/h3 (responsive), p (spacing), img (figure with caption), code (CodeBlock), lists/blockquotes/links (styled), tables (GitHub-style with rounded borders, hover effects)
 
 **Related Posts**:
 - Filters by same category, excludes current post, shows top 3
@@ -428,7 +430,18 @@ RootLayout
 
 **Runtime Rendering**:
 - `next-mdx-remote/rsc` renders MDX server-side
+- `remark-gfm` plugin enables GitHub Flavored Markdown (tables, strikethrough, autolinks)
 - Custom component mapping for styled elements
+
+**Supported MDX Elements**:
+- Headers (h2, h3) - Responsive typography with scroll-margin
+- Paragraphs - Custom spacing, image unwrapping
+- Lists (ul, ol) - Custom bullet/number styling
+- Blockquotes - Styled with accent border
+- Links - Primary color with underline
+- Images - Figure wrapper with optional captions
+- Code blocks - Syntax highlighting via CodeBlock component
+- Tables - GitHub-style with rounded container, hover effects, zebra striping
 
 **Frontmatter Schema**:
 ```yaml
@@ -511,7 +524,8 @@ type CategoryTree = Record<string, string[]>; // Category → Tags[]
 - Filters by same category, excludes current post, shows top 3, rendered as PostCard components
 
 #### 4. MDX Content Rendering
-- Custom components: Headers (responsive), Images (figure with captions), Code blocks (CodeBlock component), Links (styled), Lists (custom spacing)
+- Custom components: Headers (responsive), Images (figure with captions), Code blocks (CodeBlock component), Links (styled), Lists (custom spacing), Tables (GitHub-style)
+- Table styling: Rounded container with shadow, uppercase headers, row dividers, hover effects, zebra striping, dark mode support
 - Image handling: Prevents hydration errors (no `<p>` wrapping), captions from `title` attribute, responsive sizing
 
 ---
@@ -589,8 +603,17 @@ out/
 **Adding a New Post**:
 1. Create `.mdx` file in `src/posts/`
 2. Add frontmatter with required fields
-3. Write content in Markdown/MDX
+3. Write content in Markdown/MDX (supports GFM tables, strikethrough, etc.)
 4. Build and deploy
+
+**Using Tables in Posts**:
+```markdown
+| Feature | Description |
+|---------|-------------|
+| Cost | Free |
+| Open Source | Yes |
+```
+Tables render with GitHub-style formatting (rounded borders, hover effects, zebra striping).
 
 **Adding a New Category**:
 1. Add category to post frontmatter

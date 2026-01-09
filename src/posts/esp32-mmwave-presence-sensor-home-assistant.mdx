@@ -1,0 +1,572 @@
+---
+title: 'ESP32 & Home Assistant: Building a Presence Sensor with mmWave'
+date: '2026-02-01'
+category: 'Electronics'
+tags: ['esp32', 'home-assistant', 'mmwave', 'ld2410', 'esphome', 'smart-home', 'sensors']
+featuredImage: 'https://i.ytimg.com/vi/Gb-4l93st8A/maxresdefault.jpg'
+excerpt: 'Build an advanced presence detection sensor using ESP32 and mmWave technology, replacing traditional PIR sensors with more accurate, reliable motion and presence detection for Home Assistant automation.'
+---
+
+Traditional PIR (Passive Infrared) motion sensors have been the go-to solution for detecting movement in smart homes for years. But they have limitations: they only detect motion, not presence. They can't tell if someone is sitting still in a room, leading to lights turning off while you're reading or working.
+
+**mmWave (millimeter wave) radar sensors** solve this problem. Using radar technology similar to what's in modern smartphones, these sensors can detect both motion and static presence—knowing when someone is in a room even if they're not moving. Combined with an **ESP32** microcontroller and **Home Assistant**, you can build a presence detection system that's more accurate and reliable than anything you can buy off the shelf.
+
+## Why mmWave Over PIR?
+
+### PIR Sensor Limitations
+
+**Motion-Only Detection:**
+- Triggers only when movement occurs
+- Can't detect stationary people
+- Prone to false positives (pets, sunlight)
+- Limited range and field of view
+- Slow response time
+
+**Real-World Problems:**
+- Lights turn off while you're sitting at a desk
+- False triggers from heating vents
+- Misses slow movements
+- Doesn't work well in corners
+
+### mmWave Advantages
+
+**Presence Detection:**
+- Detects both motion and static presence
+- Knows when someone is in a room, even if still
+- More accurate occupancy detection
+
+**Better Performance:**
+- Faster response time
+- Wider detection range
+- More reliable in various conditions
+- Less prone to false positives
+- Works through thin materials (drywall, glass)
+
+**Advanced Features:**
+- Distance measurement
+- Multiple target detection
+- Movement speed detection
+- Configurable sensitivity
+
+![Electronics components on breadboard](https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1080&q=80 "ESP32 and sensor components")
+
+## Understanding mmWave Technology
+
+mmWave radar operates in the 24GHz or 60GHz frequency bands, using radio waves to detect objects. Unlike PIR sensors that detect heat, mmWave sensors detect the reflection of radio waves, allowing them to:
+
+- Detect stationary objects (people sitting still)
+- Measure distance to targets
+- Detect movement speed and direction
+- Work regardless of ambient temperature
+
+### LD2410 Sensor Overview
+
+The **HiLink LD2410** is one of the most popular mmWave sensors for DIY projects:
+
+**Specifications:**
+- Frequency: 24GHz
+- Detection Range: 0.75m to 6m (configurable)
+- Detection Types: Motion and presence
+- Update Rate: Up to 100Hz
+- Interface: UART (serial)
+- Power: 5V, ~100mA
+- Size: Compact module (~30mm × 20mm)
+
+**Features:**
+- Motion detection (moving targets)
+- Presence detection (stationary targets)
+- Distance measurement
+- Configurable sensitivity zones
+- Multiple target detection
+
+## Hardware Requirements
+
+### Components Needed
+
+**Essential:**
+- ESP32 development board (ESP32-WROOM-32 or similar)
+- LD2410 mmWave sensor module
+- USB cable for programming
+- Jumper wires (Dupont wires)
+- 5V power supply (USB power bank or wall adapter)
+
+**Optional but Recommended:**
+- Breadboard for prototyping
+- 3D printed enclosure
+- Status LED
+- Resistors (for LED if used)
+
+### ESP32 Board Options
+
+**ESP32-DevKitC:**
+- Good for prototyping
+- Built-in USB-to-serial
+- Easy to program
+- Price: $5-10
+
+**ESP32-WROOM-32:**
+- Compact module
+- Requires external USB adapter
+- Smaller form factor
+- Price: $3-8
+
+**ESP32-S3:**
+- More powerful
+- Better for complex projects
+- Overkill for this project
+- Price: $8-15
+
+### Wiring the LD2410 to ESP32
+
+The LD2410 communicates via UART (serial). Here's the wiring:
+
+```
+LD2410          ESP32
+------          -----
+VCC      →      5V (or 3.3V with level shifter)
+GND      →      GND
+TX       →      GPIO 4 (RX on ESP32)
+RX       →      GPIO 5 (TX on ESP32)
+OUT      →      (Optional) GPIO 2 (for direct output)
+```
+
+**Important Notes:**
+- LD2410 operates at 5V logic levels
+- ESP32 GPIO pins are 3.3V
+- LD2410 TX can typically drive ESP32 RX directly (3.3V tolerant)
+- For LD2410 RX, use a level shifter or voltage divider (or use 3.3V if your module supports it)
+
+**Simplified Wiring (if LD2410 is 3.3V compatible):**
+```
+LD2410          ESP32
+------          -----
+VCC      →      3.3V
+GND      →      GND
+TX       →      GPIO 4
+RX       →      GPIO 5
+```
+
+## Software Setup: ESPHome
+
+**ESPHome** is the easiest way to integrate ESP32 devices with Home Assistant. It provides a simple YAML-based configuration system.
+
+### Installing ESPHome
+
+**Option 1: Home Assistant Add-on (Easiest)**
+1. In Home Assistant, go to Settings → Add-ons
+2. Add-on Store → ESPHome
+3. Install and start ESPHome
+4. Open Web UI
+
+**Option 2: Docker**
+```bash
+docker run -d \
+  --name esphome \
+  --restart unless-stopped \
+  -v /path/to/esphome:/config \
+  -p 6052:6052 \
+  esphome/esphome
+```
+
+**Option 3: Python (pip)**
+```bash
+pip install esphome
+esphome dashboard /path/to/config
+```
+
+### Creating the ESP32 Configuration
+
+Create a new device in ESPHome:
+
+```yaml
+esphome:
+  name: presence-sensor-bedroom
+  platform: ESP32
+  board: esp32dev
+  framework:
+    type: arduino
+
+wifi:
+  ssid: "YourWiFiSSID"
+  password: "YourWiFiPassword"
+  
+  # Enable fallback hotspot
+  ap:
+    ssid: "Presence Sensor Fallback"
+    password: "fallback123"
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "your-encryption-key-here"
+
+# OTA updates
+ota:
+  - platform: esphome
+    password: "your-ota-password"
+
+# Web server for status
+web_server:
+  port: 80
+
+# UART for LD2410
+uart:
+  tx_pin: GPIO5
+  rx_pin: GPIO4
+  baud_rate: 256000
+
+# LD2410 BLE and Radar sensor
+ld2410:
+  timeout: 150ms
+  # Optional: Configure detection zones
+  max_move_distance: 6m
+  max_still_distance: 4m
+  g0_move_threshold: 10
+  g0_still_threshold: 10
+
+# Binary sensors for motion and presence
+binary_sensor:
+  - platform: ld2410
+    has_target:
+      name: "Bedroom Motion"
+    has_moving_target:
+      name: "Bedroom Moving Target"
+    has_still_target:
+      name: "Bedroom Still Target"
+
+# Sensor for distance
+sensor:
+  - platform: ld2410
+    moving_distance:
+      name: "Bedroom Moving Distance"
+    still_distance:
+      name: "Bedroom Still Distance"
+    detect_distance:
+      name: "Bedroom Detect Distance"
+    move_energy:
+      name: "Bedroom Move Energy"
+    still_energy:
+      name: "Bedroom Still Energy"
+
+# Status LED (optional)
+status_led:
+  pin:
+    number: GPIO2
+    inverted: true
+```
+
+### Compiling and Flashing
+
+1. **Compile the firmware:**
+   - Click "Install" in ESPHome
+   - Select "Plug into this computer"
+   - Flash over USB
+
+2. **Or use OTA (Over-The-Air):**
+   - Connect ESP32 to WiFi first (via USB)
+   - Then use OTA for future updates
+   - No need to physically access device
+
+## Home Assistant Integration
+
+### Automatic Discovery
+
+If ESPHome is properly configured, the device will automatically appear in Home Assistant:
+
+1. Go to Settings → Devices & Services
+2. Look for "ESPHome" integration
+3. The presence sensor should appear automatically
+4. Entities will be created for each sensor
+
+### Manual Configuration
+
+If automatic discovery doesn't work, add manually:
+
+```yaml
+# configuration.yaml
+esphome:
+  name: presence-sensor-bedroom
+  platform: ESP32
+  # ... rest of config
+```
+
+### Using the Sensors in Automations
+
+**Basic Presence Detection:**
+
+```yaml
+automation:
+  - alias: "Turn on lights when presence detected"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.bedroom_still_target
+        to: "on"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.bedroom_lights
+
+  - alias: "Turn off lights when no presence"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.bedroom_still_target
+        to: "off"
+        for:
+          minutes: 5
+    action:
+      - service: light.turn_off
+        target:
+          entity_id: light.bedroom_lights
+```
+
+**Advanced: Motion vs Presence:**
+
+```yaml
+automation:
+  - alias: "Bright lights on motion"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.bedroom_moving_target
+        to: "on"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.bedroom_lights
+        data:
+          brightness: 255
+
+  - alias: "Dim lights for presence"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.bedroom_still_target
+        to: "on"
+        from: "off"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.bedroom_moving_target
+        state: "off"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.bedroom_lights
+        data:
+          brightness: 128
+```
+
+## Advanced Configuration
+
+### Fine-Tuning Detection Zones
+
+The LD2410 allows you to configure detection zones:
+
+```yaml
+ld2410:
+  timeout: 150ms
+  max_move_distance: 6m      # Maximum distance for motion detection
+  max_still_distance: 4m     # Maximum distance for presence detection
+  g0_move_threshold: 10      # Sensitivity zone 0 (0-0.75m) motion
+  g0_still_threshold: 10     # Sensitivity zone 0 presence
+  g1_move_threshold: 20      # Zone 1 (0.75-1.5m)
+  g1_still_threshold: 20
+  g2_move_threshold: 30      # Zone 2 (1.5-2.5m)
+  g2_still_threshold: 30
+  g3_move_threshold: 40      # Zone 3 (2.5-4m)
+  g3_still_threshold: 40
+  g4_move_threshold: 50      # Zone 4 (4-6m)
+  g4_still_threshold: 50
+```
+
+**Tuning Tips:**
+- Start with default values
+- Increase thresholds to reduce sensitivity
+- Decrease thresholds to increase sensitivity
+- Test in your actual environment
+- Adjust zone-by-zone based on room layout
+
+### Multiple Sensors
+
+For larger rooms, use multiple sensors:
+
+```yaml
+# Sensor 1 - Room entrance
+esphome:
+  name: presence-sensor-bedroom-entrance
+  # ... config with different GPIO pins
+
+# Sensor 2 - Room center  
+esphome:
+  name: presence-sensor-bedroom-center
+  # ... config
+```
+
+Combine in Home Assistant:
+
+```yaml
+template:
+  - binary_sensor:
+      - name: "Bedroom Any Presence"
+        state: >
+          {{ is_state('binary_sensor.bedroom_entrance_still_target', 'on') or
+             is_state('binary_sensor.bedroom_center_still_target', 'on') }}
+```
+
+## Enclosure and Installation
+
+### 3D Printed Enclosure
+
+Design considerations:
+- Allow airflow (sensor can get warm)
+- Mounting options (wall, ceiling)
+- Cable management
+- LED visibility (if using status LED)
+
+**Popular Designs:**
+- Search Thingiverse for "LD2410 enclosure"
+- Many designs available for ESP32 + LD2410
+- Choose based on mounting preference
+
+### Installation Tips
+
+**Mounting Location:**
+- Ceiling mount: Best coverage, detects entire room
+- Wall mount: Good for specific areas
+- Corner mount: Maximizes detection range
+- Height: 2-3 meters (6-10 feet) recommended
+
+**Orientation:**
+- Sensor should face the area to monitor
+- Avoid pointing at windows (can detect outside)
+- Consider furniture placement
+- Test before permanent installation
+
+**Power:**
+- USB power bank: Portable, good for testing
+- Wall adapter: Reliable for permanent install
+- PoE (with adapter): Professional installation
+- Battery (with ESP32-S3): Truly wireless (advanced)
+
+## Troubleshooting
+
+### Sensor Not Detecting
+
+**Check Wiring:**
+- Verify all connections
+- Check power (5V for LD2410)
+- Test with multimeter
+- Try different GPIO pins
+
+**Check Configuration:**
+- Verify UART pins match wiring
+- Check baud rate (256000 for LD2410)
+- Review ESPHome logs
+- Test with serial monitor
+
+**Environmental Factors:**
+- Metal objects can interfere
+- Thick walls block detection
+- Test in different locations
+- Adjust sensitivity thresholds
+
+### False Positives
+
+**Reduce Sensitivity:**
+- Increase threshold values
+- Reduce detection distance
+- Adjust zone-specific thresholds
+- Add delay before triggering
+
+**Filter in Home Assistant:**
+```yaml
+template:
+  - binary_sensor:
+      - name: "Bedroom Presence Filtered"
+        state: >
+          {{ is_state('binary_sensor.bedroom_still_target', 'on') }}
+        delay_on: 00:00:05  # 5 second delay
+```
+
+### Connection Issues
+
+**WiFi Problems:**
+- Check signal strength
+- Use 2.4GHz (ESP32 doesn't support 5GHz)
+- Reduce distance to router
+- Check ESPHome logs
+
+**Home Assistant Not Seeing Device:**
+- Verify API encryption key matches
+- Check firewall settings
+- Ensure ESPHome add-on is running
+- Restart Home Assistant
+
+## Use Cases and Applications
+
+### Room Occupancy Automation
+
+**Smart Lighting:**
+- Turn on when presence detected
+- Dim when stationary presence
+- Turn off after timeout
+- Different scenes for motion vs presence
+
+**Climate Control:**
+- Adjust HVAC based on occupancy
+- Turn off when room empty
+- Set different temps for occupied/unoccupied
+
+**Entertainment Systems:**
+- Pause media when room empty
+- Adjust volume based on presence
+- Turn on TV when motion detected
+
+### Security Applications
+
+**Intrusion Detection:**
+- Alert on unexpected presence
+- Monitor specific zones
+- Integrate with security system
+- Record events in Home Assistant
+
+### Energy Efficiency
+
+**Power Management:**
+- Turn off devices when room empty
+- Reduce heating/cooling for unoccupied rooms
+- Smart power strips based on presence
+- Monitor occupancy patterns
+
+## Comparison: mmWave vs Other Sensors
+
+| Sensor Type | Motion | Presence | Range | Cost | Complexity |
+|-------------|--------|----------|-------|------|------------|
+| PIR | Yes | No | 5-10m | $ | Low |
+| mmWave | Yes | Yes | 6m+ | $$ | Medium |
+| Ultrasonic | Yes | Limited | 3-5m | $ | Medium |
+| Camera | Yes | Yes | Variable | $$$ | High |
+| ToF | Yes | Limited | 2-4m | $$ | Medium |
+
+**mmWave Advantages:**
+- Best presence detection
+- Privacy-friendly (no camera)
+- Good range
+- Reasonable cost
+- Works in darkness
+
+## Conclusion
+
+Building a presence sensor with ESP32 and mmWave technology gives you capabilities that commercial sensors can't match at a fraction of the cost. The LD2410 sensor, combined with ESPHome and Home Assistant, creates a powerful, customizable presence detection system.
+
+Key benefits:
+- **Accurate presence detection**: Knows when someone is in a room, even if still
+- **Privacy-focused**: No cameras, radar-based detection
+- **Customizable**: Fine-tune for your specific needs
+- **Cost-effective**: ~$15-20 total cost
+- **Integrates seamlessly**: Works with Home Assistant ecosystem
+
+Whether you're automating lights, optimizing energy usage, or building a comprehensive smart home, mmWave presence sensors are a significant upgrade over traditional PIR sensors. The combination of ESP32's flexibility and mmWave's accuracy makes this a perfect project for any smart home enthusiast.
+
+*For more ESP32 projects and tutorials, check out [Random Nerd Tutorials' ESP32 guide](https://randomnerdtutorials.com/getting-started-with-esp32/) and the ESPHome documentation for advanced configurations.*
+

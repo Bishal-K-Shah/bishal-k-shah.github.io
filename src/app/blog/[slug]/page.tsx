@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
 import { Clock, Calendar, Hash } from 'lucide-react';
 import { MDXRemote } from 'next-mdx-remote/rsc';
+import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/CodeBlock';
 import { SocialShare } from '@/components/SocialShare';
 import { PostCard } from '@/components/PostCard';
@@ -167,6 +168,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <div className="prose prose-base sm:prose-lg dark:prose-invert max-w-none">
           <MDXRemote
             source={post.content}
+            options={{
+              mdxOptions: {
+                remarkPlugins: [remarkGfm],
+              },
+            }}
             components={{
               // Headers with responsive text sizes
               h2: ({ ...props}) => <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold mt-10 sm:mt-12 mb-4 sm:mb-6 font-headline tracking-tight text-foreground scroll-m-20 border-b pb-2" {...props} />,
@@ -239,6 +245,30 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   </code>
                 );
               },
+
+              // Tables (GitHub style)
+              table: ({ ...props }) => (
+                <div className="my-8 w-full overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-sm" {...props} />
+                  </div>
+                </div>
+              ),
+              thead: ({ ...props }) => (
+                <thead className="bg-gray-50 dark:bg-zinc-800/80" {...props} />
+              ),
+              tbody: ({ ...props }) => (
+                <tbody className="divide-y divide-gray-200 dark:divide-zinc-700" {...props} />
+              ),
+              tr: ({ ...props }) => (
+                <tr className="bg-white dark:bg-zinc-900 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800/50" {...props} />
+              ),
+              th: ({ ...props }) => (
+                <th className="border-b border-gray-200 dark:border-zinc-700 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300" {...props} />
+              ),
+              td: ({ ...props }) => (
+                <td className="px-4 py-3 text-left text-gray-700 dark:text-gray-300 whitespace-nowrap first:font-medium first:text-gray-900 dark:first:text-white" {...props} />
+              ),
             }}
           />
         </div>
