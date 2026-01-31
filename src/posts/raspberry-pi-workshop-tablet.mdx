@@ -1,0 +1,157 @@
+---
+title: 'Building a Grease-Proof Raspberry Pi Tablet for Digital Service Manuals'
+date: '2026-02-03'
+category: 'Electronics'
+tags: ['Raspberry Pi', '3D Printing', 'Workshop', 'DIY', 'Linux']
+featuredImage: 'https://miro.medium.com/v2/da:true/resize:fit:1200/0*JwMMa57jZ6AxgXx2'
+excerpt: 'Stop ruining your expensive iPad with oil and grease. Build a dedicated, ruggedized Raspberry Pi workshop tablet designed to survive the shop environment.'
+---
+
+## Introduction: The "Greasy Finger" Problem
+
+We've all been there: you’re halfway through a complex engine teardown, your hands are covered in a mixture of 10W-30 and brake dust, and you need to look up the torque specs for the head bolts. You reach for your iPad or your smartphone, and in that moment of desperation, you realize you're about to ruin a $500 piece of consumer electronics.
+
+Paper manuals are great, but they’re hard to search, get stained instantly, and take up valuable bench space. The solution is a dedicated **Shop Tablet**. It needs to be rugged, easily cleanable, mountable to a magnetic tool chest, and powerful enough to load 500-page service PDFs instantly.
+
+In this guide, we’re going to build exactly that using a Raspberry Pi 4, a 7-inch touchscreen, and a custom 3D-printed rugged enclosure.
+
+---
+
+## 1. Hardware Selection: Picking the Right Components
+
+Not all Raspberry Pi parts are suited for a shop environment. We need a balance of performance and thermal management.
+
+### Component Recommendations
+
+| Component | Recommendation | Why? |
+|-----------|----------------|------|
+| **Compute** | Raspberry Pi 4 (4GB) | Faster PDF rendering and multi-tab browsing than the Pi 3. |
+| **Display** | Official Raspberry Pi 7" Touch | Integrated driver support; very reliable. |
+| **Storage** | 32GB High Endurance microSD | Handles frequent reads/writes and vibration better. |
+| **Power** | 5V 3A USB-C (Hardwired) | Avoids the "Low Voltage" lightning bolt during heavy use. |
+| **Cooling** | Passive Heat Sinks | Avoids fans that can suck in metallic workshop dust. |
+
+### Raspberry Pi Model Comparison for Shop Use
+
+| Feature | Pi 3B+ | Pi 4 (4GB) | Pi 5 |
+|---------|--------|------------|------|
+| **Boot Speed** | Slow | Fast | Blazing |
+| **PDF Handling**| Stutters on large files| Smooth | Perfect |
+| **Heat** | Low | Moderate | High (Needs active cooling) |
+| **Price** | $35 | $55 | $80 |
+
+> **Pro Tip:** The **Raspberry Pi 4 (4GB)** is the "Goldilocks" choice. It’s fast enough for heavy manuals but stays cool enough for a sealed, dust-proof case without needing a noisy fan.
+
+---
+
+## 2. Designing the "Grease Guard" Enclosure
+
+The case is the most important part of this build. It needs to survive drops and be wipeable with a shop rag.
+
+### Material Choice
+
+| Material | Pros | Cons |
+|----------|------|------|
+| **PLA** | Easy to print | Brittle, melts in a hot car/garage |
+| **PETG** | Heat resistant, strong | Can shatter on high impact |
+| **TPU** | Incredible impact resistance| Harder to print, very flexible |
+
+**The Strategy:** Use **PETG** for the main structural shell and a **TPU** "over-mold" or bumper for the corners. This provides the rigidity needed to hold the screen and the shock absorption to survive a fall from a workbench.
+
+### Design Features
+1. **Recessed Screen:** The screen should be set back 2-3mm into the case. This prevents the glass from hitting the floor first if it falls face-down.
+2. **Magnetic Mounts:** Embed four 20mm Neodymium magnets into the back of the case. This allows you to "stick" the tablet directly to your toolbox or the underside of a car hood.
+3. **Sealed Ports:** Use silicone dust plugs for the USB and Ethernet ports you aren't using.
+
+---
+
+## 3. Software Configuration: The Workshop Kiosk
+
+We want this tablet to feel like an appliance, not a desktop computer. We’ll configure it to boot directly into a "Workshop Menu."
+
+### Kiosk Mode Setup
+We can use a simple Python/Tkinter script to create a touch-friendly interface for browsing your NAS-hosted manuals.
+
+```python
+import tkinter as tk
+from tkinter import filedialog
+import os
+
+class ShopTabletApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.attributes('-fullscreen', True)
+        self.root.configure(bg='#1a1a1a')
+        
+        # Large, touch-friendly buttons
+        self.btn_manuals = tk.Button(root, text="OPEN SERVICE MANUALS", 
+                                     command=self.open_manuals,
+                                     font=("Arial", 24), bg="#d32f2f", fg="white",
+                                     height=3, width=20)
+        self.btn_manuals.pack(pady=50)
+
+        self.btn_calculator = tk.Button(root, text="TORQUE CONVERTER", 
+                                        command=self.open_calc,
+                                        font=("Arial", 24), bg="#1976d2", fg="white",
+                                        height=3, width=20)
+        self.btn_calculator.pack(pady=20)
+
+    def open_manuals(self):
+        os.system("pcmanfm /mnt/nas/manuals")
+
+    def open_calc(self):
+        # Trigger a custom calculator script
+        pass
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ShopTabletApp(root)
+    root.mainloop()
+```
+
+### Auto-Mounting the Manuals Library
+If you keep your manuals on a HomeLab NAS (like we discussed in our [Inventory Guide](/blog/workshop-inventory-management-system)), you need to auto-mount them at boot.
+
+Add this to your `/etc/fstab`:
+```bash
+//192.168.1.10/manuals /mnt/nas/manuals cifs guest,uid=1000,iocharset=utf8 0 0
+```
+
+---
+
+## 4. Assembly and Protection
+
+1. **Screen Assembly:** Connect the ribbon cable from the Pi to the DSI port on the screen. Mount the Pi to the back of the display using the provided standoffs.
+2. **The "Glass Protection":** Apply a high-quality tempered glass screen protector designed for the 7" Pi screen. It's much cheaper to replace a $10 protector than the $60 screen when a wrench slips.
+3. **Wiring:** Use a 90-degree USB-C adapter to keep the power cable flush against the side of the case, reducing the chance of it being snagged and broken.
+
+---
+
+## 5. Cost Breakdown
+
+| Item | Cost |
+|------|------|
+| Raspberry Pi 4 (4GB) | $55 |
+| Official 7" Touchscreen | $65 |
+| 3D Printer Filament (PETG/TPU) | $10 |
+| SD Card & Magnets | $15 |
+| **Total** | **$145** |
+
+For less than the price of a budget Android tablet, you have a purpose-built tool that is faster, more durable, and completely under your control.
+
+---
+
+## 6. Conclusion: A Better Way to Work
+
+The Rugged Shop Tablet isn't just a gadget; it's a productivity multiplier. Being able to pull up a wiring diagram or a bolt pattern in seconds—without worrying about your hardware—changes the flow of a project. No more washing your hands every five minutes just to check a spec.
+
+### Future Upgrades
+- **Battery Power:** Add a PiJuice or similar HAT to make it truly cordless for 4-6 hours.
+- **Endoscope Integration:** Plug in a $20 USB borescope and use the tablet to see inside cylinders or frame rails.
+- **OBD-II Integration:** Link it to your [Telemetry Gateway](/blog/obd2-telemetry-grafana-dashboard) for a mobile diagnostics station.
+
+Build it once, use it for a decade. Happy wrenching!
+
+---
+
+*This is the fifth article in our "Smart Workshop" series. Check back next week as we learn how to monitor high-power workshop tools!*

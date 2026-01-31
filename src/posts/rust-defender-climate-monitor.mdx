@@ -1,0 +1,192 @@
+---
+title: 'Prevent Rust: Building a Smart Garage Climate Monitor with ESP32 & Home Assistant'
+date: '2026-01-30'
+category: 'Electronics'
+tags: ['ESP32', 'Home Assistant', 'DIY', 'Workshop', 'Climate Control']
+featuredImage: 'https://i.ytimg.com/vi/W0E-juQZDEY/maxresdefault.jpg'
+excerpt: 'Protect your tools and project cars from silent corrosion by building a custom ESP32-powered dew point monitor that integrates with Home Assistant.'
+---
+
+## Introduction: The Hidden Enemy in Your Garage
+
+If you've ever spent a Saturday morning cleaning surface rust off a cast-iron table saw or discovered that your vintage motorcycle’s chrome has started to pit, you know the frustration of the silent killer: humidity. In a garage or workshop environment, temperature fluctuations are constant, and when warm, moist air hits cold metal surfaces, condensation occurs. This isn't just "dampness"—it's a chemical reaction waiting to happen.
+
+The problem is that standard humidity sensors only tell part of the story. 70% humidity might be perfectly safe at 80°F (26°C), but it can be catastrophic at 50°F (10°C). To truly protect your gear, you need to monitor the **Dew Point**.
+
+In this guide, we're going to build the "Rust Defender"—a smart climate monitoring node using an ESP32 microcontroller and a high-accuracy DHT22 sensor. We’ll calculate the risk of corrosion in real-time and integrate it into Home Assistant to trigger dehumidifiers or heaters before the first drop of moisture even forms.
+
+---
+
+## 1. The Science of Dew Point and Corrosion
+
+To build an effective defense, we first need to understand the enemy. Corrosion on steel and iron typically begins when the relative humidity (RH) exceeds 60%, but it accelerates exponentially as the surface temperature of the metal approaches the dew point.
+
+### What is Dew Point?
+The dew point is the temperature at which air becomes saturated with water vapor. If a metal surface (like your car’s frame or your lathe) is at or below this temperature, water will condense on it. This is why tools often feel "sweaty" on a humid spring morning after a cold night.
+
+### Humidity vs. Dew Point vs. Rust Risk
+The following table illustrates how different conditions impact the risk of rust formation.
+
+| Temperature (°F) | Relative Humidity (%) | Dew Point (°F) | Rust Risk Level | Action Required |
+|------------------|-----------------------|----------------|-----------------|-----------------|
+| 70 | 40 | 44 | Low | None |
+| 70 | 65 | 57 | Moderate | Monitor |
+| 50 | 70 | 41 | High | Dehumidify |
+| 50 | 90 | 47 | Critical | Heat & Dehumidify |
+| 35 | 80 | 30 | High | Raise Temp |
+
+> **Pro Tip:** Rust doesn't just happen when it's "wet." Even "dry" feeling air can cause oxidation if the RH is high enough for a micro-layer of moisture to form on metal surfaces.
+
+---
+
+## 2. The Hardware Build
+
+The Rust Defender is designed to be affordable, reliable, and easy to assemble. We’re using the ESP32 because of its built-in Wi-Fi and robust processing power, which allows us to run complex dew point calculations directly on the device.
+
+### Bill of Materials (BOM)
+
+| Component | Purpose | Approx. Cost |
+|-----------|---------|--------------|
+| ESP32 DevKit V1 | The "Brain" of the operation | $6.00 |
+| DHT22 Sensor | High-accuracy Temp/Humidity sensing | $5.00 |
+| 10k Ohm Resistor | Pull-up resistor for DHT22 | $0.10 |
+| Project Box | Protection from workshop dust | $4.00 |
+| Micro-USB Cable | Power supply | $3.00 |
+| **Total** | | **$18.10** |
+
+### Wiring the Sensor
+The DHT22 has four pins, but we typically only use three (VCC, Data, and Ground).
+
+1. **VCC** to ESP32 **3.3V**
+2. **GND** to ESP32 **GND**
+3. **Data** to ESP32 **GPIO 4**
+4. Place the **10k resistor** between the VCC and Data pins (this acts as a pull-up to ensure stable signals).
+
+---
+
+## 3. ESPHome Configuration: The "Smart" Part
+
+We’ll use **ESPHome** to flash our ESP32. It’s a powerful system that allows us to define our sensors and logic in a simple YAML file. 
+
+One of the best features of ESPHome is its ability to create "Template Sensors." We won't just report humidity; we will calculate the dew point using the Magnus-Tetens approximation.
+
+### The YAML Configuration
+
+```yaml
+esphome:
+  name: rust_defender
+  platform: ESP32
+  board: esp32dev
+
+sensor:
+  - platform: dht
+    pin: 4
+    temperature:
+      name: "Garage Temperature"
+      id: garage_temp
+    humidity:
+      name: "Garage Humidity"
+      id: garage_humidity
+    update_interval: 60s
+
+  - platform: template
+    name: "Garage Dew Point"
+    unit_of_measurement: "°F"
+    icon: "mdi:water-percent"
+    lambda: |-
+      float t = id(garage_temp).state;
+      float rh = id(garage_humidity).state;
+      // Convert F to C for calculation
+      float t_c = (t - 32.0) * 5.0 / 9.0;
+      float a = 17.27;
+      float b = 237.7;
+      float gamma = (a * t_c) / (b + t_c) + log(rh / 100.0);
+      float dew_point_c = (b * gamma) / (a - gamma);
+      // Convert back to F
+      return (dew_point_c * 9.0 / 5.0) + 32.0;
+    update_interval: 60s
+
+  - platform: template
+    name: "Rust Risk Level"
+    lambda: |-
+      if (id(garage_humidity).state > 75) {
+        return 3.0; // Critical
+      } else if (id(garage_humidity).state > 60) {
+        return 2.0; // High
+      } else if (id(garage_humidity).state > 50) {
+        return 1.0; // Moderate
+      } else {
+        return 0.0; // Safe
+      }
+    update_interval: 60s
+```
+
+---
+
+## 4. Integrating with Home Assistant
+
+Once flashed, your ESP32 will automatically appear in Home Assistant. Now we can turn that data into action.
+
+### Creating a "Rust Defense" Dashboard
+You can use the `custom:mini-graph-card` or standard gauge cards to visualize the threat. 
+
+```yaml
+type: gauge
+entity: sensor.rust_risk_level
+min: 0
+max: 3
+severity:
+  green: 0
+  yellow: 1
+  orange: 2
+  red: 3
+name: Corrosion Threat Level
+```
+
+### Automation: The Active Defense
+The real power of this project is automation. If the risk level hits "High," we want to turn on a smart plug connected to a dehumidifier. If it hits "Critical" and the temperature is low, we might trigger a small heater to raise the surface temperature of our tools above the dew point.
+
+```yaml
+alias: "Garage: Activate Rust Defense"
+description: "Turn on dehumidifier when rust risk is high"
+trigger:
+  - platform: numeric_state
+    entity_id: sensor.rust_risk_level
+    above: 1
+action:
+  - service: switch.turn_on
+    target:
+      entity_id: switch.garage_dehumidifier
+  - service: notify.mobile_app_my_phone
+    data:
+      title: "Rust Warning!"
+      message: "Garage humidity is rising. Dehumidifier activated."
+```
+
+---
+
+## 5. Testing and Calibration
+
+No sensor is perfect. DHT22 sensors are known to drift over time or have a slight offset. 
+
+1. **The Salt Test:** You can calibrate your humidity sensor by placing it in a sealed container with a bottle cap full of damp salt. After 12 hours, the humidity should be exactly 75%. Adjust your YAML `filters` if it's off.
+2. **Placement Matters:** Don't mount your Rust Defender near the ceiling (where it's warmer) or directly on a cold concrete wall. Place it near your most valuable tools or at "chest height" for the most accurate representative data.
+
+> **Warning:** Never install electronics directly inside a car or a tool cabinet without ensuring proper ventilation. Heat buildup can skew readings.
+
+---
+
+## 6. Conclusion and Future Upgrades
+
+By building the Rust Defender, you've moved from reactive maintenance to proactive protection. You no longer have to guess if your tools are safe; you have hard data and automated guards standing watch.
+
+### Where to go from here?
+- **Multiple Nodes:** Build 2 or 3 nodes for a larger shop to identify "cold spots" where moisture accumulates.
+- **E-Ink Display:** Add a small waveshare E-Ink screen to the project box so you can see the stats at a glance without opening your phone.
+- **Tool-Specific Probes:** Use DS18B20 waterproof temperature probes taped directly to a large piece of machinery (like a milling machine) to compare the *actual* metal temperature against the dew point.
+
+Your workshop is an investment in your hobbies and your craft. Protect it with the same precision you use to build your projects.
+
+---
+
+*This article is part of our "Smart Workshop" series. Check back next week as we build a live telemetry dashboard for your car!*

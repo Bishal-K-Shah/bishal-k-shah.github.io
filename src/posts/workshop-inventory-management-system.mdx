@@ -1,0 +1,180 @@
+---
+title: 'Stop Losing 10mm Sockets: Hosting a Private Inventory System for Your Workshop'
+date: '2026-02-02'
+category: 'HomeLab'
+tags: ['Self-Hosting', 'Inventory', 'Workshop', 'Arduino', '3D Printing', 'Snipe-IT']
+featuredImage: 'https://res.cloudinary.com/daog6scxm/image/upload/v1687525693/cms/inventory-management-app/Inventory_Management_16_fgwdxq.webp'
+excerpt: 'Tired of buying the same bolt twice? Learn how to deploy Snipe-IT and build a custom ESP32 barcode scanner to track every tool and part in your shop.'
+---
+
+## Introduction: The "Where is that Bolt?" Tax
+
+Every DIYer has paid it: the "I know I have one somewhere" tax. You're in the middle of a brake job, you need a specific M8 flange bolt, you spend 45 minutes digging through greasy coffee cans, give up, drive to the hardware store, buy a 5-pack for $8, and come home only to find the original bolt sitting right on top of your toolbox.
+
+In a professional environment, this is solved with ERP (Enterprise Resource Planning) software. In a home workshop, we can do the same. By self-hosting a private inventory system and building a handheld barcode scanner, we can treat our garages like mini-warehouses.
+
+In this guide, we’ll deploy **Snipe-IT** via Docker and build a custom, ruggedized Wi-Fi barcode scanner using an ESP32.
+
+---
+
+## 1. Choosing the Right Platform
+
+There are several open-source inventory managers, each suited for different tasks. 
+
+### Inventory Software Comparison
+
+| Software | Best For | Pros | Cons |
+|----------|----------|------|------|
+| **Snipe-IT** | Tools & Assets | Powerful, barcode support, professional UI | Overkill for just "nuts and bolts" |
+| **Grocy** | Consumables | Great for oil, filters, and spray paint | UI can be cluttered |
+| **Homebox** | General Storage | Simple, lightweight, fast | Fewer enterprise features |
+| **PartKeepr** | Electronics Parts | Deep nested categories for components | Older UI, slower development |
+
+> **Pro Tip:** We are using **Snipe-IT** because its "Asset" management is perfect for tools, and its "Consumables" section handles spare parts like oil filters and brake pads beautifully.
+
+---
+
+## 2. Server Deployment: Setting Up Snipe-IT
+
+Snipe-IT requires a database (MariaDB/MySQL) and a web server. Docker Compose makes this deployment a breeze.
+
+### Docker Compose Configuration
+
+```yaml
+version: '3'
+services:
+  snipeit-mysql:
+    image: mariadb:10.5
+    container_name: snipeit-mysql
+    volumes:
+      - snipeit-db:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=snipeit
+      - MYSQL_USER=snipeit
+      - MYSQL_PASSWORD=your_password
+      - MYSQL_ROOT_PASSWORD=your_root_password
+
+  snipeit:
+    image: snipe/snipe-it:latest
+    container_name: snipeit
+    ports:
+      - "8080:80"
+    depends_on:
+      - snipeit-mysql
+    volumes:
+      - snipeit-vol:/var/www/html/storage
+    environment:
+      - APP_URL=http://your-ip:8080
+      - MYSQL_PORT_3306_TCP_ADDR=snipeit-mysql
+      - MYSQL_PORT_3306_TCP_PORT=3306
+      - MYSQL_DATABASE=snipeit
+      - MYSQL_USER=snipeit
+      - MYSQL_PASSWORD=your_password
+      - MAIL_DRIVER=log # logs mail instead of sending
+
+volumes:
+  snipeit-db:
+  snipeit-vol:
+```
+
+---
+
+## 3. Building the "Shop Scanner"
+
+While you can use the Snipe-IT mobile app, it’s not ideal when your hands are covered in grease. We’re going to build a dedicated handheld scanner that survival-ready.
+
+### Parts List
+
+| Component | Purpose | Cost |
+|-----------|---------|------|
+| ESP32 DevKit | Wi-Fi Connectivity | $6.00 |
+| GM65 Barcode Module | 1D/2D QR/Barcode Reading | $18.00 |
+| 0.96" OLED Display | User Feedback | $4.00 |
+| LiPo Battery (2000mAh)| Portable Power | $12.00 |
+| TP4056 Charger | Battery Management | $2.00 |
+
+### The Scan-to-API Logic
+The ESP32 will act as a keyboard or, better yet, send an API request directly to Snipe-IT to "check out" an item.
+
+```cpp
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+const char* ssid = "YourWiFi";
+const char* password = "YourPassword";
+const char* api_key = "Bearer YOUR_SNIPE_IT_API_TOKEN";
+const char* base_url = "http://your-ip:8080/api/v1/hardware/bytag/";
+
+void setup() {
+  Serial.begin(9600); // Connect to GM65 Module
+  WiFi.begin(ssid, password);
+}
+
+void loop() {
+  if (Serial.available()) {
+    String barcode = Serial.readString();
+    sendCheckoutRequest(barcode);
+  }
+}
+
+void sendCheckoutRequest(String tag) {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    String url = String(base_url) + tag + "/checkout";
+    http.begin(url);
+    http.addHeader("Authorization", api_key);
+    http.addHeader("Accept", "application/json");
+    
+    int httpResponseCode = http.POST("{}");
+    if (httpResponseCode > 0) {
+      Serial.println("Success!");
+    }
+    http.end();
+  }
+}
+```
+
+---
+
+## 4. 3D Printing the Rugged Case
+
+A bare circuit board won't last ten minutes in a garage. We need an enclosure that can take a drop onto concrete.
+
+### Design Principles
+1. **The Bumper:** Print an outer "skin" in **TPU** (Flexible filament). This absorbs impact.
+2. **The Shell:** Print the inner structure in **PETG** for heat resistance (garages get hot!).
+3. **The Trigger:** Design a large, tactile button that can be pressed even with work gloves.
+
+---
+
+## 5. Organizing the Shop: The Label Strategy
+
+Software is only half the battle. You need a physical labeling system.
+
+### Category Structure Examples
+
+| Category | Tag Prefix | Location |
+|----------|------------|----------|
+| **Power Tools** | PWR- | Wall Rack |
+| **Sockets & Wrenches**| HAND- | Top Drawer |
+| **Fluids (Oil/Coolant)**| FLD- | Cabinet A |
+| **Fasteners** | FST- | Small Bin Organizer |
+
+1. **Print Everything:** Snipe-IT can generate QR code labels. Use a thermal label printer (like a Brother P-Touch or Dymo) with "Industrial" tape that resists oil and UV.
+2. **Bin Locations:** Every bin should have a unique ID (e.g., A1, B4). Snipe-IT allows you to map assets to these locations.
+
+---
+
+## 6. Conclusion: The Joy of a Managed Shop
+
+It takes a weekend to set up, but the first time you’re working on your car and you instantly know you have exactly three spare oil filters and where they are located, the effort pays for itself. No more midnight runs to the parts store. No more lost 10mm sockets (well, maybe fewer of them).
+
+### Next Steps
+- **Automation:** Integrate Snipe-IT with Home Assistant; turn the workbench light red if a tool is checked out for more than 24 hours.
+- **Maintenance Logs:** Use Snipe-IT to track service history for your lawnmower, compressor, and welder.
+
+Stay organized, and happy building!
+
+---
+
+*This is the fourth article in our "Smart Workshop" series. Check back next week as we build a ruggedized shop tablet!*

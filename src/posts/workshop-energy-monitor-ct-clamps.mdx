@@ -1,0 +1,157 @@
+---
+title: 'Tracking Welder & Compressor Power Usage with CT Clamps and ESPHome'
+date: '2026-02-04'
+category: 'Electronics'
+tags: ['ESP32', 'ESPHome', 'Energy Monitoring', 'Workshop', 'Home Assistant']
+featuredImage: 'https://i.ytimg.com/vi/JlQ16FEl4zI/hq720.jpg'
+excerpt: 'Stop tripping breakers and start tracking costs. Learn how to safely monitor high-power 240V workshop tools using non-invasive CT clamps and ESP32.'
+---
+
+## Introduction: The High-Power Workshop
+
+A workshop isn't like a living room. While a TV or a laptop pulls a few dozen watts, a MIG welder, a 60-gallon air compressor, or a heavy-duty wood lathe can pull thousands of watts in an instant. This high power consumption presents three challenges:
+
+1. **Cost:** Running a 5HP compressor all day isn't cheap.
+2. **Safety:** Overloading a circuit can lead to tripped breakers or, worse, electrical fires.
+3. **Logistics:** If you know exactly when your compressor is cycling too frequently, you might catch a major air leak before it burns out the motor.
+
+Standard "smart plugs" are rated for 15A at 120V—totally useless for a 240V welder. To monitor these beasts, we need **Current Transformer (CT) Clamps**. They are non-invasive, safe, and can measure hundreds of amps without you ever touching a bare wire.
+
+In this guide, we’ll build a multi-channel energy monitor using an ESP32 and ESPHome to track your shop's heaviest hitters.
+
+---
+
+## 1. Electrical Safety: Read This First!
+
+Working around electrical panels and 240V lines is dangerous. While CT clamps are "non-invasive" (they clip *around* the wire, not into it), you still need to open your electrical panel or a junction box to install them.
+
+> **CRITICAL WARNING:** 
+> - **Never** open your electrical panel if you are not comfortable and knowledgeable about high-voltage safety.
+> - **Always** turn off the main breaker before removing the panel cover.
+> - Even with the main breaker off, the **lugs coming into the top of the panel are still live**. 
+> - If you have any doubt, hire a licensed electrician to clip the clamps on for you. It’s a 5-minute job for them.
+
+---
+
+## 2. Hardware Selection: The Tools for the Job
+
+We need CT clamps that match the current rating of our tools and an ESP32 to process the analog signals.
+
+### Bill of Materials
+
+| Component | Purpose | Approx. Cost |
+|-----------|---------|--------------|
+| **ESP32 DevKit** | The "Brain" | $6.00 |
+| **SCT-013-000** | 100A CT Clamp (for Main lines) | $12.00 |
+| **SCT-013-030** | 30A CT Clamp (for Welder/Compressor) | $10.00 |
+| **ADS1115** | 16-bit ADC (for high precision) | $8.00 |
+| **3.5mm Audio Jacks** | Connectors for CT Clamps | $2.00 |
+| **Resistors/Caps** | Burden resistors and bias circuit | $1.00 |
+
+### Choosing the Right CT Clamp
+
+| Tool | Typical Peak Amps | Recommended CT |
+|------|-------------------|----------------|
+| Small Air Compressor | 15A (120V) | SCT-013-020 (20A) |
+| Large 60gal Compressor | 25A (240V) | SCT-013-030 (30A) |
+| MIG/TIG Welder | 30-50A (240V) | SCT-013-050 (50A) |
+| Shop Total (Main Lugs)| 60-100A | SCT-013-000 (100A) |
+
+---
+
+## 3. How CT Clamps Work (The 30-Second Theory)
+
+A CT clamp is basically a transformer. When AC current flows through a wire, it creates a magnetic field. The clamp "catches" this field and induces a much smaller current in its own coil. 
+
+**Important:** A CT clamp must only go around **one** of the wires (the hot wire). if you clip it around a whole power cord (hot + neutral), the fields cancel each other out, and you get a reading of zero.
+
+---
+
+## 4. Hardware Wiring: The Bias Circuit
+
+The ESP32’s analog pins can only read voltages between 0V and 3.3V. However, the output of a CT clamp is an AC wave that goes positive and negative. We need a "DC Bias" circuit to shift that wave so it sits right in the middle (at 1.65V).
+
+### The Circuit Diagram (Conceptual)
+1. Two 100k resistors create a voltage divider between 3.3V and GND.
+2. A 10uF capacitor stabilizes this 1.65V midpoint.
+3. One leg of the CT clamp connects to this 1.65V midpoint.
+4. The other leg goes to the ESP32 (or ADS1115) analog input.
+
+> **Pro Tip:** Use the **ADS1115 ADC module** instead of the ESP32’s built-in analog pins. The ESP32's ADC is notoriously "noisy" and non-linear, which makes energy monitoring much less accurate.
+
+---
+
+## 5. ESPHome Configuration: Calibration and Logic
+
+We’ll use the `ct_clamp` component in ESPHome. This component samples the AC wave at high speed and calculates the Root Mean Square (RMS) current.
+
+### The YAML Configuration
+
+```yaml
+sensor:
+  - platform: ads1115
+    multiplexer: 'A0_GND'
+    gain: 4.096
+    name: "ADS1115 Channel 0"
+    update_interval: 10s
+    id: ads_ch0
+
+  - platform: ct_clamp
+    sensor: ads_ch0
+    name: "Welder Current"
+    update_interval: 10s
+    unit_of_measurement: "A"
+    # Calibration: clip it on a known 100W lightbulb (0.83A) 
+    # and adjust the 'to' value until it matches.
+    filters:
+      - calibrate_linear:
+          - 0 -> 0
+          - 0.05 -> 0.83 
+      - multiply: 240 # Convert Amps to Watts for 240V
+    id: welder_power
+
+  - platform: template
+    name: "Welder Power (Watts)"
+    unit_of_measurement: "W"
+    lambda: return id(welder_power).state;
+```
+
+---
+
+## 6. Home Assistant Dashboard and Analysis
+
+Once your data is flowing into Home Assistant, you can create some truly useful insights.
+
+### Identifying "The Leaks"
+If your air compressor power graph shows a 3000W spike every 2 hours while you aren't in the shop, **you have an air leak**. Over time, those 2-minute cycles add up to significant electricity costs and wear and tear on the pump.
+
+### Automations for Safety
+```yaml
+alias: "Warning: Welder Left On"
+trigger:
+  - platform: numeric_state
+    entity_id: sensor.welder_power
+    above: 10
+    for: "01:00:00" # If welder is drawing power for > 1 hour
+action:
+  - service: notify.mobile_app_phone
+    data:
+      title: "Workshop Alert"
+      message: "The welder has been active for over an hour. Did you forget to turn it off?"
+```
+
+---
+
+## 7. Conclusion: Data-Driven Craftsmanship
+
+By monitoring your high-power tools, you've added a layer of intelligence to your shop that most professional garages don't even have. You can now track the true cost of a project, identify failing machinery before it dies, and ensure your electrical system isn't being pushed to its limits.
+
+### Next Steps
+- **Voltage Monitoring:** Add a small transformer to monitor the *actual* AC voltage. This allows for "True Power" (Watts) calculations instead of "Apparent Power" (VA).
+- **Run-Time Tracking:** Use Home Assistant's `history_stats` to track exactly how many hours of "arc time" you have on your welder to stay ahead of consumable changes.
+
+Stay safe, watch your loads, and happy building!
+
+---
+
+*This is the sixth article in our "Smart Workshop" series. Check back next week as we automate workshop dust collection!*

@@ -1,0 +1,194 @@
+---
+title: 'Protect Your Project Car: Setting Up Frigate NVR with Local AI Object Detection'
+date: '2026-02-01'
+category: 'HomeLab'
+tags: ['Frigate', 'NVR', 'AI', 'Security', 'Home Assistant', 'Docker']
+featuredImage: 'https://miro.medium.com/v2/resize:fit:1400/1*BpapRETf-AXdPwLl6euVhg.png'
+excerpt: 'Stop relying on leaky cloud cameras. Build a private, high-performance security system for your garage using Frigate NVR and local AI object detection.'
+---
+
+## Introduction: The Problem with Cloud Cameras
+
+Your garage is more than just a place to park; it’s where your most valuable tools, project cars, and memories live. Naturally, you want to keep an eye on it. However, the standard consumer solution—cloud-based cameras—has three major flaws:
+
+1. **Privacy:** Your video is sent to a third-party server, often with questionable security.
+2. **Reliability:** If your internet goes down, so does your security.
+3. **Intelligence:** Most cloud cameras "detect motion," but in a workshop, that usually means every moth or swaying spiderweb triggers a false alarm.
+
+The solution is **Frigate NVR**. It’s an open-source, local-first NVR (Network Video Recorder) that uses real-time AI to identify *exactly* what is in your camera’s view. It doesn’t just see "motion"; it sees a "person," a "car," or a "dog," and it does it all on your local hardware without a single byte leaving your house.
+
+---
+
+## 1. Hardware Requirements: The Foundation of Speed
+
+AI object detection is computationally expensive. Running it on a standard CPU will likely result in high latency and melting hardware. To run Frigate effectively, you need a **Coral TPU**.
+
+### Hardware Recommendations
+
+| Component | Recommendation | Why? |
+|-----------|----------------|------|
+| **Server** | Mini PC (Intel NUC / HP ProDesk) | Better price/performance than a Pi for video encoding. |
+| **Accelerator** | Google Coral TPU (USB or M.2) | Offloads AI detection from CPU (required for real-time). |
+| **Storage** | 1TB+ WD Purple / Seagate Skyhawk | Surveillance-rated drives handle constant writing. |
+| **Cameras** | Amcrest / Reolink / Dahua PoE | Must support ONVIF/RTSP streams. |
+
+### Camera Selection Comparison
+
+| Feature | PoE (Power over Ethernet) | WiFi Cameras |
+|---------|---------------------------|--------------|
+| **Stability** | High | Moderate/Low |
+| **Installation** | Harder (runs CAT6) | Easier (needs power only) |
+| **Bandwidth** | Dedicated | Shared with Home WiFi |
+| **Frigate Support** | Excellent | Variable (latency issues) |
+
+> **Pro Tip:** If you can run a wire, **always choose PoE**. WiFi cameras often struggle with the constant high-bandwidth streams Frigate requires for 24/7 analysis.
+
+---
+
+## 2. Docker Configuration: Deploying the Sentry
+
+Frigate runs best as a Docker container. We’ll use Docker Compose to manage the container and its hardware dependencies.
+
+### The Docker Compose File
+
+```yaml
+version: '3.9'
+services:
+  frigate:
+    container_name: frigate
+    privileged: true # needed for Coral/GPU access
+    restart: unless-stopped
+    image: ghcr.io/blakeblackshear/frigate:stable
+    shm_size: "128mb" # critical for high-res streams
+    devices:
+      - /dev/bus/usb:/dev/bus/usb # for USB Coral
+      # - /dev/dri/renderD128:/dev/dri/renderD128 # for Intel GPU acceleration
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./config:/config
+      - /mnt/storage/frigate/recordings:/media/frigate
+      - type: tmpfs # reduces SD card/SSD wear
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "5000:5000"
+      - "8554:8554" # RTSP feeds
+      - "8555:8555" # WebRTC
+    environment:
+      FRIGATE_MQTT_PASSWORD: password
+```
+
+---
+
+## 3. Frigate Configuration: Defining Your World
+
+The heart of Frigate is the `config.yml`. This is where you define your cameras, detection zones, and what objects you want to track.
+
+### Example `config.yml`
+
+```yaml
+mqtt:
+  host: 192.168.1.10
+  user: mqtt_user
+  password: mqtt_password
+
+detectors:
+  coral:
+    type: edgetpu
+    device: usb
+
+cameras:
+  garage_shop:
+    ffmpeg:
+      inputs:
+        - path: rtsp://admin:pass@192.168.1.50:554/live
+          roles:
+            - detect
+            - record
+    detect:
+      enabled: True
+      width: 1280
+      height: 720
+      fps: 5 # 5fps is plenty for AI detection
+    objects:
+      track:
+        - person
+        - car
+        - motorcycle
+    zones:
+      tool_chest_area:
+        coordinates: 123,456,789,012... # define polygon
+      workbench:
+        coordinates: 111,222,333,444...
+    record:
+      enabled: True
+      retain:
+        days: 7
+        mode: all
+      events:
+        retain:
+          default: 30
+          mode: active_objects
+```
+
+---
+
+## 4. Setting Up Detection Zones and Masks
+
+A "Zone" is a specific area you want to monitor (e.g., your tool chest). A "Mask" is an area you want Frigate to *ignore* (e.g., a tree that sways in the wind).
+
+### Tuning for Zero False Alarms
+1. **Motion Masks:** Use the Frigate UI to draw masks over anything that moves but isn't relevant (ceiling fans, leaves).
+2. **Object Filters:** If you have a car parked in the garage, it will always be detected as a "car." Use `filters` to tell Frigate to only notify you if the "car" moves or if a *new* car appears.
+
+> **Warning:** Be careful not to mask areas where a person might actually appear. Masks prevent *all* detection in that area.
+
+---
+
+## 5. Home Assistant Integration: Smart Notifications
+
+Frigate’s real power comes when you connect it to Home Assistant. You can set up notifications that send a snapshot of the detected object directly to your phone.
+
+### The "Sentry Alert" Automation
+
+```yaml
+alias: "Security: Person Detected in Garage"
+trigger:
+  - platform: mqtt
+    topic: frigate/events
+action:
+  - condition: template
+    value_template: "{{ wait.json['after']['label'] == 'person' }}"
+  - service: notify.mobile_app_phone
+    data:
+      title: "Garage Alert!"
+      message: "A person was detected near the workbench."
+      data:
+        image: "https://your-ha-url.com/api/frigate/notifications/{{ trigger.payload_json['after']['id'] }}/snapshot.jpg"
+        clickAction: "/lovelace/security"
+```
+
+---
+
+## 6. Fine-Tuning and Maintenance
+
+- **Storage Management:** Frigate’s `record` settings are powerful. You can record 24/7 at low resolution but keep high-res "events" for 30 days.
+- **CPU vs. GPU:** Ensure you have hardware acceleration configured for `ffmpeg`. This reduces CPU usage significantly by using the Intel or Nvidia GPU to decode the video streams before passing them to the Coral TPU.
+
+---
+
+## 7. Conclusion: Peace of Mind, Locally Hosted
+
+You now have a professional-grade security system that rivals enterprise solutions. Your data stays on your server, your notifications are instant and accurate, and you finally know exactly what is happening in your shop—whether it’s a delivery person at the door or a curious cat investigating your project car.
+
+### Future Improvements
+- **License Plate Recognition:** Use the `Double Take` or `Plate Recognizer` add-on to identify specific vehicles.
+- **Audio Detection:** Add microphones to detect the sound of breaking glass or power tools.
+- **Smart Lighting:** Link Frigate to your garage lights; if a person is detected after 10 PM, flood the area with light.
+
+Stay secure, and happy hosting!
+
+---
+
+*This is the third article in our "Smart Workshop" series. Check back next week for our guide on workshop inventory management!*

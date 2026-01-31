@@ -1,0 +1,55 @@
+1. The "Rust Defender" Climate System
+Title (SEO Hook): Prevent Rust: Building a Smart Garage Climate Monitor with ESP32 & Home Assistant
+
+Target Keywords: ESP32 DHT22 tutorial, Home Assistant humidity automation, garage rust prevention, DIY smart workshop, dew point calculator code.
+
+Short Description: A guide on building a custom sensor node (Electronics) to track humidity and dew point in a garage. It covers the Python/YAML code to calculate "Rust Risk" (Coding) and triggers a smart plug to turn on a heater or dehumidifier to protect expensive tools and project cars (Mechanical/Homelab).
+
+2. The Live Telemetry Dashboard
+Title (SEO Hook): DIY Telemetry: Streaming Live OBD2 Car Data to a Self-Hosted Grafana Dashboard
+
+Target Keywords: OBD2 to Grafana, Raspberry Pi car computer, InfluxDB visualization, CAN bus Python tutorial, real-time vehicle diagnostics.
+
+Short Description: A tutorial on using a Bluetooth OBD2 dongle or CAN hat (Electronics) to pull live engine data (RPM, Temps, Fuel Trims) from a car. You script a Python gateway (Coding) to push this data to a local server running InfluxDB and Grafana (Homelab) for F1-style race analysis (Mechanical).
+
+3. The AI Security Sentry
+Title (SEO Hook): Protect Your Project Car: Setting Up Frigate NVR with Local AI Object Detection
+
+Target Keywords: Frigate NVR setup, Google Coral accelerator, local AI security camera, self-hosted CCTV, license plate recognition home assistant.
+
+Short Description: Ditch cloud cameras for a private, self-hosted NVR using Frigate. This covers mounting PoE cameras in the shop (Mechanical), configuring the Docker container (Homelab), and tuning the AI model to distinguish between a "cat" and a "person" approaching your toolbox (Coding/AI).
+
+4. The "Infinite Parts" Database
+Title (SEO Hook): Stop Losing 10mm Sockets: Hosting a Private Inventory System for Your Workshop
+
+Target Keywords: Self-hosted inventory management, Snipe-IT for home use, DIY barcode scanner, workshop organization software, managing spare parts database.
+
+Short Description: Implementing an enterprise-grade ERP like Snipe-IT or Grocy on a home server (Homelab) to track oil filters, bolts, and tools. Includes building a handheld wireless barcode scanner using an Arduino/ESP32 (Electronics) and 3D printing a rugged case (Mechanical).
+
+5. The Rugged Shop Interface
+Title (SEO Hook): Building a Grease-Proof Raspberry Pi Tablet for Digital Service Manuals
+
+Target Keywords: Raspberry Pi touch screen kiosk, ruggedized tablet build, viewing PDF manuals on Linux, 3D printed tablet case, workshop PC build.
+
+Short Description: Creating a dedicated "Shop PC" that can survive oil and impact. Involves 3D printing a TPU bumper case (Mechanical), wiring a Pi to a touchscreen (Electronics), and coding a kiosk-mode interface that auto-loads repair PDFs from your NAS (Coding/Homelab).
+
+6. The High-Power Energy Monitor
+Title (SEO Hook): Tracking Welder & Compressor Power Usage with CT Clamps and ESPHome
+
+Target Keywords: DIY energy monitor ESP32, measuring 240V power usage, ESPHome CT clamp tutorial, workshop electrical efficiency, welder power consumption.
+
+Short Description: Mechanics use power-hungry tools. This article explains how to safely install non-invasive CT current sensors (Electronics) on 240V lines. It covers the calibration code in ESPHome (Coding) and analyzing the surge current of air compressors to prevent breaker trips (Mechanical/Homelab).
+
+7. The "Hands-Free" Dust Collector
+Title (SEO Hook): Automating Dust Collection: Current Sensing Blast Gates with Arduino
+
+Target Keywords: Automated dust collection system, current sensor Arduino, DIY blast gates, smart workshop dust control, miter saw automation.
+
+Short Description: A classic mechanical upgrade. When you pull the trigger on a saw (Mechanical), a current sensor detects the load (Electronics) and tells a microcontroller to automatically open the specific vacuum gate and turn on the dust collector (Coding).
+
+8. The Old-School ECU Revival
+Title (SEO Hook): Reverse Engineering an 80s ECU: Reading Old Car Chips with a Modern EEPROM Programmer
+
+Target Keywords: ECU chiptuning tutorial, EEPROM reader writer, reverse engineering hex code, car ECU mapping, DIY ECU tuning.
+
+Short Description: A deep dive into "Archaeological Electronics." Removing the chip from an old car computer (Mechanical), reading the raw Hex data with a modern programmer (Electronics), and writing a Python script to visualize the fuel maps (Coding).
