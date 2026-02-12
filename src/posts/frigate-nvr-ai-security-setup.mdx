@@ -1,10 +1,10 @@
 ---
-title: 'Protect Your Project Car: Setting Up Frigate NVR with Local AI Object Detection'
+title: 'Frigate NVR Setup Guide: Local AI Security for Your Garage (2026)'
 date: '2026-02-01'
 category: 'HomeLab'
-tags: ['Frigate', 'NVR', 'AI', 'Security', 'Home Assistant', 'Docker']
+tags: ['Frigate', 'NVR', 'AI', 'Security', 'Home Assistant', 'Docker', 'Coral TPU', 'object-detection', 'garage-security', 'privacy', 'self-hosted']
 featuredImage: 'https://miro.medium.com/v2/resize:fit:1400/1*BpapRETf-AXdPwLl6euVhg.png'
-excerpt: 'Stop relying on leaky cloud cameras. Build a private, high-performance security system for your garage using Frigate NVR and local AI object detection.'
+excerpt: 'Stop relying on leaky cloud cameras. Build a private, high-performance security system with Frigate NVR and Coral TPU—local AI object detection, Home Assistant integration, zero cloud.'
 ---
 
 ## Introduction: The Problem with Cloud Cameras
@@ -17,11 +17,35 @@ Your garage is more than just a place to park; it’s where your most valuable t
 
 The solution is **Frigate NVR**. It’s an open-source, local-first NVR (Network Video Recorder) that uses real-time AI to identify *exactly* what is in your camera’s view. It doesn’t just see "motion"; it sees a "person," a "car," or a "dog," and it does it all on your local hardware without a single byte leaving your house.
 
+**In this guide, you'll learn:**
+- How to choose hardware (including the Coral TPU) and cameras
+- Docker deployment and Frigate configuration
+- Setting up detection zones and motion masks for zero false alarms
+- Home Assistant integration for instant phone alerts
+- Troubleshooting common issues and cost breakdown
+
+---
+
+## Frigate vs Alternatives: Why Go Local?
+
+Before diving in, here's how Frigate stacks up against other NVR options:
+
+| NVR | AI Detection | Privacy | Cost | Best For |
+|-----|--------------|---------|------|----------|
+| **Frigate** | Local (Coral/GPU) | Full local | Free | Homelab, Home Assistant users |
+| **Blue Iris** | Local (optional) | Local | ~$60 | Windows users |
+| **Shinobi** | Plugin-based | Variable | Free | Multi-tenant setups |
+| **ZoneMinder** | Basic motion | Local | Free | Legacy systems |
+
+Frigate is ideal if you want privacy-first, AI-powered object detection that integrates seamlessly with Home Assistant. No cloud, no subscriptions, no vendor lock-in.
+
 ---
 
 ## 1. Hardware Requirements: The Foundation of Speed
 
 AI object detection is computationally expensive. Running it on a standard CPU will likely result in high latency and melting hardware. To run Frigate effectively, you need a **Coral TPU**.
+
+For the server itself, an Intel N100 mini PC or similar offers excellent price/performance for video encoding and can run Frigate alongside other homelab services. See our [in-depth N100 mini PC power consumption and performance review](/blog/low-power-homelab-n100-mini-pc) for real-world measurements and hardware comparisons.
 
 ### Hardware Recommendations
 
@@ -31,6 +55,8 @@ AI object detection is computationally expensive. Running it on a standard CPU w
 | **Accelerator** | Google Coral TPU (USB or M.2) | Offloads AI detection from CPU (required for real-time). |
 | **Storage** | 1TB+ WD Purple / Seagate Skyhawk | Surveillance-rated drives handle constant writing. |
 | **Cameras** | Amcrest / Reolink / Dahua PoE | Must support ONVIF/RTSP streams. |
+
+![Google Coral accelerator for local AI object detection](https://api.proxpc.com/media/uploads/2024/09/05/24_google_coral_device.webp "Coral TPU offloads AI inference from the CPU for real-time detection")
 
 ### Camera Selection Comparison
 
@@ -43,11 +69,23 @@ AI object detection is computationally expensive. Running it on a standard CPU w
 
 > **Pro Tip:** If you can run a wire, **always choose PoE**. WiFi cameras often struggle with the constant high-bandwidth streams Frigate requires for 24/7 analysis.
 
+### What Will This Cost?
+
+| Component | Typical Cost |
+|-----------|--------------|
+| Coral TPU (USB or M.2) | $60–80 |
+| Mini PC (if needed) | $150–250 |
+| PoE camera | $40–80 |
+| Storage (1TB surveillance) | ~$50 |
+| **Total (new build)** | **$300–460** |
+
+Cloud cameras run $10–30/month. A Frigate setup pays for itself in 12–24 months—and you own the hardware forever.
+
 ---
 
 ## 2. Docker Configuration: Deploying the Sentry
 
-Frigate runs best as a Docker container. We’ll use Docker Compose to manage the container and its hardware dependencies.
+Frigate runs best as a Docker container. New to Docker? See our [guide to self-hosting with Docker](/blog/self-hosting-with-docker) for the fundamentals. We’ll use Docker Compose to manage the container and its hardware dependencies.
 
 ### The Docker Compose File
 
@@ -83,7 +121,9 @@ services:
 
 ## 3. Frigate Configuration: Defining Your World
 
-The heart of Frigate is the `config.yml`. This is where you define your cameras, detection zones, and what objects you want to track.
+The heart of Frigate is the `config.yml`. This is where you define your cameras, detection zones, and what objects you want to track. Draw zones and masks directly in the Frigate UI—coordinates are auto-generated when you outline each area.
+
+![Frigate NVR AI object detection interface](https://res.cloudinary.com/hobbyist-hideaway-bishal/image/upload/f_auto,q_auto/v1770896387/Frigate_Object_Detection_fdimbp.png "Frigate dashboard with live view and object detection")
 
 ### Example `config.yml`
 
@@ -118,9 +158,9 @@ cameras:
         - motorcycle
     zones:
       tool_chest_area:
-        coordinates: 123,456,789,012... # define polygon
+        coordinates: 320,240,640,240,640,480,320,480 # draw in Frigate UI; coordinates are auto-generated
       workbench:
-        coordinates: 111,222,333,444...
+        coordinates: 100,200,400,200,400,400,100,400
     record:
       enabled: True
       retain:
@@ -148,7 +188,7 @@ A "Zone" is a specific area you want to monitor (e.g., your tool chest). A "Mask
 
 ## 5. Home Assistant Integration: Smart Notifications
 
-Frigate’s real power comes when you connect it to Home Assistant. You can set up notifications that send a snapshot of the detected object directly to your phone.
+Frigate’s real power comes when you connect it to Home Assistant. You can set up notifications that send a snapshot of the detected object directly to your phone. For even smarter automation, combine Frigate with [mmWave presence sensors](/blog/esp32-mmwave-presence-sensor-home-assistant) to know when someone is in the room versus just passing by.
 
 ### The "Sentry Alert" Automation
 
@@ -178,12 +218,60 @@ action:
 
 ---
 
-## 7. Conclusion: Peace of Mind, Locally Hosted
+## 7. Troubleshooting Common Issues
+
+### Coral TPU Not Detected
+
+Run `lsusb` (Linux) or check Device Manager (Windows) to verify the Coral appears. If it doesn't show up:
+- Try a different USB port (USB 3.0 required)
+- Ensure the container has `privileged: true` and the correct `devices:` mapping
+- On Linux, add udev rules so the Coral is accessible: `sudo usermod -aG plugdev $USER` (then reboot)
+
+### High CPU Usage
+
+Enable ffmpeg hardware acceleration. Uncomment the `devices` line for Intel GPU (`/dev/dri/renderD128`) or add the equivalent for NVIDIA/AMD. This offloads video decoding from the CPU to the GPU.
+
+### Too Many False Positives
+
+Use motion masks to ignore areas that move but aren't relevant (trees, ceiling fans). Add object filters to ignore stationary cars or pets you don't care about. Lower `fps` in the detect section (5 fps is usually enough).
+
+### WebRTC or Stream Won't Load
+
+Check that port 8555 is open and not blocked by a firewall. Ensure your cameras support RTSP—some budget cameras only offer proprietary protocols that Frigate can't use.
+
+---
+
+## 8. FAQ: Questions People Actually Ask
+
+### Can Frigate run without a Coral TPU?
+
+Yes, but it will be slower and more CPU-intensive. A Coral TPU handles 100+ detections per second; on CPU alone you might get 5–10 fps with noticeable lag. For 1–2 cameras, CPU-only can work. For more, the Coral is essential.
+
+### Is Frigate free?
+
+Yes. Frigate is open-source (MIT license) and completely free. There is an optional paid add-on called Frigate+ with models trained on real security footage—but the core software costs nothing.
+
+### How many cameras can one Coral handle?
+
+A single USB Coral can typically handle 4–6 cameras at 5 fps each, depending on resolution. For 8+ cameras, consider a second Coral or an M.2 Coral for better throughput.
+
+### Does Frigate work with WiFi cameras?
+
+It can, but we don't recommend it. WiFi cameras often have latency, dropouts, and bandwidth issues that frustrate 24/7 recording and real-time AI analysis. PoE is far more reliable.
+
+### Can I use Frigate without Home Assistant?
+
+Yes. Frigate works standalone. You lose the tight integration (automations, notifications, dashboards), but MQTT and the built-in UI still give you event viewing and recordings. Many people run Frigate without HA.
+
+---
+
+## 9. Conclusion: Peace of Mind, Locally Hosted
 
 You now have a professional-grade security system that rivals enterprise solutions. Your data stays on your server, your notifications are instant and accurate, and you finally know exactly what is happening in your shop—whether it’s a delivery person at the door or a curious cat investigating your project car.
 
 ### Future Improvements
 - **License Plate Recognition:** Use the `Double Take` or `Plate Recognizer` add-on to identify specific vehicles.
+- **Facial Recognition:** Add the Double Take add-on for recognizing known faces versus strangers.
 - **Audio Detection:** Add microphones to detect the sound of breaking glass or power tools.
 - **Smart Lighting:** Link Frigate to your garage lights; if a person is detected after 10 PM, flood the area with light.
 
@@ -191,4 +279,4 @@ Stay secure, and happy hosting!
 
 ---
 
-*This is the third article in our "Smart Workshop" series. Check back next week for our guide on workshop inventory management!*
+*This is the third article in our "Smart Workshop" series. Read our [workshop inventory management guide](/blog/workshop-inventory-management-system) to track every tool and part in your shop.*
