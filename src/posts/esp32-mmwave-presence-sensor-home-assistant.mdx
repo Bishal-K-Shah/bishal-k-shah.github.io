@@ -1,55 +1,39 @@
 ---
-title: 'ESP32 & Home Assistant: Building a Presence Sensor with mmWave'
+title: 'ESP32 mmWave Presence Sensor: LD2410 + ESPHome Guide (2026)'
 date: '2026-02-01'
 category: 'Electronics'
 tags: ['esp32', 'home-assistant', 'mmwave', 'ld2410', 'esphome', 'smart-home', 'sensors']
 featuredImage: 'https://i.ytimg.com/vi/Gb-4l93st8A/maxresdefault.jpg'
-excerpt: 'Build an advanced presence detection sensor using ESP32 and mmWave technology, replacing traditional PIR sensors with more accurate, reliable motion and presence detection for Home Assistant automation.'
+excerpt: 'Build an LD2410 mmWave presence sensor with ESP32 and ESPHome. Replace PIR sensors with accurate occupancy detection for Home Assistant—~$15–20, no cameras.'
 ---
 
 Traditional PIR (Passive Infrared) motion sensors have been the go-to solution for detecting movement in smart homes for years. But they have limitations: they only detect motion, not presence. They can't tell if someone is sitting still in a room, leading to lights turning off while you're reading or working.
 
 **mmWave (millimeter wave) radar sensors** solve this problem. Using radar technology similar to what's in modern smartphones, these sensors can detect both motion and static presence—knowing when someone is in a room even if they're not moving. Combined with an **ESP32** microcontroller and **Home Assistant**, you can build a presence detection system that's more accurate and reliable than anything you can buy off the shelf.
 
+**In this guide, you'll learn:**
+- Wiring the LD2410 to ESP32
+- ESPHome configuration and Home Assistant discovery
+- Motion vs presence automations
+- Fine-tuning sensitivity and troubleshooting
+- Cost breakdown (~$15–20 total)
+
 ## Why mmWave Over PIR?
 
-### PIR Sensor Limitations
+| Aspect | PIR Sensors | mmWave (LD2410) |
+|--------|-------------|-----------------|
+| **Motion detection** | Yes | Yes |
+| **Presence detection (stationary)** | No—lights turn off while you sit | Yes—knows when someone is in the room |
+| **False positives** | Pets, sunlight, heating vents | Configurable; less prone |
+| **Detection range** | 5–10m, limited field of view | 0.75–6m, configurable zones |
+| **Response time** | Slow | Fast (up to 100Hz) |
+| **Works in darkness** | No (needs IR contrast) | Yes—radar, not optical |
+| **Through thin materials** | No | Yes (drywall, glass) |
+| **Distance measurement** | No | Yes |
+| **Real-world pain** | Lights off while reading, misses slow movement | Accurate occupancy; fewer false alarms |
 
-**Motion-Only Detection:**
-- Triggers only when movement occurs
-- Can't detect stationary people
-- Prone to false positives (pets, sunlight)
-- Limited range and field of view
-- Slow response time
 
-**Real-World Problems:**
-- Lights turn off while you're sitting at a desk
-- False triggers from heating vents
-- Misses slow movements
-- Doesn't work well in corners
-
-### mmWave Advantages
-
-**Presence Detection:**
-- Detects both motion and static presence
-- Knows when someone is in a room, even if still
-- More accurate occupancy detection
-
-**Better Performance:**
-- Faster response time
-- Wider detection range
-- More reliable in various conditions
-- Less prone to false positives
-- Works through thin materials (drywall, glass)
-
-**Advanced Features:**
-- Distance measurement
-- Multiple target detection
-- Movement speed detection
-- Configurable sensitivity
-
-![Electronics components on breadboard](https://www.electroniclinic.com/wp-content/uploads/2025/04/C4001-mmWave-Human-Detection-Sensor-with-Arduino-and-ESP32.webp "ESP32 and sensor components")
-
+![ESP32 and LD2410 mmWave sensor on breadboard](https://www.electroniclinic.com/wp-content/uploads/2025/04/C4001-mmWave-Human-Detection-Sensor-with-Arduino-and-ESP32.webp "C4001 mmWave Human Detection Sensor")
 ## Understanding mmWave Technology
 
 mmWave radar operates in the 24GHz or 60GHz frequency bands, using radio waves to detect objects. Unlike PIR sensors that detect heat, mmWave sensors detect the reflection of radio waves, allowing them to:
@@ -61,7 +45,13 @@ mmWave radar operates in the 24GHz or 60GHz frequency bands, using radio waves t
 
 ### LD2410 Sensor Overview
 
-The **HiLink LD2410** is one of the most popular mmWave sensors for DIY projects:
+<img 
+  src="https://how2electronics.com/wp-content/uploads/2025/02/HiLink-Millimeter-Wave-Presence-Sensors.jpg" 
+  alt="LD2410 24GHz radar sensor module with antenna and UART pins" 
+  className="max-w-lg mx-auto rounded-xl border border-border/50"
+/>
+
+The **HiLink LD2410** is one of the most popular mmWave sensors for DIY projects. Variants include the standard LD2410 (6m range), LD2410C (compact form factor), and LD2410B/HC (extended 8m+ range). Most tutorials use the standard LD2410; ESPHome config is similar across variants.
 
 **Specifications:**
 - Frequency: 24GHz
@@ -95,6 +85,18 @@ The **HiLink LD2410** is one of the most popular mmWave sensors for DIY projects
 - 3D printed enclosure
 - Status LED
 - Resistors (for LED if used)
+
+### What Will This Cost?
+
+| Component | Typical Cost |
+|-----------|--------------|
+| LD2410 mmWave module | $8–15 |
+| ESP32 DevKit | $5–10 |
+| Jumper wires, breadboard | $2–5 |
+| 5V power supply | $3–8 (or reuse) |
+| **Total** | **~$15–25** |
+
+Commercial presence sensors run $50–150+. This DIY build delivers the same (or better) accuracy at a fraction of the cost.
 
 ### ESP32 Board Options
 
@@ -146,9 +148,11 @@ TX       →      GPIO 4
 RX       →      GPIO 5
 ```
 
+![LD2410 to ESP32 wiring diagram](https://smarthomescene.com/wp-content/uploads/2023/12/diy-presence-sensor-ld2410-esphome-wiring-diagram-smarthomescene-1024x768.jpg.webp "Breadboard wiring showing VCC, GND, TX, RX connections between LD2410 and ESP32")
+
 ## Software Setup: ESPHome
 
-**ESPHome** is the easiest way to integrate ESP32 devices with Home Assistant. It provides a simple YAML-based configuration system.
+**ESPHome** is the easiest way to integrate ESP32 devices with Home Assistant. It provides a simple YAML-based configuration system. For another ESP32 + ESPHome + Home Assistant project, see our [garage climate monitor](/blog/rust-defender-climate-monitor) that protects tools from rust.
 
 ### Installing ESPHome
 
@@ -258,6 +262,8 @@ status_led:
     inverted: true
 ```
 
+![ESPHome dashboard with presence sensor device](https://content.instructables.com/FTX/MLFF/ML5UJB1V/FTXMLFFML5UJB1V.png?frame=true&width=1024&height=1024&fit=bounds "ESPHome web UI showing device list and Install button")
+
 ### Compiling and Flashing
 
 1. **Compile the firmware:**
@@ -281,9 +287,10 @@ If ESPHome is properly configured, the device will automatically appear in Home 
 3. The presence sensor should appear automatically
 4. Entities will be created for each sensor
 
+
 ### Manual Configuration
 
-If automatic discovery doesn't work, add manually:
+If automatic discovery doesn't work, add manually. Ensure the rest of your ESPHome config matches the device; discovery usually works without manual config.
 
 ```yaml
 # configuration.yaml
@@ -428,6 +435,8 @@ Design considerations:
 - Many designs available for ESP32 + LD2410
 - Choose based on mounting preference
 
+![3D printed enclosure for ESP32 and LD2410](https://media.printables.com/media/prints/366944/images/3097299_65850ecc-233f-4e29-8c0a-bfebcf77fc45/thumbs/inside/1280x960/jpg/large_display_314cd4d1-545a-4237-86f1-647aab4ad2eb_366944.webp "Presence sensor in 3D printed case")
+
 ### Installation Tips
 
 **Mounting Location:**
@@ -435,6 +444,7 @@ Design considerations:
 - Wall mount: Good for specific areas
 - Corner mount: Maximizes detection range
 - Height: 2-3 meters (6-10 feet) recommended
+
 
 **Orientation:**
 - Sensor should face the area to monitor
@@ -511,11 +521,13 @@ template:
 - Dim when stationary presence
 - Turn off after timeout
 - Different scenes for motion vs presence
+- For addressable LED strips and advanced effects, see our [custom LED strip guide](/blog/custom-led-strip-lighting)
 
 **Climate Control:**
 - Adjust HVAC based on occupancy
 - Turn off when room empty
 - Set different temps for occupied/unoccupied
+- For workshop or garage: combine with our [tool inventory system](/blog/workshop-inventory-management-system) for a complete automation setup
 
 **Entertainment Systems:**
 - Pause media when room empty
@@ -529,6 +541,7 @@ template:
 - Monitor specific zones
 - Integrate with security system
 - Record events in Home Assistant
+- Pair with [Frigate NVR](/blog/frigate-nvr-ai-security-setup) for camera + presence—know when someone is in the room vs just passing by
 
 ### Energy Efficiency
 
@@ -537,6 +550,7 @@ template:
 - Reduce heating/cooling for unoccupied rooms
 - Smart power strips based on presence
 - Monitor occupancy patterns
+- For workshop power monitoring, see our [CT clamp energy monitor](/blog/workshop-energy-monitor-ct-clamps) guide
 
 ## Comparison: mmWave vs Other Sensors
 
@@ -555,6 +569,32 @@ template:
 - Reasonable cost
 - Works in darkness
 
+## FAQ: Questions People Actually Ask
+
+### Can mmWave detect through walls?
+
+Thin drywall: yes. Thick concrete or brick: no. Radar can penetrate thin materials like drywall and glass, but dense walls block the signal. Mount the sensor in the room you want to monitor.
+
+### Is it pet-friendly?
+
+Yes, and configurable. Reduce sensitivity thresholds or shorten detection distance to ignore small pets. You can also tune zone-by-zone so the sensor ignores the area where your cat sleeps.
+
+### Does it work in the dark?
+
+Yes. mmWave uses radar, not optical sensors. It works in complete darkness, bright sunlight, and any lighting condition. No IR illuminator needed.
+
+### Is it privacy-friendly?
+
+Yes. No camera, no images, no facial recognition. The radar detects that *something* is present and its distance—it doesn't identify who or what. Your data never leaves the device.
+
+### LD2410 vs LD2410C—which should I buy?
+
+Either works. The LD2410C is a compact form factor; the standard LD2410 is more common and often cheaper. ESPHome config is the same. Choose based on your enclosure size.
+
+### Can I use this without Home Assistant?
+
+Yes. ESPHome exposes MQTT and a REST API. You can integrate with Node-RED, OpenHAB, or any system that speaks MQTT. The web server on the ESP32 also shows sensor status.
+
 ## Conclusion
 
 Building a presence sensor with ESP32 and mmWave technology gives you capabilities that commercial sensors can't match at a fraction of the cost. The LD2410 sensor, combined with ESPHome and Home Assistant, creates a powerful, customizable presence detection system.
@@ -568,5 +608,5 @@ Key benefits:
 
 Whether you're automating lights, optimizing energy usage, or building a comprehensive smart home, mmWave presence sensors are a significant upgrade over traditional PIR sensors. The combination of ESP32's flexibility and mmWave's accuracy makes this a perfect project for any smart home enthusiast.
 
-*For more ESP32 projects and tutorials, check out [Random Nerd Tutorials' ESP32 guide](https://randomnerdtutorials.com/getting-started-with-esp32/) and the ESPHome documentation for advanced configurations.*
+*Part of our ESP32 + Home Assistant series. Pair this with our [Frigate NVR guide](/blog/frigate-nvr-ai-security-setup) for camera + presence combos, or our [workshop inventory system](/blog/workshop-inventory-management-system) for tool tracking. For more ESP32 projects, see [Random Nerd Tutorials](https://randomnerdtutorials.com/getting-started-with-esp32/) and the ESPHome documentation.*
 
