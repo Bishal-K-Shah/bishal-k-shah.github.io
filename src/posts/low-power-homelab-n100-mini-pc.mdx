@@ -24,7 +24,7 @@ Before we dive into the N100 and N150, let's talk about why this matters. Every 
 | 100W idle | 876 kWh | **$105.12** | **$262.80** |
 | 150W idle | 1,314 kWh | **$157.68** | **$394.20** |
 
-The difference between a 10W mini PC and a 100W desktop server? **$95-$237 per year**. Over 5 years, that's $475-$1,185—enough to buy multiple mini PCs.
+The difference between a 10W mini PC and a 100W desktop server? **$95-$237 per year**. Over 5 years, that's $475-$1,185—enough to buy multiple mini PCs. Want to measure your own setup? See our [homelab energy monitoring guide](/blog/homelab-energy-monitoring-power-tracking) for tools and dashboards.
 
 > **The Golden Rule:** For homelab workloads, every watt of idle power consumption costs roughly $1/year (at US rates) or $2.50/year (at EU rates). A 6W difference between idle and sleep isn't trivial—it's $6-15 annually, forever.
 
@@ -58,6 +58,7 @@ Both the N100 and N150 excel at:
 - **Lightweight virtualization**: 2-3 small VMs on Proxmox, no problem
 - **Home automation**: Home Assistant, Node-RED, MQTT—perfect fit
 - **File serving**: Samba, NFS, Syncthing—NVMe speeds in a tiny package
+- **Local AI (Ollama):** Small models (3B) run fine; see our [Ollama on N100 guide](/blog/ollama-n100-mini-pc-local-ai) for what works
 
 ### Where They Struggle
 
@@ -188,7 +189,7 @@ Here's what specific homelab services actually draw on my Beelink Mini S12 Pro:
 - **Storage**: M.2 NVMe + SATA
 - **Network**: **4x 2.5GbE Intel i226-V**
 - **Price**: ~$200-250
-- **Why it's good**: Perfect for OPNsense/pfSense, serious networking
+- **Why it's good**: Perfect for OPNsense/pfSense, serious networking. We've written a full [OPNsense on N100 setup guide](/blog/opnsense-n100-mini-pc-router) for turning this into a DIY router
 
 ### Best Fanless: Minisforum UN100C
 
@@ -229,6 +230,7 @@ Here's what specific homelab services actually draw on my Beelink Mini S12 Pro:
 - Web UI for management
 - Free and open source
 - Perfect for learning enterprise virtualization
+- See our [complete Proxmox on N100 setup guide](/blog/proxmox-n100-mini-pc-setup-guide) for step-by-step installation and first LXC/VM
 
 **Ubuntu Server / Debian**:
 - Simpler setup

@@ -1,0 +1,91 @@
+---
+title: 'Homelab Energy Monitoring: Track Your Power Draw'
+date: '2026-02-10'
+category: 'HomeLab'
+tags: ['homelab', 'energy-monitoring', 'power-consumption', 'grafana', 'smart-plug']
+featuredImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1080&q=80'
+excerpt: 'Measure and track your homelab power consumption with Kill-A-Watt, smart plugs, or PDUs. Set up dashboards, calculate costs, and optimize your setup.'
+---
+
+Every watt your homelab draws 24/7 costs roughly $1/year (US) or $2.50/year (EU). Before you can optimize, you need to measure. This guide covers tools and methods to track homelab power consumption—from a simple plug-in meter to Grafana dashboards.
+
+For real N100 power numbers and hardware comparison, see our [N100 power consumption guide](/blog/low-power-homelab-n100-mini-pc).
+
+## Why Track Homelab Power?
+
+- **Cost** – See exactly what each server or stack costs per year
+- **Optimization** – Find energy hogs and unnecessary 24/7 services
+- **Validation** – Confirm that "low power" claims match reality
+- **Trends** – Spot when a device starts drawing more (fans, failing PSU)
+
+## Tools for Measuring Power
+
+| Tool | Cost | Accuracy | Best For |
+|------|------|----------|----------|
+| **Kill-A-Watt (plug-in)** | $20–35 | Good | Single device, spot checks |
+| **Smart plug with energy** | $15–30 | Good | Per-outlet, remote monitoring |
+| **Shelly Plug / Emporia Vue** | $20–50 | Good | Local API, no cloud |
+| **PDU with metering** | $80–200+ | Excellent | Rack, per-outlet |
+| **CT clamps** | $30–80 | Excellent | Whole circuit (see our [workshop CT clamp guide](/blog/workshop-energy-monitor-ct-clamps) for 240V tools) |
+
+For homelab servers on 120V outlets, a Kill-A-Watt or smart plug is usually enough. For a full rack, a metered PDU is better.
+
+## Kill-A-Watt: Simple Spot Checks
+
+Plug the Kill-A-Watt between the wall and your server. It shows:
+
+- **Watts** – Instantaneous draw
+- **kWh** – Cumulative energy (reset it weekly or monthly to track)
+- **Voltage, frequency** – Useful for diagnosing power issues
+
+Leave it connected for 24–48 hours to get an average. Multiply watts × 24 × 365 / 1000 for annual kWh, then multiply by your electricity rate.
+
+## Smart Plugs with Energy Monitoring
+
+Plugs like TP-Link Kasa, Shelly Plug S, or Emporia Vue measure watts and often kWh. Advantages:
+
+- **Remote** – Check power from your phone or dashboard
+- **Historical** – Some store days or weeks of data
+- **Automation** – Integrate with Home Assistant to log to InfluxDB or Prometheus
+
+**Shelly Plug S** has a local REST API—no cloud required. Good for homelab privacy.
+
+## Grafana Dashboard (Advanced)
+
+If your smart plug exposes data via MQTT, REST, or a local API:
+
+1. **Collect** – Use Telegraf, Node-RED, or a simple script to poll and write to InfluxDB or Prometheus
+2. **Store** – InfluxDB for time-series, or Prometheus if you already use it
+3. **Visualize** – Grafana dashboard with watts, kWh, and cost over time
+
+Example: Shelly Plug → MQTT → Node-RED → InfluxDB → Grafana. Plenty of guides exist for each step.
+
+## Calculating Cost
+
+| Formula | Example |
+|---------|---------|
+| **Annual kWh** | Watts × 24 × 365 / 1000 |
+| **Annual cost (US)** | kWh × $0.12 |
+| **Annual cost (EU)** | kWh × $0.30 |
+
+Example: 10W × 24 × 365 / 1000 = 87.6 kWh. At $0.12/kWh, that is **$10.51/year**.
+
+## Real Numbers: N100 vs Alternatives
+
+From our [N100 power guide](/blog/low-power-homelab-n100-mini-pc):
+
+| Setup | Typical Power | Annual Cost (US) |
+|-------|---------------|------------------|
+| N100 mini PC | 9–11 W | ~$12 |
+| Raspberry Pi 5 | 5 W | ~$6 |
+| Old desktop | 80 W | ~$105 |
+| Dell Optiplex SFF | 40 W | ~$52 |
+| R720 server | 150 W | ~$158 |
+
+Measuring your own setup will show where you stand and whether an N100 or similar upgrade pays off.
+
+## Conclusion
+
+Start with a Kill-A-Watt or smart plug on your main homelab outlet. Once you have numbers, you can optimize—consolidate services, replace power hogs, or add a Grafana dashboard for ongoing tracking.
+
+*For N100-specific power measurements and hardware picks, see our [N100 power consumption guide](/blog/low-power-homelab-n100-mini-pc).*

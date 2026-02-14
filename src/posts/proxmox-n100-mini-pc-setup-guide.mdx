@@ -1,0 +1,127 @@
+---
+title: 'Proxmox on N100 Mini PC: Complete Setup Guide (2026)'
+date: '2026-02-10'
+category: 'HomeLab'
+tags: ['proxmox', 'n100', 'mini-pc', 'homelab', 'virtualization', 'lxc', 'kvm']
+featuredImage: 'https://www.virtualizationhowto.com/wp-content/uploads/2025/06/Best-Low-Power-Mini-PC-for-Proxmox.png'
+excerpt: 'Step-by-step guide to installing Proxmox VE on an Intel N100 mini PC. BIOS settings for stability, first LXC and VM, and backup strategy for your low-power homelab.'
+---
+
+The Intel N100 and Proxmox VE are a perfect match: a 6–8W idle hypervisor that runs LXC containers and lightweight VMs without breaking a sweat. If you've picked up an N100 mini PC for your homelab, this guide walks you through installation, stability tweaks, and your first containers.
+
+For power consumption numbers and hardware recommendations, see our [N100 power guide](/blog/low-power-homelab-n100-mini-pc).
+
+## Why Proxmox on N100?
+
+| Benefit | Why It Matters |
+|---------|----------------|
+| **Efficiency** | Proxmox + N100 idles at 6–9W—about $8–12/year in electricity |
+| **LXC + KVM** | Run Docker in LXC, Windows in a VM, all from one box |
+| **Web UI** | No headless SSH-only setup; manage everything from a browser |
+| **Free** | No licensing, no subscriptions—just download and run |
+
+Not sure if Proxmox is right for you? Our [Proxmox vs ESXi comparison](/blog/proxmox-vs-esxi-homelab) breaks down the hypervisor choice.
+
+## Before You Install: BIOS Settings
+
+N100 mini PCs can be finicky with default BIOS settings. Apply these before or right after install:
+
+1. **Auto Power On** – Enable so the server restarts after power outages
+2. **C-States** – If you see random freezes, limit to C3 or disable
+3. **Wake on LAN** – Enable for remote wake
+4. **Quiet Fan Mode** – Disable if thermals are a concern
+5. **Power Limit (PL1/PL2)** – Some BIOS let you raise from 6W to 15W for better sustained performance
+
+> **Warning:** Some N100 systems freeze with default C-states. If that happens, add `intel_idle.max_cstate=1` to GRUB and run `update-grub && reboot`.
+
+## Proxmox VE Installation
+
+### Step 1: Download and Prepare
+
+1. Download the Proxmox VE ISO from [proxmox.com](https://www.proxmox.com/en/downloads)
+2. Flash to a USB drive with Balena Etcher or Rufus
+3. Insert the USB into your N100 mini PC
+
+### Step 2: Boot and Install
+
+1. Power on and press F7, F11, or F12 (varies by brand) for the boot menu
+2. Select the USB drive
+3. Choose "Install Proxmox VE (Graphical)"
+4. Accept the EULA, select your NVMe as the target disk
+5. Set your root password and email (for notifications)
+6. Configure network: static IP recommended for a server
+7. Finish the installer and reboot
+
+### Step 3: First Login
+
+Open `https://your-ip:8006` in a browser. Log in as `root` with your password. Accept the self-signed certificate warning.
+
+### Step 4: Post-Install
+
+SSH in and run:
+
+```bash
+apt update && apt full-upgrade -y
+sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/pve-enterprise.list
+```
+
+The second command disables the enterprise repo (which requires a subscription) and removes the "no valid subscription" warning.
+
+## Creating Your First LXC (Docker Host)
+
+LXC containers are lighter than VMs and ideal for Docker on an N100.
+
+1. In Proxmox UI: **Create CT** → Template: Debian 12
+2. Set CPU: 2 cores, Memory: 2048 MB
+3. Root disk: 8–16 GB
+4. Network: Bridge vmbr0, DHCP or static
+5. Start the container
+
+Inside the container:
+
+```bash
+apt update && apt install -y curl
+curl -fsSL https://get.docker.com | sh
+```
+
+You now have a Docker host. Add Portainer, Pi-hole, or Jellyfin as needed. See our [self-hosting with Docker guide](/blog/self-hosting-with-docker) for container ideas.
+
+## Creating Your First VM
+
+For a lightweight Linux VM (e.g. Ubuntu Server):
+
+1. **Create VM** → Name: ubuntu-server
+2. **OS**: Use Ubuntu Server ISO (upload via local storage or URL)
+3. **System**: Machine: q35, SCSI: VirtIO SCSI single
+4. **Disks**: 32 GB, VirtIO
+5. **CPU**: 2 cores
+6. **Memory**: 2048 MB
+7. **Network**: VirtIO, bridge vmbr0
+
+Start the VM, open the console, and complete the Ubuntu installer.
+
+## Backup Strategy
+
+Proxmox has built-in backups. For an N100 homelab:
+
+- **Frequency**: Daily for critical containers (Docker host, Home Assistant)
+- **Retention**: Keep 3–7 days
+- **Storage**: Use a second disk, NFS share, or USB drive—avoid filling the boot disk
+
+Configure under **Datacenter → Backup → Add** and set a schedule.
+
+## Kernel Parameters for Stability
+
+If you experience freezes, add to `/etc/default/grub`:
+
+```
+GRUB_CMDLINE_LINUX_DEFAULT="intel_idle.max_cstate=1"
+```
+
+Then run `update-grub && reboot`. This limits deep C-states that can cause N100 freezes.
+
+## Conclusion
+
+Proxmox on an N100 gives you a full virtualization platform at Pi-like power consumption. With LXC for containers and KVM for VMs, you can run a complete homelab—Pi-hole, Jellyfin, Home Assistant, and more—on a single 10W box.
+
+*For power measurements and hardware picks, see our [N100 power consumption guide](/blog/low-power-homelab-n100-mini-pc).*

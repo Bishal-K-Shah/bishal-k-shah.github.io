@@ -1,0 +1,70 @@
+---
+title: 'Running Ollama on N100: Local AI on Low-Power Hardware'
+date: '2026-02-10'
+category: 'HomeLab'
+tags: ['ollama', 'n100', 'local-ai', 'llm', 'mini-pc', 'homelab']
+featuredImage: 'https://res.cloudinary.com/hobbyist-hideaway-bishal/image/upload/v1771048732/ollama_N100_Hobbiyist_Hideaway_skvpow.jpg'
+excerpt: 'Can you run Ollama and local LLMs on an Intel N100 mini PC? Yes—with limits. Here is what works, power draw, and which 3B models run smoothly on CPU-only.'
+---
+
+"Can I run ChatGPT locally on my N100?" The answer is yes—but only for small models. The Intel N100 has no discrete GPU for LLM inference, so you are running on CPU. That means 3B parameter models work; 7B and above will crawl or run out of memory.
+
+This guide covers what actually works on an N100, real power consumption during inference, and how to get the most out of local AI on low-power hardware. For full Ollama setup and Open WebUI, see our [main Ollama guide](/blog/running-local-ai-agents-ollama-guide).
+
+## What Works on N100
+
+| Model | Size | RAM Needed | Speed | Verdict |
+|-------|------|------------|-------|---------|
+| **llama3.2** | 3B | ~4 GB | 5–15 tok/s | Best choice |
+| **phi-3-mini** | 3.8B | ~4 GB | 4–12 tok/s | Good |
+| **qwen2.5:3b** | 3B | ~4 GB | 5–14 tok/s | Good |
+| **tinyllama** | 1.1B | ~1.5 GB | 15–25 tok/s | Fast but limited |
+| **gemma2:2b** | 2B | ~2 GB | 8–18 tok/s | Solid |
+
+## What Does Not Work Well
+
+- **7B+ models** – Need 8–16 GB for the model alone; N100 systems often have 16 GB total, leaving little for the OS and other services. Inference is very slow on CPU.
+- **Heavy reasoning** – Models like deepseek-r1 are too demanding for N100.
+- **GPU acceleration** – N100 has Intel UHD (24 EUs) for video decode/encode, but Ollama does not use it for LLM inference. You are CPU-only.
+
+## Power Consumption During Inference
+
+| State | Power Draw |
+|-------|------------|
+| Idle (Ollama not running) | 6–8 W |
+| Ollama idle (model loaded) | 8–10 W |
+| During inference (3B model) | 12–18 W |
+| Peak (all cores) | 20–25 W |
+
+Expect about **12–15 W** during typical chat. At $0.12/kWh, that is roughly $1.50–2/month if you use it a few hours a day.
+
+## Installation: Native vs Docker
+
+**Native (recommended):**
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull llama3.2
+ollama run llama3.2
+```
+
+**Docker:** Run Ollama in a container if you prefer. Use the official image and pass through the host network so Open WebUI can reach it. The main [Ollama guide](/blog/running-local-ai-agents-ollama-guide) covers Docker setups.
+
+## QuickSync and LLMs
+
+The N100 has Intel QuickSync for video transcoding (Jellyfin, Plex). Ollama does not use QuickSync for LLM inference—that would require a different stack. For LLMs on N100, you are using CPU only.
+
+## Practical Use Cases on N100
+
+- **Light coding help** – Small models can suggest snippets and explain code.
+- **Drafts and summaries** – Short emails, notes, and summaries work fine.
+- **Learning and experimentation** – Try prompts and models without API costs.
+- **Homelab automation** – Use the REST API for scripts and simple agents.
+
+Avoid: long documents, complex reasoning, and anything that needs 7B+ quality.
+
+## Conclusion
+
+Ollama on N100 is viable for 3B models. You get local, private AI at about 12–18 W during use. For heavier workloads, you will need a machine with more RAM and a GPU.
+
+*For N100 power measurements and hardware comparison, see our [N100 power guide](/blog/low-power-homelab-n100-mini-pc). For full Ollama setup, see our [Ollama and Open WebUI guide](/blog/running-local-ai-agents-ollama-guide).*
