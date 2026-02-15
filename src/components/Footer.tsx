@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Github, Linkedin, Rss, Sparkles } from "lucide-react";
+import { Github, Linkedin, Rss, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NewsletterForm } from "@/components/NewsletterForm";
 
@@ -40,7 +40,7 @@ export function Footer() {
           {/* Newsletter Signup - First on mobile for prominence */}
           <div className="order-1 lg:order-3 lg:col-span-4 bg-gradient-to-br from-primary/5 to-primary/10 p-5 sm:p-6 rounded-2xl border border-primary/20">
             <h4 className="font-semibold text-foreground flex items-center gap-2 text-base">
-               <Sparkles className="h-5 w-5 text-primary" />
+               <Gem className="h-5 w-5 text-primary" />
                Stay Updated
             </h4>
             <p className="text-sm text-muted-foreground mt-2">Get the latest posts delivered to your inbox.</p>

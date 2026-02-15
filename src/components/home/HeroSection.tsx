@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Sparkles, X } from 'lucide-react';
+import { Search, Gem, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import DotGrid from '@/components/DotGrid';
@@ -65,7 +65,7 @@ export function HeroSection({
         className="container relative mx-auto px-4 text-center z-10 pointer-events-none will-change-transform"
       >
         <div className="inline-flex items-center rounded-full border bg-background/50 px-3 py-1 text-sm font-medium text-muted-foreground backdrop-blur-md mb-6 shadow-sm pointer-events-auto">
-          <Sparkles className="mr-2 h-4 w-4 text-primary" />
+          <Gem className="mr-2 h-4 w-4 text-primary" />
           <span className="hidden sm:inline">Discover projects, guides, and stories.</span>
           <span className="sm:hidden">Discover projects & guides.</span>
         </div>
