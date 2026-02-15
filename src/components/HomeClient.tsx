@@ -11,6 +11,7 @@ import {
   HeroSection,
   MobileSearchHeader,
   RecentPosts,
+  PopularPosts,
   CategoryTabs,
   PostGrid,
   NewsletterCTA,
@@ -18,11 +19,12 @@ import {
 
 interface HomeContentProps {
   initialPosts: Post[];
+  popularPosts: Post[];
   categoriesList: Category[];
   categoryTree: CategoryTree;
 }
 
-function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContentProps) {
+function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree }: HomeContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const postsSectionRef = useRef<HTMLDivElement>(null);
@@ -44,6 +46,8 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   const heroContentRef = useHeroFade<HTMLDivElement>();
   const { ref: recentPostsRef, isVisible: recentPostsVisible, getItemDelay: getRecentDelay } =
     useStaggerReveal<HTMLDivElement>(isMobile ? 3 : 6, { threshold: 0.1, staggerDelay: 80 });
+  const { ref: popularPostsRef, isVisible: popularPostsVisible, getItemDelay: getPopularDelay } =
+    useStaggerReveal<HTMLDivElement>(popularPosts.length, { threshold: 0.1, staggerDelay: 80 });
   const { ref: ctaRef, isVisible: ctaVisible } = useScrollReveal<HTMLDivElement>({
     threshold: 0.2,
   });
@@ -285,6 +289,17 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
         />
       )}
 
+      {/* Popular Posts Section */}
+      {!searchQuery && (
+        <PopularPosts
+          posts={popularPosts}
+          isMobile={isMobile}
+          sectionRef={popularPostsRef}
+          isVisible={popularPostsVisible}
+          getItemDelay={getPopularDelay}
+        />
+      )}
+
       {/* Main Content */}
       <div
         ref={postsSectionRef}
@@ -336,7 +351,7 @@ function HomeContent({ initialPosts, categoriesList, categoryTree }: HomeContent
   );
 }
 
-export default function Home({ initialPosts, categoriesList, categoryTree }: HomeContentProps) {
+export default function Home({ initialPosts, popularPosts, categoriesList, categoryTree }: HomeContentProps) {
   return (
     <Suspense
       fallback={
@@ -345,6 +360,7 @@ export default function Home({ initialPosts, categoriesList, categoryTree }: Hom
     >
       <HomeContent
         initialPosts={initialPosts}
+        popularPosts={popularPosts}
         categoriesList={categoriesList}
         categoryTree={categoryTree}
       />

@@ -18,6 +18,7 @@ export type Post = {
   featuredImage: string;
   excerpt: string;
   content: string;
+  featured?: boolean;
 };
 
 export type CategoryInfo = {

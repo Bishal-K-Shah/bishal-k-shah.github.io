@@ -1,8 +1,10 @@
+'use client';
+
 import Link from "next/link";
 import Image from "next/image";
-import { Github, Linkedin, Rss, Send, Sparkles, Heart } from "lucide-react";
+import { Github, Linkedin, Rss, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { NewsletterForm } from "@/components/NewsletterForm";
 
 export function Footer() {
   const socialLinks = [
@@ -42,17 +44,13 @@ export function Footer() {
                Stay Updated
             </h4>
             <p className="text-sm text-muted-foreground mt-2">Get the latest posts delivered to your inbox.</p>
-            <form className="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-2">
-              <Input 
-                type="email" 
-                placeholder="Enter your email" 
-                className="bg-background h-11 sm:h-10" 
+            <div className="mt-4">
+              <NewsletterForm
+                variant="compact"
+                inputClassName="bg-background h-11 sm:h-10"
+                buttonClassName="h-11 sm:h-10 px-5 w-full sm:w-auto"
               />
-              <Button type="submit" variant="default" className="h-11 sm:h-10 px-5 w-full sm:w-auto">
-                <Send className="h-4 w-4 mr-2" />
-                Subscribe
-              </Button>
-            </form>
+            </div>
           </div>
 
           {/* About Section */}

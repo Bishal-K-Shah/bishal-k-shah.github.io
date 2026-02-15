@@ -1,7 +1,6 @@
 'use client';
 
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { NewsletterForm } from '@/components/NewsletterForm';
 import { RefObject } from 'react';
 
 interface NewsletterCTAProps {
@@ -24,14 +23,14 @@ export function NewsletterCTA({ ctaRef, isVisible }: NewsletterCTAProps) {
           Join our community of makers. Get the latest guides on Homelab, Electronics, and Coding
           delivered to your inbox.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-          <Input
-            placeholder="Enter your email"
-            className="bg-primary-foreground text-primary placeholder:text-primary/50 border-0 h-12"
+        <div className="flex justify-center max-w-md mx-auto">
+          <NewsletterForm
+            variant="default"
+            inputClassName="bg-primary-foreground text-primary placeholder:text-primary/50 border-0 h-12"
+            buttonClassName="h-12 px-8 font-bold"
+            showIcon={false}
+            onPrimaryBg
           />
-          <Button variant="secondary" className="h-12 px-8 font-bold">
-            Subscribe
-          </Button>
         </div>
       </div>
     </div>

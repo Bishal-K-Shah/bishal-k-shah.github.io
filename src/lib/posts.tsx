@@ -33,6 +33,7 @@ export const getPosts = async (): Promise<Post[]> => {
       featuredImage: data.featuredImage, 
       excerpt: data.excerpt,
       content: content,
+      featured: data.featured === true,
     };
 
     return post;
@@ -67,7 +68,15 @@ export const getPostBySlug = async (slug: string): Promise<Post | undefined> => 
     featuredImage: data.featuredImage,
     excerpt: data.excerpt,
     content: content,
+    featured: data.featured === true,
   };
+};
+
+const POPULAR_POSTS_LIMIT = 10;
+
+export const getPopularPosts = async (): Promise<Post[]> => {
+  const posts = await getPosts();
+  return posts.filter((post) => post.featured === true).slice(0, POPULAR_POSTS_LIMIT);
 };
 
 // Returns a Map of Category -> Unique Tags

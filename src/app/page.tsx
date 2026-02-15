@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getPosts, getCategories, getCategoryTree } from "@/lib/posts";
+import { getPosts, getPopularPosts, getCategories, getCategoryTree } from "@/lib/posts";
 import HomeClient from "@/components/HomeClient";
 import { Category, CategoryTree } from "@/types";
 import { Metadata } from "next";
@@ -16,15 +16,19 @@ export const metadata: Metadata = {
 
 // This is a Server Component
 export default async function Home() {
-  const posts = await getPosts();
+  const [posts, popularPosts, categoryTree] = await Promise.all([
+    getPosts(),
+    getPopularPosts(),
+    getCategoryTree(),
+  ]);
   // We only pass simple data (strings), not objects with functions (icons)
   // getCategories returns string[], so we need to cast it to Category[]
   const categories = getCategories() as Category[];
-  const categoryTree = await getCategoryTree();
 
   return (
     <HomeClient 
       initialPosts={posts} 
+      popularPosts={popularPosts}
       categoriesList={categories} 
       categoryTree={categoryTree}
     />
