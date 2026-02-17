@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Server, Wrench, Terminal, Cpu } from 'lucide-react';
@@ -25,7 +26,7 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <div className="grid md:grid-cols-2 gap-8 mb-16">
+      <div className="grid md:grid-cols-2 gap-10 mb-16 md:items-center">
         <div className="prose dark:prose-invert">
           <p className="text-lg leading-relaxed">
             Welcome to <strong>Hobbyist's Hideaway</strong>. This blog was born out of a passion for understanding how things work—whether it's the code powering a server, the mechanics of a vintage engine, or the precise art of soldering a circuit board.
@@ -34,9 +35,15 @@ export default function AboutPage() {
             Here, we don't just consume technology; we build it, break it, and fix it. Our mission is to document the journey of learning and to provide clear, practical guides that empower you to take control of your own hardware and software.
           </p>
         </div>
-        <div className="relative rounded-xl overflow-hidden shadow-2xl bg-muted aspect-video flex items-center justify-center border border-border">
-            {/* Placeholder for an about image if desired, using an icon for now */}
-            <Wrench className="w-24 h-24 text-muted-foreground/20" />
+        <div className="relative rounded-xl overflow-hidden shadow-2xl bg-muted aspect-[4/3] border border-border">
+          <Image
+            src="https://res.cloudinary.com/hobbyist-hideaway-bishal/image/upload/v1771310720/About_Us_HobbistHideaway_agw5xj.jpg"
+            alt="About Hobbyist's Hideaway"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, min(50vw, 480px)"
+            priority
+          />
         </div>
       </div>
 
