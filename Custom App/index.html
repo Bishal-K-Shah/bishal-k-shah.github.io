@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PTE Spelling Drill — Listen, type, advance</title>
+  <meta name="description" content="A browser spelling drill for PTE Academic. Hear word groups, type them correctly, and advance. Includes misspelled-word presets and essay dictation.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <p class="eyebrow">PTE Academic · Writing</p>
+      <h1>Spelling Drill</h1>
+      <p class="subtitle">Hear a group of words. Type them. Advance only when they are correct.</p>
+      <p class="subtitle">Great for Essay, SST, and SWT, as well as WFD.</p>
+    </header>
+
+    <section class="panel" id="setup-panel">
+      <div class="section-head">
+        <h2>Source text</h2>
+        <p id="source-meta">Paste a paragraph or word list or your essay.</p>
+      </div>
+      <textarea
+        id="source-text"
+        rows="9"
+        placeholder="Paste a paragraph or word list here…"
+      ></textarea>
+      <div class="file-row">
+        <label for="file-upload" class="file-label">Upload .txt</label>
+        <input type="file" id="file-upload" accept=".txt,text/plain">
+        <span id="file-name" class="file-name"></span>
+        <span id="word-count" class="word-count"></span>
+      </div>
+
+      <div class="or-divider" role="separator" aria-label="or">
+        <span>OR</span>
+      </div>
+
+      <div class="section-head">
+        <h2>Presets</h2>
+        <p>Load a ready-made drill instead.</p>
+      </div>
+      <div class="preset-grid" id="preset-grid">
+        <button type="button" class="preset-card" data-preset="wordlist" id="preset-wordlist">
+          <span class="preset-kicker">Preset 1 · 40 words</span>
+          <span class="preset-title">Most Mispelled Wordlist 1</span>
+          <span class="preset-meta">1 word at a time · common academic traps</span>
+        </button>
+        <button type="button" class="preset-card" data-preset="essay" id="preset-essay">
+          <span class="preset-kicker">Preset 2 · ~200 words</span>
+          <span class="preset-title">Essay Paragraph (3 Words At a Time)</span>
+          <span class="preset-meta">4 paragraphs · high-density spelling traps</span>
+        </button>
+      </div>
+
+      <div class="section-head">
+        <h2>Settings</h2>
+      </div>
+      <div class="settings-grid">
+        <label>
+          Words at a time
+          <input type="number" id="words-per-group" min="1" max="5" value="3">
+        </label>
+
+        <fieldset class="repeat-fieldset">
+          <legend>Repeat mode</legend>
+          <label class="radio-label">
+            <input type="radio" name="repeat-mode" value="until-typed" checked>
+            <span>Until typed — keep speaking until correct</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="repeat-mode" value="multiple-times">
+            <span>Multiple times — speak N times, then wait</span>
+          </label>
+        </fieldset>
+
+        <label id="repeat-count-wrap" class="hidden">
+          Times to Repeat Audio
+          <input type="number" id="repeat-count" min="1" max="10" value="3">
+        </label>
+
+        <label>
+          Voice
+          <select id="voice-select">
+            <option value="">Loading voices…</option>
+          </select>
+        </label>
+
+        <label>
+          Speech rate
+          <div class="rate-row">
+            <input type="range" id="speech-rate" min="0.5" max="1.5" step="0.1" value="0.9">
+            <span id="rate-value">0.9</span>
+          </div>
+        </label>
+      </div>
+
+      <button type="button" id="start-btn" class="primary" disabled>Start practice</button>
+    </section>
+
+    <section class="panel practice-panel hidden" id="practice-panel">
+      <div class="progress-row">
+        <div>
+          <span id="progress" class="progress-label">Group 1 of 1</span>
+          <div class="progress-track" aria-hidden="true">
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
+        </div>
+        <div class="practice-actions">
+          <button type="button" id="audio-toggle" class="icon-btn" aria-pressed="true" aria-label="Pause audio" title="Pause audio">
+            <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="6" y="5" width="4" height="14" rx="1"></rect>
+              <rect x="14" y="5" width="4" height="14" rx="1"></rect>
+            </svg>
+            <svg class="icon-play hidden" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5.5v13l11-6.5-11-6.5z"></path>
+            </svg>
+          </button>
+          <button type="button" id="stop-btn" class="ghost">End session</button>
+        </div>
+      </div>
+
+      <p id="status" class="status">Listen and type the words you hear.</p>
+
+      <div class="answer-row">
+        <div class="input-wrap">
+          <input
+            type="text"
+            id="answer-input"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="Type the words here…"
+          >
+        </div>
+        <button type="button" id="submit-btn" class="primary" title="Submit (Space)">
+          Submit
+          <svg class="space-icon" viewBox="0 0 28 10" aria-hidden="true" title="Space">
+            <path d="M3 2.5v5h22v-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+        <button type="button" id="replay-btn" class="secondary">Replay</button>
+      </div>
+
+      <div class="show-answer-row">
+        <button type="button" id="show-answer-btn" class="secondary">Show Answer (Esc)</button>
+      </div>
+
+      <div id="answer-reveal" class="answer-reveal hidden" aria-live="polite">
+        <span class="reveal-label">Answer</span>
+        <span id="reveal-text" class="reveal-text"></span>
+      </div>
+
+      <div id="assembled-wrap" class="assembled-wrap hidden">
+        <span class="reveal-label">Typed so far</span>
+        <p id="assembled-text" class="assembled-text"></p>
+      </div>
+    </section>
+
+    <section class="panel complete-panel hidden" id="complete-panel">
+      <p class="complete-kicker">Done</p>
+      <h2>Session complete</h2>
+      <p id="complete-summary"></p>
+      <div id="retry-list-wrap" class="hidden">
+        <h3>Needed more than one attempt</h3>
+        <ul id="retry-list"></ul>
+      </div>
+      <button type="button" id="restart-btn" class="primary">Practice again</button>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
