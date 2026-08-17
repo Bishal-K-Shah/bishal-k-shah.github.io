@@ -750,7 +750,7 @@
 
   async function startKokoroWorker() {
     stopKokoroWorker();
-    const worker = new Worker("kokoro-worker.js", { type: "module" });
+    const worker = new Worker("/pte-spelling-practice/kokoro-worker.js", { type: "module" });
     kokoroWorker = worker;
     worker.onmessage = handleKokoroWorkerMessage;
     worker.onerror = (event) => {
