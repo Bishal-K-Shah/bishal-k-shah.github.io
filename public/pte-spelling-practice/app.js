@@ -1,8 +1,19 @@
 (function () {
   "use strict";
 
-  const REPEAT_INTERVAL_MS = 2500;
+  const REPEAT_GAP_MS = {
+    tight: 900,
+    natural: 2500,
+    relaxed: 4500,
+  };
   const CORRECT_HOLD_MS = 550;
+  const BETWEEN_GROUPS_MS = 400;
+  const SPEECH_WAIT_MAX_MS = 15000;
+  const KOKORO_DOWNLOAD_LABEL = "Download better voice (~90 MB, One-time)";
+  const KOKORO_VOICE_ID = "kokoro:af_bella";
+  const KOKORO_VOICE_LABEL = "Better voice — Kokoro Bella (downloaded)";
+  const KOKORO_MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
+  const KOKORO_MODULE_URL = "https://esm.sh/kokoro-js@1.2.1";
 
   const PRESETS = {
     wordlist: {
@@ -70,7 +81,14 @@
     repeatModeRadios: document.querySelectorAll('input[name="repeat-mode"]'),
     repeatCountWrap: document.getElementById("repeat-count-wrap"),
     repeatCount: document.getElementById("repeat-count"),
+    repeatGapRadios: document.querySelectorAll('input[name="repeat-gap"]'),
     voiceSelect: document.getElementById("voice-select"),
+    kokoroWrap: document.getElementById("kokoro-wrap"),
+    kokoroBtn: document.getElementById("kokoro-btn"),
+    kokoroRemove: document.getElementById("kokoro-remove"),
+    kokoroStatus: document.getElementById("kokoro-status"),
+    kokoroProgressTrack: document.getElementById("kokoro-progress-track"),
+    kokoroProgressBar: document.getElementById("kokoro-progress-bar"),
     speechRate: document.getElementById("speech-rate"),
     rateValue: document.getElementById("rate-value"),
     showAnswerBtn: document.getElementById("show-answer-btn"),
@@ -104,12 +122,28 @@
   let sessionActive = false;
   let acceptingInput = true;
   let repeatTimer = null;
+  let repeatTimerResolve = null;
   let speakGeneration = 0;
+  let currentSpeakPromise = Promise.resolve();
   let answerVisible = false;
   let audioPaused = false;
   const STORAGE_KEY = "pte-spelling-drill";
   let savedVoiceName = "";
   let saveTimer = null;
+  let kokoroDownloadedFlag = false;
+  let kokoroReady = false;
+  let kokoroTts = null;
+  let kokoroWorker = null;
+  let kokoroReqId = 0;
+  const kokoroWaiters = new Map();
+  const kokoroClipCache = new Map();
+  const kokoroPending = new Map();
+  let kokoroAudioCtx = null;
+  let kokoroSource = null;
+  let kokoroPlayResolve = null;
+  let kokoroAudio = null;
+  let kokoroObjectUrl = null;
+  let kokoroLoading = false;
   const attemptCounts = new Map();
 
   function stripWord(word) {
@@ -177,6 +211,23 @@
     });
   }
 
+  function getRepeatGap() {
+    const selected = document.querySelector('input[name="repeat-gap"]:checked');
+    const value = selected ? selected.value : "natural";
+    return REPEAT_GAP_MS[value] ? value : "natural";
+  }
+
+  function setRepeatGap(tier) {
+    const next = REPEAT_GAP_MS[tier] ? tier : "natural";
+    els.repeatGapRadios.forEach((radio) => {
+      radio.checked = radio.value === next;
+    });
+  }
+
+  function getRepeatGapMs() {
+    return REPEAT_GAP_MS[getRepeatGap()];
+  }
+
   function getActivePreset() {
     if (els.presetWordlist.classList.contains("active")) {
       return "wordlist";
@@ -194,9 +245,11 @@
         wordsPerGroup: els.wordsPerGroup.value,
         repeatMode: getRepeatMode(),
         repeatCount: els.repeatCount.value,
+        repeatGap: getRepeatGap(),
         speechRate: els.speechRate.value,
         voice: els.voiceSelect.value,
         preset: getActivePreset(),
+        kokoroDownloaded: kokoroDownloadedFlag,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (err) {
@@ -228,6 +281,9 @@
       if (data.repeatCount) {
         els.repeatCount.value = String(data.repeatCount);
       }
+      if (data.repeatGap) {
+        setRepeatGap(data.repeatGap);
+      }
       if (data.speechRate) {
         els.speechRate.value = String(data.speechRate);
         els.rateValue.textContent = els.speechRate.value;
@@ -235,6 +291,7 @@
       if (typeof data.voice === "string") {
         savedVoiceName = data.voice;
       }
+      kokoroDownloadedFlag = Boolean(data.kokoroDownloaded);
       if (data.preset === "wordlist" || data.preset === "essay") {
         els.presetWordlist.classList.toggle("active", data.preset === "wordlist");
         els.presetEssay.classList.toggle("active", data.preset === "essay");
@@ -286,61 +343,455 @@
     }
   }
 
+  function isDesktop() {
+    if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean") {
+      return !navigator.userAgentData.mobile;
+    }
+    return !/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+  }
+
+  function isGoogleVoice(voice) {
+    const blob = `${voice.name || ""} ${voice.voiceURI || ""}`;
+    return /google/i.test(blob);
+  }
+
+  function preferredGoogleVoice(list) {
+    const google = list.filter(isGoogleVoice);
+    const us = google.find((v) => /en-US/i.test(v.lang) || /US English/i.test(v.name));
+    return us || google[0] || null;
+  }
+
+  function isKokoroSelected() {
+    return els.voiceSelect.value === KOKORO_VOICE_ID;
+  }
+
+  function addVoiceOption(parent, value, label) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    parent.appendChild(opt);
+  }
+
   function getVoiceList() {
     const voices = speechSynthesis.getVoices();
-    const english = voices.filter((v) => v.lang.startsWith("en"));
+    const english = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith("en"));
     return english.length ? english : voices;
   }
 
   function loadVoices() {
     const list = getVoiceList();
-    const current = els.voiceSelect.value;
+    const previous = savedVoiceName || els.voiceSelect.value;
     els.voiceSelect.innerHTML = "";
 
-    if (list.length === 0) {
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "Default voice";
-      els.voiceSelect.appendChild(opt);
+    if (kokoroReady) {
+      const downloaded = document.createElement("optgroup");
+      downloaded.label = "Downloaded";
+      addVoiceOption(downloaded, KOKORO_VOICE_ID, KOKORO_VOICE_LABEL);
+      els.voiceSelect.appendChild(downloaded);
+    }
+
+    const google = list.filter(isGoogleVoice);
+    const other = list.filter((v) => !isGoogleVoice(v));
+
+    if (google.length) {
+      const group = document.createElement("optgroup");
+      group.label = "Google";
+      google.forEach((voice) => {
+        addVoiceOption(group, voice.name, `${voice.name} (${voice.lang})`);
+      });
+      els.voiceSelect.appendChild(group);
+    }
+
+    if (other.length) {
+      const group = document.createElement("optgroup");
+      group.label = "Other system voices";
+      other.forEach((voice) => {
+        addVoiceOption(group, voice.name, `${voice.name} (${voice.lang})`);
+      });
+      els.voiceSelect.appendChild(group);
+    }
+
+    const values = [...els.voiceSelect.options].map((opt) => opt.value);
+    if (!values.length) {
+      addVoiceOption(els.voiceSelect, "", "Default voice");
       return;
     }
 
-    list.forEach((voice) => {
-      const opt = document.createElement("option");
-      opt.value = voice.name;
-      opt.textContent = `${voice.name} (${voice.lang})`;
-      els.voiceSelect.appendChild(opt);
-    });
-
-    const stillAvailable = list.some((v) => v.name === (savedVoiceName || current));
-    if (stillAvailable) {
-      els.voiceSelect.value = savedVoiceName || current;
-    } else {
-      els.voiceSelect.value = list[0].name;
+    if (previous && values.includes(previous)) {
+      els.voiceSelect.value = previous;
+      return;
     }
-    if (els.voiceSelect.value) {
+    if (savedVoiceName && values.includes(savedVoiceName)) {
+      els.voiceSelect.value = savedVoiceName;
+      return;
+    }
+
+    const googleDefault = preferredGoogleVoice(list);
+    els.voiceSelect.value = googleDefault ? googleDefault.name : values[0];
+    if (!savedVoiceName) {
       savedVoiceName = els.voiceSelect.value;
+      saveState();
     }
   }
 
   function getSelectedVoice() {
     const list = getVoiceList();
     const selected = els.voiceSelect.value;
-    return list.find((v) => v.name === selected) || list[0] || null;
+    return list.find((v) => v.name === selected) || preferredGoogleVoice(list) || list[0] || null;
   }
 
-  function cancelSpeech() {
-    speakGeneration += 1;
+  function finishKokoroPlay() {
+    const resolve = kokoroPlayResolve;
+    kokoroPlayResolve = null;
+    if (resolve) {
+      resolve();
+    }
+  }
+
+  function stopKokoroAudio() {
+    finishKokoroPlay();
+    if (kokoroSource) {
+      kokoroSource.onended = null;
+      try {
+        kokoroSource.stop();
+      } catch (err) {
+        // Already stopped.
+      }
+      try {
+        kokoroSource.disconnect();
+      } catch (err) {
+        // Already disconnected.
+      }
+      kokoroSource = null;
+    }
+    if (kokoroAudio) {
+      kokoroAudio.onended = null;
+      kokoroAudio.onerror = null;
+      kokoroAudio.pause();
+      kokoroAudio.removeAttribute("src");
+      kokoroAudio.load();
+      kokoroAudio = null;
+    }
+    if (kokoroObjectUrl) {
+      URL.revokeObjectURL(kokoroObjectUrl);
+      kokoroObjectUrl = null;
+    }
+  }
+
+  function clearRepeatTimer() {
     if (repeatTimer) {
       clearTimeout(repeatTimer);
       repeatTimer = null;
     }
-    speechSynthesis.cancel();
+    if (repeatTimerResolve) {
+      const resolve = repeatTimerResolve;
+      repeatTimerResolve = null;
+      resolve();
+    }
   }
 
-  function speakGroup(group) {
+  function waitRepeatGap() {
     return new Promise((resolve) => {
-      const text = group.join(" ");
+      repeatTimerResolve = resolve;
+      repeatTimer = setTimeout(() => {
+        repeatTimer = null;
+        repeatTimerResolve = null;
+        resolve();
+      }, getRepeatGapMs());
+    });
+  }
+
+  function stopRepeats() {
+    speakGeneration += 1;
+    clearRepeatTimer();
+  }
+
+  function cancelSpeech() {
+    stopRepeats();
+    speechSynthesis.cancel();
+    stopKokoroAudio();
+  }
+
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function waitForCurrentSpeech() {
+    return Promise.race([currentSpeakPromise, wait(SPEECH_WAIT_MAX_MS)]);
+  }
+
+  function floatTo16BitWav(float32, sampleRate) {
+    const samples = float32.length;
+    const buffer = new ArrayBuffer(44 + samples * 2);
+    const view = new DataView(buffer);
+    const writeString = (offset, str) => {
+      for (let i = 0; i < str.length; i += 1) {
+        view.setUint8(offset + i, str.charCodeAt(i));
+      }
+    };
+    writeString(0, "RIFF");
+    view.setUint32(4, 36 + samples * 2, true);
+    writeString(8, "WAVE");
+    writeString(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, "data");
+    view.setUint32(40, samples * 2, true);
+    let offset = 44;
+    for (let i = 0; i < samples; i += 1) {
+      const s = Math.max(-1, Math.min(1, float32[i]));
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      offset += 2;
+    }
+    return new Blob([buffer], { type: "audio/wav" });
+  }
+
+  function extractKokoroSamples(raw) {
+    const audio = raw && (raw.audio || raw.data || raw);
+    if (audio instanceof Float32Array) {
+      return audio;
+    }
+    if (audio && audio.data instanceof Float32Array) {
+      return audio.data;
+    }
+    if (ArrayBuffer.isView(audio)) {
+      return new Float32Array(audio.buffer, audio.byteOffset, audio.byteLength / Float32Array.BYTES_PER_ELEMENT);
+    }
+    throw new Error("Kokoro did not return audio samples");
+  }
+
+  function getKokoroAudioContext() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) {
+      return null;
+    }
+    if (!kokoroAudioCtx || kokoroAudioCtx.state === "closed") {
+      kokoroAudioCtx = new AudioCtx();
+    }
+    return kokoroAudioCtx;
+  }
+
+  function playKokoroWav(samples, sampleRate) {
+    return new Promise((resolve) => {
+      kokoroPlayResolve = resolve;
+      kokoroObjectUrl = URL.createObjectURL(floatTo16BitWav(samples, sampleRate));
+      kokoroAudio = new Audio(kokoroObjectUrl);
+      kokoroAudio.onended = finishKokoroPlay;
+      kokoroAudio.onerror = finishKokoroPlay;
+      const started = kokoroAudio.play();
+      if (started && typeof started.catch === "function") {
+        started.catch(finishKokoroPlay);
+      }
+    });
+  }
+
+  function playKokoroSamples(samples, sampleRate) {
+    stopKokoroAudio();
+    const ctx = getKokoroAudioContext();
+    if (!ctx) {
+      return playKokoroWav(samples, sampleRate);
+    }
+
+    return (async () => {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+      const copy = samples.slice();
+      let buffer;
+      try {
+        buffer = ctx.createBuffer(1, copy.length, sampleRate);
+        buffer.copyToChannel(copy, 0);
+      } catch (err) {
+        return playKokoroWav(samples, sampleRate);
+      }
+      await new Promise((resolve) => {
+        kokoroPlayResolve = resolve;
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.onended = () => {
+          if (kokoroSource === source) {
+            kokoroSource = null;
+          }
+          finishKokoroPlay();
+        };
+        kokoroSource = source;
+        source.start();
+      });
+    })();
+  }
+
+  function kokoroAvailable() {
+    return Boolean(kokoroWorker || kokoroTts);
+  }
+
+  function kokoroClipKey(text) {
+    const speed = parseFloat(els.speechRate.value) || 0.9;
+    return `${speed}|${text}`;
+  }
+
+  function clearKokoroClips() {
+    kokoroClipCache.clear();
+    kokoroPending.clear();
+  }
+
+  function workerCall(payload) {
+    return new Promise((resolve, reject) => {
+      if (!kokoroWorker) {
+        reject(new Error("Kokoro worker is not running"));
+        return;
+      }
+      const id = (kokoroReqId += 1);
+      kokoroWaiters.set(id, { resolve, reject });
+      kokoroWorker.postMessage({ id, ...payload });
+    });
+  }
+
+  function handleKokoroWorkerMessage(event) {
+    const data = event.data || {};
+    if (data.type === "progress") {
+      setKokoroProgress(data.percent);
+      return;
+    }
+    const waiter = kokoroWaiters.get(data.id);
+    if (!waiter) {
+      return;
+    }
+    kokoroWaiters.delete(data.id);
+    if (data.type === "error") {
+      waiter.reject(new Error(data.message || "Kokoro worker failed"));
+      return;
+    }
+    waiter.resolve(data);
+  }
+
+  function stopKokoroWorker() {
+    kokoroWaiters.forEach((waiter) => {
+      waiter.reject(new Error("Kokoro worker stopped"));
+    });
+    kokoroWaiters.clear();
+    if (kokoroWorker) {
+      kokoroWorker.onmessage = null;
+      kokoroWorker.onerror = null;
+      kokoroWorker.terminate();
+      kokoroWorker = null;
+    }
+  }
+
+  async function generateKokoroOnMain(text, speed) {
+    if (!kokoroTts || typeof kokoroTts.generate !== "function") {
+      throw new Error("Kokoro is not loaded");
+    }
+    const raw = await kokoroTts.generate(text, { voice: "af_bella", speed });
+    return {
+      samples: extractKokoroSamples(raw).slice(),
+      sampleRate: (raw && raw.sampling_rate) || 24000,
+    };
+  }
+
+  async function generateKokoroClip(text, speed) {
+    if (kokoroWorker) {
+      const data = await workerCall({
+        type: "generate",
+        text,
+        speed,
+        voice: "af_bella",
+      });
+      const samples = data.samples instanceof Float32Array
+        ? data.samples
+        : new Float32Array(data.samples);
+      return { samples, sampleRate: data.sampleRate || 24000 };
+    }
+    return generateKokoroOnMain(text, speed);
+  }
+
+  function requestKokoroClip(text) {
+    const speed = parseFloat(els.speechRate.value) || 0.9;
+    const key = kokoroClipKey(text);
+    const cached = kokoroClipCache.get(key);
+    if (cached) {
+      return Promise.resolve(cached);
+    }
+    const pending = kokoroPending.get(key);
+    if (pending) {
+      return pending;
+    }
+    const request = generateKokoroClip(text, speed)
+      .then((clip) => {
+        kokoroClipCache.set(key, clip);
+        if (kokoroClipCache.size > 80) {
+          const oldest = kokoroClipCache.keys().next().value;
+          kokoroClipCache.delete(oldest);
+        }
+        return clip;
+      })
+      .finally(() => {
+        kokoroPending.delete(key);
+      });
+    kokoroPending.set(key, request);
+    return request;
+  }
+
+  function prefetchKokoroNext(index) {
+    if (!isKokoroSelected() || !kokoroAvailable()) {
+      return;
+    }
+    const next = groups[index + 1];
+    if (!next) {
+      return;
+    }
+    requestKokoroClip(next.join(" ")).catch(() => {});
+  }
+
+  async function startKokoroWorker() {
+    stopKokoroWorker();
+    const worker = new Worker("kokoro-worker.js", { type: "module" });
+    kokoroWorker = worker;
+    worker.onmessage = handleKokoroWorkerMessage;
+    worker.onerror = (event) => {
+      const err = new Error(event.message || "Kokoro worker failed");
+      kokoroWaiters.forEach((waiter) => waiter.reject(err));
+      kokoroWaiters.clear();
+    };
+    await workerCall({
+      type: "load",
+      moduleUrl: KOKORO_MODULE_URL,
+      modelId: KOKORO_MODEL_ID,
+    });
+  }
+
+  async function startKokoroMainThread() {
+    const mod = await import(/* webpackIgnore: true */ KOKORO_MODULE_URL);
+    const KokoroTTS = mod.KokoroTTS || (mod.default && mod.default.KokoroTTS);
+    if (!KokoroTTS) {
+      throw new Error("kokoro-js did not export KokoroTTS");
+    }
+    // WebGPU + q8 is a known Kokoro corruption path (hum / static).
+    // wasm + q8 is the documented clean setup for this model size.
+    kokoroTts = await KokoroTTS.from_pretrained(KOKORO_MODEL_ID, {
+      dtype: "q8",
+      device: "wasm",
+      progress_callback: (info) => {
+        if (!info) {
+          return;
+        }
+        if (typeof info.progress === "number") {
+          const pct = info.progress <= 1 ? info.progress * 100 : info.progress;
+          setKokoroProgress(pct);
+        } else if (info.loaded && info.total) {
+          setKokoroProgress((info.loaded / info.total) * 100);
+        }
+      },
+    });
+  }
+
+  function speakWebSpeech(text) {
+    return new Promise((resolve) => {
       const utterance = new SpeechSynthesisUtterance(text);
       const voice = getSelectedVoice();
       if (voice) {
@@ -351,6 +802,143 @@
       utterance.onerror = () => resolve();
       speechSynthesis.speak(utterance);
     });
+  }
+
+  function speakKokoro(text) {
+    return requestKokoroClip(text).then((clip) => {
+      prefetchKokoroNext(currentIndex);
+      return playKokoroSamples(clip.samples, clip.sampleRate);
+    });
+  }
+
+  function speakGroup(group) {
+    const text = group.join(" ");
+    const play = isKokoroSelected() && kokoroAvailable()
+      ? speakKokoro(text).catch((err) => {
+          console.warn("Kokoro playback failed, using browser TTS.", err);
+          els.kokoroStatus.textContent = "Better voice failed; using browser TTS.";
+          return speakWebSpeech(text);
+        })
+      : speakWebSpeech(text);
+    currentSpeakPromise = play.catch(() => {});
+    return currentSpeakPromise;
+  }
+
+  function setKokoroProgress(percent) {
+    const pct = Math.max(0, Math.min(100, percent));
+    els.kokoroProgressBar.style.width = `${pct}%`;
+  }
+
+  function updateKokoroUi() {
+    if (!isDesktop()) {
+      els.kokoroWrap.classList.add("hidden");
+      return;
+    }
+    els.kokoroWrap.classList.remove("hidden");
+    els.kokoroWrap.classList.toggle("is-ready", kokoroReady && !kokoroLoading);
+    if (kokoroLoading) {
+      els.kokoroBtn.classList.remove("hidden");
+      els.kokoroRemove.classList.add("hidden");
+      els.kokoroBtn.disabled = true;
+      els.kokoroBtn.textContent = "Downloading…";
+      els.kokoroStatus.classList.remove("hidden");
+      els.kokoroStatus.textContent = "Downloading better voice…";
+      els.kokoroProgressTrack.classList.remove("hidden");
+      return;
+    }
+    els.kokoroBtn.disabled = false;
+    els.kokoroProgressTrack.classList.add("hidden");
+    if (kokoroReady) {
+      els.kokoroBtn.classList.add("hidden");
+      els.kokoroRemove.classList.remove("hidden");
+      els.kokoroStatus.classList.add("hidden");
+      els.kokoroStatus.textContent = "Better voice ready";
+    } else {
+      els.kokoroBtn.classList.remove("hidden");
+      els.kokoroRemove.classList.add("hidden");
+      els.kokoroBtn.textContent = KOKORO_DOWNLOAD_LABEL;
+      const status = els.kokoroStatus.textContent;
+      const showStatus = status && status !== "Better voice ready" && status !== "One-time download";
+      els.kokoroStatus.classList.toggle("hidden", !showStatus);
+    }
+  }
+
+  function selectKokoroVoice() {
+    if (!kokoroReady) {
+      return;
+    }
+    savedVoiceName = KOKORO_VOICE_ID;
+    loadVoices();
+    els.voiceSelect.value = KOKORO_VOICE_ID;
+    saveState();
+  }
+
+  async function loadKokoroModel(forceDownload) {
+    if (kokoroAvailable()) {
+      kokoroReady = true;
+      updateKokoroUi();
+      selectKokoroVoice();
+      return true;
+    }
+    kokoroLoading = true;
+    els.kokoroStatus.textContent = forceDownload ? "Downloading better voice…" : "Loading better voice…";
+    setKokoroProgress(forceDownload ? 2 : 8);
+    updateKokoroUi();
+
+    try {
+      try {
+        await startKokoroWorker();
+        kokoroTts = null;
+      } catch (workerErr) {
+        console.warn("Kokoro worker unavailable, using main thread.", workerErr);
+        stopKokoroWorker();
+        await startKokoroMainThread();
+      }
+      kokoroReady = true;
+      kokoroDownloadedFlag = true;
+      kokoroLoading = false;
+      setKokoroProgress(100);
+      els.kokoroStatus.textContent = "Better voice ready";
+      updateKokoroUi();
+      saveState();
+      selectKokoroVoice();
+      return true;
+    } catch (err) {
+      console.warn(err);
+      stopKokoroWorker();
+      kokoroTts = null;
+      kokoroReady = false;
+      kokoroLoading = false;
+      kokoroDownloadedFlag = false;
+      els.kokoroStatus.textContent = "Could not load the better voice. Browser TTS is still available.";
+      updateKokoroUi();
+      saveState();
+      loadVoices();
+      return false;
+    }
+  }
+
+  function removeKokoroVoice() {
+    stopKokoroAudio();
+    stopKokoroWorker();
+    clearKokoroClips();
+    kokoroTts = null;
+    kokoroReady = false;
+    kokoroDownloadedFlag = false;
+    if (savedVoiceName === KOKORO_VOICE_ID) {
+      savedVoiceName = "";
+    }
+    els.kokoroStatus.textContent = "Downloaded voice removed. Browser TTS will be used.";
+    updateKokoroUi();
+    loadVoices();
+    saveState();
+  }
+
+  function handleKokoroButton() {
+    if (kokoroLoading || kokoroReady) {
+      return;
+    }
+    loadKokoroModel(true);
   }
 
   async function speakCurrentGroupOnce(generation) {
@@ -370,10 +958,7 @@
       if (!sessionActive || generation !== speakGeneration) {
         return;
       }
-      await new Promise((resolve) => {
-        repeatTimer = setTimeout(resolve, REPEAT_INTERVAL_MS);
-      });
-      repeatTimer = null;
+      await waitRepeatGap();
     }
   }
 
@@ -385,10 +970,7 @@
       }
       await speakCurrentGroupOnce(generation);
       if (i < times - 1 && sessionActive && generation === speakGeneration) {
-        await new Promise((resolve) => {
-          repeatTimer = setTimeout(resolve, REPEAT_INTERVAL_MS);
-        });
-        repeatTimer = null;
+        await waitRepeatGap();
       }
     }
     if (sessionActive && generation === speakGeneration && acceptingInput) {
@@ -502,14 +1084,24 @@
     startSpeakingCurrentGroup();
   }
 
-  function acceptCorrect(group) {
+  async function acceptCorrect(group) {
     recordAttempt(group);
     acceptingInput = false;
-    cancelSpeech();
+    stopRepeats();
     els.answerInput.classList.remove("mismatch");
     setStatus("Correct", "is-correct");
     appendAssembledGroup(group);
-    setTimeout(advanceOrComplete, CORRECT_HOLD_MS);
+    const started = Date.now();
+    await waitForCurrentSpeech();
+    if (!sessionActive) {
+      return;
+    }
+    const remaining = Math.max(BETWEEN_GROUPS_MS, CORRECT_HOLD_MS - (Date.now() - started));
+    await wait(remaining);
+    if (!sessionActive) {
+      return;
+    }
+    advanceOrComplete();
   }
 
   function handleSubmit() {
@@ -669,9 +1261,20 @@
 
   els.repeatCount.addEventListener("change", saveState);
 
+  els.repeatGapRadios.forEach((radio) => {
+    radio.addEventListener("change", saveState);
+  });
+
   els.voiceSelect.addEventListener("change", () => {
     savedVoiceName = els.voiceSelect.value;
     saveState();
+  });
+
+  els.kokoroBtn.addEventListener("click", handleKokoroButton);
+  els.kokoroRemove.addEventListener("click", () => {
+    if (!kokoroLoading && kokoroReady) {
+      removeKokoroVoice();
+    }
   });
 
   els.speechRate.addEventListener("input", () => {
@@ -728,6 +1331,11 @@
     }
   });
 
+  loadState();
+  updateRepeatCountVisibility();
+  updateWordCount();
+  updateKokoroUi();
+
   if ("speechSynthesis" in window) {
     loadVoices();
     speechSynthesis.addEventListener("voiceschanged", loadVoices);
@@ -737,7 +1345,7 @@
     setStatus("Text-to-speech is not supported in this browser.");
   }
 
-  loadState();
-  updateRepeatCountVisibility();
-  updateWordCount();
+  if (isDesktop() && kokoroDownloadedFlag) {
+    loadKokoroModel(false);
+  }
 })();
