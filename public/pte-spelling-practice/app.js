@@ -2,9 +2,9 @@
   "use strict";
 
   const REPEAT_GAP_MS = {
-    tight: 900,
     natural: 2500,
-    relaxed: 4500,
+    medium: 4500,
+    difficult: 10000,
   };
   const CORRECT_HOLD_MS = 550;
   const BETWEEN_GROUPS_MS = 400;
@@ -282,7 +282,12 @@
         els.repeatCount.value = String(data.repeatCount);
       }
       if (data.repeatGap) {
-        setRepeatGap(data.repeatGap);
+        const migrated = data.repeatGap === "relaxed"
+          ? "medium"
+          : data.repeatGap === "tight"
+          ? "natural"
+          : data.repeatGap;
+        setRepeatGap(migrated);
       }
       if (data.speechRate) {
         els.speechRate.value = String(data.speechRate);
