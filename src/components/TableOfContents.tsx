@@ -99,7 +99,7 @@ export function SidebarTableOfContents({ items }: TableOfContentsProps) {
   return (
     <nav
       aria-label="Table of contents"
-      className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto overscroll-contain pb-6"
+      className="sticky top-32 max-h-[calc(100vh-9rem)] overflow-y-auto overscroll-contain pb-6"
     >
       <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-foreground">
         <ListTree className="h-4 w-4 text-primary" />
