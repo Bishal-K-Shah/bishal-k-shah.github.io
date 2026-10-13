@@ -5,8 +5,10 @@ import { getPostBySlug, getPosts } from '@/lib/posts';
 import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
 import { Clock, Calendar, Hash } from 'lucide-react';
-import { MDXRemote } from 'next-mdx-remote/rsc';
+import { compileMDX } from 'next-mdx-remote/rsc';
+import type { MDXComponents } from 'mdx/types';
 import remarkGfm from 'remark-gfm';
+import rehypeSlug from 'rehype-slug';
 import CodeBlock from '@/components/CodeBlock';
 import { SocialShare } from '@/components/SocialShare';
 import { PostCard } from '@/components/PostCard';
@@ -15,6 +17,109 @@ import { ArticleStickyHeader } from '@/components/ArticleStickyHeader';
 import { Metadata } from 'next';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { StructuredData } from '@/components/StructuredData';
+import { MobileTableOfContents, SidebarTableOfContents } from '@/components/TableOfContents';
+import { rehypeCollectHeadings, type TocItem } from '@/lib/toc';
+
+// Posts with fewer sections than this don't get a table of contents.
+const MIN_TOC_ITEMS = 3;
+
+const mdxComponents: MDXComponents = {
+  // Headers with responsive text sizes
+  h2: ({ ...props}) => <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold mt-10 sm:mt-12 mb-4 sm:mb-6 font-headline tracking-tight text-foreground scroll-mt-24 md:scroll-mt-32 border-b pb-2" {...props} />,
+  h3: ({ ...props}) => <h3 className="text-lg sm:text-xl md:text-2xl font-medium mt-6 sm:mt-8 mb-3 sm:mb-4 font-headline tracking-tight text-foreground scroll-mt-24 md:scroll-mt-32" {...props} />,
+  
+  // Paragraphs
+  p: ({ children, ...props }) => {
+    // This logic prevents next-mdx-remote from wrapping images in p tags, which causes a hydration error.
+    const childrenArray = React.Children.toArray(children);
+    if (childrenArray.length === 1 && React.isValidElement(childrenArray[0])) {
+      const child = childrenArray[0];
+      // Check for native img tag OR custom img component (function with src prop)
+      if (
+        child.type === 'img' ||
+        (typeof child.type === 'function' && 'src' in (child.props || {}))
+      ) {
+        return <>{children}</>;
+      }
+    }
+    return (
+      <p
+        className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground text-base sm:text-lg"
+        {...props}
+      >
+        {children}
+      </p>
+    );
+  },
+  
+  // Lists
+  ul: ({ ...props}) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground" {...props} />,
+  ol: ({ ...props}) => <ol className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground" {...props} />,
+  
+  // Blockquotes
+  blockquote: ({ ...props}) => <blockquote className="mt-6 border-l-4 border-primary pl-6 italic bg-muted/40 py-2 pr-4 rounded-r-lg" {...props} />,
+  
+  // Links
+  a: ({ ...props}) => <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors" {...props} />,
+  
+  // Standard Images from Markdown (e.g., ![alt](src))
+  img: ({ alt, src, title, ...props}) => (
+    <figure className="my-8">
+      <div className="rounded-xl overflow-hidden border border-border/50 bg-muted shadow-sm">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img 
+          src={src} 
+          alt={alt || "Blog post image"}
+          className="w-full h-auto object-cover"
+          {...props} 
+        />
+      </div>
+      {title && (
+        <figcaption className="mt-2 text-center text-sm text-muted-foreground italic">
+          {title}
+        </figcaption>
+      )}
+    </figure>
+  ),
+
+  // Code Blocks
+  code: ({ className, children, ...props }) => {
+    const match = /language-(\w+)/.exec(className || '');
+    return match ? (
+      <div className="my-8 rounded-lg overflow-hidden shadow-md border border-border/50">
+        <CodeBlock>{String(children).replace(/\\n$/, '')}</CodeBlock>
+      </div>
+    ) : (
+      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold text-foreground" {...props}>
+        {children}
+      </code>
+    );
+  },
+
+  // Tables (GitHub style)
+  table: ({ ...props }) => (
+    <div className="my-8 w-full overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm" {...props} />
+      </div>
+    </div>
+  ),
+  thead: ({ ...props }) => (
+    <thead className="bg-gray-50 dark:bg-zinc-800/80" {...props} />
+  ),
+  tbody: ({ ...props }) => (
+    <tbody className="divide-y divide-gray-200 dark:divide-zinc-700" {...props} />
+  ),
+  tr: ({ ...props }) => (
+    <tr className="bg-white dark:bg-zinc-900 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800/50" {...props} />
+  ),
+  th: ({ ...props }) => (
+    <th className="border-b border-gray-200 dark:border-zinc-700 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300" {...props} />
+  ),
+  td: ({ ...props }) => (
+    <td className="px-4 py-3 text-left text-gray-700 dark:text-gray-300 whitespace-nowrap first:font-medium first:text-gray-900 dark:first:text-white" {...props} />
+  ),
+};
 
 type BlogPostPageProps = {
   params: {
@@ -107,176 +212,100 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const baseUrl = 'https://bishalkshah.com.np'; 
   const shareUrl = `${baseUrl}/blog/${post.slug}`;
 
+  // Compile the MDX, giving h2/h3 headings ids and collecting the h2s for the table of contents
+  const toc: TocItem[] = [];
+  const { content } = await compileMDX({
+    source: post.content,
+    options: {
+      mdxOptions: {
+        remarkPlugins: [remarkGfm],
+        rehypePlugins: [rehypeSlug, rehypeCollectHeadings(toc)],
+      },
+    },
+    components: mdxComponents,
+  });
+  const showToc = toc.length >= MIN_TOC_ITEMS;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Structured Data for SEO */}
       <StructuredData post={post} />
 
       {/* Scroll-aware Sticky Header */}
-      <ArticleStickyHeader title={post.title} />
+      <ArticleStickyHeader title={post.title} wide={showToc} />
 
-      <article className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-5xl">
+      <article className={`container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-5xl ${showToc ? 'lg:max-w-6xl' : ''}`}>
         {/* Header Section */}
         <Breadcrumb category={post.category} slug={post.slug} title={post.title} />
-        <header className="mb-8 text-center sm:text-left">
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-4">
-            <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-medium border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors">
-              <Icon className="mr-1.5 h-3.5 w-3.5" />
-              {post.category}
-            </Badge>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5" />
-                <time dateTime={post.date}>
-                  {format(parseISO(post.date), 'MMMM d, yyyy')}
-                </time>
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" />
-                {/* Simple read time estimation */}
-                {Math.ceil(post.content.split(' ').length / 200)} min read
-              </span>
+        <div className={showToc ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_14rem] lg:gap-12' : undefined}>
+          <div className="min-w-0">
+            <header className="mb-8 text-center sm:text-left">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-4">
+                <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-medium border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors">
+                  <Icon className="mr-1.5 h-3.5 w-3.5" />
+                  {post.category}
+                </Badge>
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <time dateTime={post.date}>
+                      {format(parseISO(post.date), 'MMMM d, yyyy')}
+                    </time>
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    {/* Simple read time estimation */}
+                    {Math.ceil(post.content.split(' ').length / 200)} min read
+                  </span>
+                </div>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight text-foreground mb-6 leading-tight font-headline">
+                {post.title}
+              </h1>
+          
+              <div className="flex justify-center sm:justify-between items-center border-b border-border/50 pb-6 mb-8">
+                 <div className="hidden sm:block">
+                   <span className="text-sm font-medium text-muted-foreground">By <span className="text-foreground">Hobbyist's Hideaway</span></span>
+                 </div>
+                 <SocialShare url={shareUrl} title={post.title} />
+              </div>
+            </header>
+        
+            {/* Featured Image */}
+            {post.featuredImage && (
+              <div className="mb-10 relative group rounded-xl overflow-hidden shadow-sm border border-border/50 aspect-video bg-muted">
+                 {/* eslint-disable-next-line @next/next/no-img-element */}
+                 <img
+                  src={post.featuredImage}
+                  alt={post.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+        
+            {/* Table of Contents (phones & tablets) */}
+            {showToc && <MobileTableOfContents items={toc} />}
+
+            {/* Content */}
+            <div className="prose prose-base sm:prose-lg dark:prose-invert max-w-none">
+              {content}
+            </div>
+        
+            {/* Footer Share */}
+            <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+              <span className="text-base font-bold text-foreground">Share this article</span>
+              <SocialShare url={shareUrl} title={post.title} />
             </div>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight text-foreground mb-6 leading-tight font-headline">
-            {post.title}
-          </h1>
-          
-          <div className="flex justify-center sm:justify-between items-center border-b border-border/50 pb-6 mb-8">
-             <div className="hidden sm:block">
-               <span className="text-sm font-medium text-muted-foreground">By <span className="text-foreground">Hobbyist's Hideaway</span></span>
-             </div>
-             <SocialShare url={shareUrl} title={post.title} />
-          </div>
-        </header>
-        
-        {/* Featured Image */}
-        {post.featuredImage && (
-          <div className="mb-10 relative group rounded-xl overflow-hidden shadow-sm border border-border/50 aspect-video bg-muted">
-             {/* eslint-disable-next-line @next/next/no-img-element */}
-             <img
-              src={post.featuredImage}
-              alt={post.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-        
-        {/* Content */}
-        <div className="prose prose-base sm:prose-lg dark:prose-invert max-w-none">
-          <MDXRemote
-            source={post.content}
-            options={{
-              mdxOptions: {
-                remarkPlugins: [remarkGfm],
-              },
-            }}
-            components={{
-              // Headers with responsive text sizes
-              h2: ({ ...props}) => <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold mt-10 sm:mt-12 mb-4 sm:mb-6 font-headline tracking-tight text-foreground scroll-m-20 border-b pb-2" {...props} />,
-              h3: ({ ...props}) => <h3 className="text-lg sm:text-xl md:text-2xl font-medium mt-6 sm:mt-8 mb-3 sm:mb-4 font-headline tracking-tight text-foreground scroll-m-20" {...props} />,
-              
-              // Paragraphs
-              p: ({ children, ...props }) => {
-                // This logic prevents next-mdx-remote from wrapping images in p tags, which causes a hydration error.
-                const childrenArray = React.Children.toArray(children);
-                if (childrenArray.length === 1 && React.isValidElement(childrenArray[0])) {
-                  const child = childrenArray[0];
-                  // Check for native img tag OR custom img component (function with src prop)
-                  if (
-                    child.type === 'img' ||
-                    (typeof child.type === 'function' && 'src' in (child.props || {}))
-                  ) {
-                    return <>{children}</>;
-                  }
-                }
-                return (
-                  <p
-                    className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground text-base sm:text-lg"
-                    {...props}
-                  >
-                    {children}
-                  </p>
-                );
-              },
-              
-              // Lists
-              ul: ({ ...props}) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground" {...props} />,
-              ol: ({ ...props}) => <ol className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground" {...props} />,
-              
-              // Blockquotes
-              blockquote: ({ ...props}) => <blockquote className="mt-6 border-l-4 border-primary pl-6 italic bg-muted/40 py-2 pr-4 rounded-r-lg" {...props} />,
-              
-              // Links
-              a: ({ ...props}) => <a className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors" {...props} />,
-              
-              // Standard Images from Markdown (e.g., ![alt](src))
-              img: ({ alt, src, title, ...props}) => (
-                <figure className="my-8">
-                  <div className="rounded-xl overflow-hidden border border-border/50 bg-muted shadow-sm">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
-                      src={src} 
-                      alt={alt || "Blog post image"}
-                      className="w-full h-auto object-cover"
-                      {...props} 
-                    />
-                  </div>
-                  {title && (
-                    <figcaption className="mt-2 text-center text-sm text-muted-foreground italic">
-                      {title}
-                    </figcaption>
-                  )}
-                </figure>
-              ),
-
-              // Code Blocks
-              code: ({ className, children, ...props }) => {
-                const match = /language-(\w+)/.exec(className || '');
-                return match ? (
-                  <div className="my-8 rounded-lg overflow-hidden shadow-md border border-border/50">
-                    <CodeBlock>{String(children).replace(/\\n$/, '')}</CodeBlock>
-                  </div>
-                ) : (
-                  <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold text-foreground" {...props}>
-                    {children}
-                  </code>
-                );
-              },
-
-              // Tables (GitHub style)
-              table: ({ ...props }) => (
-                <div className="my-8 w-full overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 shadow-sm">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-sm" {...props} />
-                  </div>
-                </div>
-              ),
-              thead: ({ ...props }) => (
-                <thead className="bg-gray-50 dark:bg-zinc-800/80" {...props} />
-              ),
-              tbody: ({ ...props }) => (
-                <tbody className="divide-y divide-gray-200 dark:divide-zinc-700" {...props} />
-              ),
-              tr: ({ ...props }) => (
-                <tr className="bg-white dark:bg-zinc-900 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800/50" {...props} />
-              ),
-              th: ({ ...props }) => (
-                <th className="border-b border-gray-200 dark:border-zinc-700 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300" {...props} />
-              ),
-              td: ({ ...props }) => (
-                <td className="px-4 py-3 text-left text-gray-700 dark:text-gray-300 whitespace-nowrap first:font-medium first:text-gray-900 dark:first:text-white" {...props} />
-              ),
-            }}
-          />
-        </div>
-        
-        {/* Footer Share */}
-        <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-base font-bold text-foreground">Share this article</span>
-          <SocialShare url={shareUrl} title={post.title} />
+          {/* Table of Contents (desktop sidebar) */}
+          {showToc && (
+            <aside className="hidden lg:block">
+              <SidebarTableOfContents items={toc} />
+            </aside>
+          )}
         </div>
       </article>
 

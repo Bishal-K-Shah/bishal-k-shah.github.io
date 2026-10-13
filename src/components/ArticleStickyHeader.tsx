@@ -8,9 +8,11 @@ import { cn } from "@/lib/utils";
 
 interface ArticleStickyHeaderProps {
   title: string;
+  /** Match the wider article layout used when the table of contents sidebar is shown. */
+  wide?: boolean;
 }
 
-export function ArticleStickyHeader({ title }: ArticleStickyHeaderProps) {
+export function ArticleStickyHeader({ title, wide = false }: ArticleStickyHeaderProps) {
   const [isVisible, setIsVisible] = React.useState(true);
   const [lastScrollY, setLastScrollY] = React.useState(0);
 
@@ -42,7 +44,7 @@ export function ArticleStickyHeader({ title }: ArticleStickyHeaderProps) {
         isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
       )}
     >
-      <div className="container mx-auto px-4 max-w-5xl flex items-center justify-between">
+      <div className={cn("container mx-auto px-4 max-w-5xl flex items-center justify-between", wide && "lg:max-w-6xl")}>
         <Button 
           variant="ghost" 
           size="sm" 
