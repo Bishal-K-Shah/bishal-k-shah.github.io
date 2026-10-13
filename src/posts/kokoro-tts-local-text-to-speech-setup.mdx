@@ -1,0 +1,309 @@
+---
+title: 'Kokoro TTS: Free, Local Text-to-Speech That Sounds Human (Setup + Real-World Uses)'
+date: '2026-10-10'
+category: 'Technology'
+tags: ['kokoro', 'tts', 'text-to-speech', 'local-ai', 'self-hosting', 'docker', 'open-webui', 'home-assistant', 'audiobooks']
+featuredImage: ''
+excerpt: 'Kokoro is a tiny 82M-parameter TTS model that sounds shockingly human and runs on almost anything. Set it up with Docker or Python, mix voices, and wire it into Open WebUI.'
+---
+
+Most "free" text-to-speech still sounds like a GPS from 2009. The good stuff, like ElevenLabs, is cloud-only, charges per character, and sends every word you type to someone else's server.
+
+**Kokoro** changes that. It's an open-weight text-to-speech model with just **82 million parameters**. That's tiny next to modern AI models, yet in blind listening tests it holds its own against systems many times its size. It runs on a laptop CPU, an old gaming GPU, a Mac, or the [N100 mini PC](/blog/low-power-homelab-n100-mini-pc) in your cupboard. The weights are **Apache 2.0** licensed, so you can use them in personal and commercial projects.
+
+In this guide you'll set up **Kokoro TTS** two ways (Docker and Python), learn how to pick and blend voices, and plug it into real projects: AI chat voices, Home Assistant announcements, and turning articles or ebooks into audiobooks.
+
+{/* IMAGE: Kokoro-FastAPI web player in a browser with text box, voice dropdown and waveform — suggested caption: "Kokoro's built-in web player: paste text, pick a voice, hit generate" */}
+
+## Why Kokoro Is Worth Your Time
+
+| | Kokoro | Cloud TTS (e.g. ElevenLabs) | Piper | Older XTTS-style models |
+|---|---|---|---|---|
+| **Cost** | Free | Per-character pricing | Free | Free |
+| **Runs locally** | ✅ | ❌ | ✅ | ✅ |
+| **Model size** | ~82M params (~330 MB) | n/a | Very small | 400M+ params |
+| **Naturalness** | Excellent | Excellent | Good, slightly robotic | Very good |
+| **CPU-friendly** | ✅ | n/a | ✅✅ | ❌ (wants a GPU) |
+| **Voice cloning** | ❌ | ✅ | ❌ | ✅ |
+| **License** | Apache 2.0 | Commercial | MIT | Often non-commercial |
+
+**The short version:** if you want natural-sounding narration without a subscription or a big GPU, Kokoro is the sweet spot. Its only real gap is **voice cloning**. You choose from built-in voices (and blends of them) rather than cloning your own.
+
+## What Hardware Do You Need?
+
+Because the model is so small, the requirements are modest:
+
+| Hardware | Experience |
+|---|---|
+| **NVIDIA GPU** (any recent card, 2 GB+ VRAM) | Many times faster than real-time; near-instant |
+| **Apple Silicon Mac** (M1 and newer) | Fast; GPU acceleration via PyTorch MPS |
+| **Modern desktop CPU** (Ryzen 5 / Core i5 and up) | Faster than real-time for normal paragraphs |
+| **Intel N100 / N150 mini PC** | Usable; fine for short announcements and overnight batch jobs |
+| **Raspberry Pi 5** | Works for short phrases; slow for long text |
+
+**RAM:** budget about **1–2 GB** for the container or Python process. Disk: about **2–5 GB** for the Docker image (the GPU image is larger because it bundles CUDA).
+
+The project that makes Kokoro easy to self-host is **Kokoro-FastAPI**. Its author reports **35×–100× real-time** on an RTX 4060 Ti, with about **300 ms** before the first audio starts streaming on GPU. On CPU, the first audio chunk takes roughly **1 second on an M3 Pro** and a few seconds on an older Intel i7.
+
+## Option 1: Kokoro with Docker (Recommended)
+
+**Kokoro-FastAPI** wraps the model in a web server with an **OpenAI-compatible API**. Any app that can talk to OpenAI's text-to-speech endpoint can talk to Kokoro instead. That's the magic that makes integrations so easy.
+
+### CPU-only (works everywhere)
+
+```bash
+docker run -d --name kokoro \
+  -p 8880:8880 \
+  --restart unless-stopped \
+  ghcr.io/remsky/kokoro-fastapi-cpu:latest
+```
+
+### NVIDIA GPU
+
+You'll need the NVIDIA Container Toolkit installed first:
+
+```bash
+docker run -d --name kokoro \
+  --gpus all \
+  -p 8880:8880 \
+  --restart unless-stopped \
+  ghcr.io/remsky/kokoro-fastapi-gpu:latest
+```
+
+For **RTX 50-series (Blackwell)** cards, use the `latest-cu128` tag. There's also an experimental **AMD ROCm** image (`kokoro-fastapi-rocm`).
+
+### Docker Compose version
+
+```yaml
+services:
+  kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest   # or kokoro-fastapi-gpu
+    container_name: kokoro
+    ports:
+      - 8880:8880
+    restart: unless-stopped
+    # Uncomment for NVIDIA GPUs:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+```
+
+> **Tip:** Once things work, pin a specific release tag instead of `latest`, so an update never surprises you mid-project.
+
+### Try it
+
+- **Web player:** open `http://YOUR-SERVER-IP:8880/web`, paste text, pick a voice, and listen.
+- **API docs:** `http://YOUR-SERVER-IP:8880/docs`.
+- **List voices:** `curl http://YOUR-SERVER-IP:8880/v1/audio/voices`
+
+Generate an MP3 from the command line:
+
+```bash
+curl -s http://localhost:8880/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{
+        "model": "kokoro",
+        "input": "Welcome to Hobbyist'\''s Hideaway. Your homelab is now talking.",
+        "voice": "af_heart",
+        "response_format": "mp3",
+        "speed": 1.0
+      }' \
+  -o hello.mp3
+```
+
+Supported output formats: **mp3, wav, opus, flac, aac and pcm**.
+
+{/* IMAGE: Terminal showing the curl command and a media player playing hello.mp3 — suggested caption: "One curl command, one natural-sounding MP3" */}
+
+## Option 2: Kokoro in Python (No Server)
+
+If you just want to script things, use the official `kokoro` Python package.
+
+```bash
+# Linux (Debian/Ubuntu): espeak-ng is used as a fallback for unusual words
+sudo apt install espeak-ng
+
+python3 -m venv kokoro-env && source kokoro-env/bin/activate
+pip install "kokoro>=0.9.4" soundfile
+```
+
+On macOS use `brew install espeak-ng`. On Windows, install the `.msi` from the espeak-ng GitHub releases page.
+
+```python
+from kokoro import KPipeline
+import soundfile as sf
+import numpy as np
+
+# 'a' = American English, 'b' = British English
+pipeline = KPipeline(lang_code="a")
+
+text = """
+Kokoro is an open-weight text-to-speech model with 82 million parameters.
+It runs locally, it's free, and it sounds remarkably human.
+"""
+
+chunks = [audio for _, _, audio in pipeline(text, voice="af_heart", speed=1.0)]
+sf.write("kokoro.wav", np.concatenate(chunks), 24000)  # Kokoro outputs 24 kHz audio
+print("Saved kokoro.wav")
+```
+
+**Mac users:** add `PYTORCH_ENABLE_MPS_FALLBACK=1` in front of your command to use the Apple Silicon GPU:
+
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 python my_kokoro_script.py
+```
+
+## Choosing (and Blending) Voices
+
+Voice names follow a simple pattern: **language/accent + gender + name**.
+
+| Prefix | Meaning | Examples |
+|---|---|---|
+| `af_` | American female | `af_heart`, `af_bella`, `af_nicole`, `af_sky` |
+| `am_` | American male | `am_adam`, `am_michael` |
+| `bf_` | British female | `bf_emma`, `bf_isabella` |
+| `bm_` | British male | `bm_george`, `bm_lewis` |
+
+`af_heart` is widely considered the best all-rounder and is a great default. Run the `/v1/audio/voices` endpoint to see every voice your version ships with.
+
+**Languages:** besides US and UK English, Kokoro supports **Spanish, French, Hindi, Italian, Japanese, Brazilian Portuguese and Mandarin Chinese**. Japanese and Chinese need extra packages in Python: `pip install "misaki[ja]"` or `"misaki[zh]"`.
+
+### Voice mixing
+
+This is Kokoro's party trick. Combine voices with `+`, and optionally weight them:
+
+```json
+{ "voice": "af_bella+af_sky" }
+{ "voice": "af_bella(2)+af_sky(1)" }
+```
+
+The second example is a **67% / 33% blend**. Weights are normalized automatically. Blending lets you create a unique "house voice" for your smart home or YouTube channel that nobody else has.
+
+## Real-World Uses
+
+### 1. Give your local AI a voice (Open WebUI)
+
+If you followed our [Ollama + Open WebUI guide](/blog/running-local-ai-agents-ollama-guide), you can make your local assistant speak in a few clicks:
+
+1. Open **Admin Panel → Settings → Audio**.
+2. Set **Text-to-Speech Engine** to **OpenAI**.
+3. **API Base URL:** `http://kokoro:8880/v1` (or your server's IP).
+4. **API Key:** anything, such as `not-needed`.
+5. **TTS Model:** `kokoro`. **TTS Voice:** `af_heart`.
+6. Save, then click the speaker icon on any reply.
+
+Now you have a fully private, ChatGPT-style voice assistant. Nothing leaves your network.
+
+{/* IMAGE: Open WebUI Admin → Audio settings with OpenAI engine pointed at Kokoro — suggested caption: "Point Open WebUI's TTS at Kokoro's OpenAI-compatible endpoint" */}
+
+### 2. Home Assistant announcements
+
+Because Kokoro speaks the OpenAI TTS protocol, you can add it to Home Assistant with an **OpenAI-compatible TTS** custom integration (several are available through HACS). Point the integration's URL at `http://YOUR-SERVER-IP:8880/v1`. Then use it in automations:
+
+```yaml
+action: tts.speak
+target:
+  entity_id: tts.kokoro
+data:
+  media_player_entity_id: media_player.kitchen_speaker
+  message: "The garage door has been open for 15 minutes."
+```
+
+Pair it with sensors from our [mmWave presence sensor build](/blog/esp32-mmwave-presence-sensor-home-assistant) for announcements that only play when someone is actually in the room.
+
+### 3. Turn articles and ebooks into audiobooks
+
+Here's a small script that reads a text file and calls your Kokoro server chapter by chapter:
+
+```python
+# audiobook.py — usage: python audiobook.py book.txt
+import sys, pathlib, requests
+
+KOKORO = "http://localhost:8880/v1/audio/speech"
+VOICE = "bm_george"
+
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+chapters = [c.strip() for c in text.split("\n\n\n") if c.strip()]  # 2 blank lines = new chapter
+
+out = pathlib.Path("audiobook"); out.mkdir(exist_ok=True)
+for i, chapter in enumerate(chapters, 1):
+    r = requests.post(KOKORO, json={
+        "model": "kokoro", "voice": VOICE,
+        "input": chapter, "response_format": "mp3", "speed": 1.0,
+    }, timeout=600)
+    r.raise_for_status()
+    (out / f"chapter_{i:03}.mp3").write_bytes(r.content)
+    print(f"Chapter {i}/{len(chapters)} done")
+```
+
+Convert an EPUB to plain text first with Calibre's `ebook-convert book.epub book.txt`. Drop the resulting MP3s into an **Audiobookshelf** library and you've got a self-hosted audiobook pipeline. Community projects such as **audiblez** do the whole EPUB-to-M4B conversion with Kokoro in one command, if you'd rather not script it.
+
+### 4. Voiceovers for videos and tutorials
+
+Write your script, generate it with a consistent blended voice, and drop the WAV into your video editor. It's perfect for YouTube explainers, product demos, or narrating your [FPV drone](/blog/intro-to-fpv-drones) footage.
+
+### 5. Accessibility
+
+Use Kokoro as a read-aloud engine for long articles, documentation, or your [Obsidian notes](/blog/mastering-obsidian-second-brain). Many browser "read aloud" extensions accept a custom OpenAI-compatible endpoint.
+
+## Streaming for Low Latency
+
+For chat-style apps, you don't want to wait for the full clip. Request `pcm` and stream it. Here's an example using the OpenAI Python client:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8880/v1", api_key="not-needed")
+
+with client.audio.speech.with_streaming_response.create(
+    model="kokoro",
+    voice="af_heart",
+    input="Streaming lets playback start before the whole sentence is generated.",
+    response_format="pcm",
+) as response:
+    with open("stream.pcm", "wb") as f:
+        for chunk in response.iter_bytes(chunk_size=1024):
+            f.write(chunk)  # or feed straight into an audio device (24 kHz, 16-bit mono)
+```
+
+## Troubleshooting
+
+**Words are mispronounced (names, acronyms, jargon)**
+Kokoro lets you spell pronunciation inline with phonemes in Markdown-link style: `[Kokoro](/kˈOkəɹO/)`. For acronyms, writing them with spaces or dots ("N A S" or "N.A.S.") often helps.
+
+**`espeak-ng` not found (Python)**
+Install it with your OS package manager, as shown above. The Docker images already include it.
+
+**GPU container falls back to CPU**
+Run `docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu24.04 nvidia-smi` to confirm Docker can see your GPU. If it can't, install or repair the NVIDIA Container Toolkit.
+
+**Long text cuts off or sounds rushed**
+Split text on paragraphs (as in the audiobook script) and keep `speed` at `1.0`. Very long single requests are slower and harder to retry.
+
+**Port 8880 already in use**
+Map it elsewhere, for example `-p 8890:8880`, and update your integrations.
+
+## FAQ
+
+**Is Kokoro really free for commercial use?**
+The model weights are released under the **Apache 2.0** license, which allows commercial use. Check the licenses of any wrapper apps or voices you add on top.
+
+**Can Kokoro clone my voice?**
+No. Kokoro uses built-in voices. You can blend them to create something unique, but not clone a specific person.
+
+**How does Kokoro compare to Piper?**
+Piper is even lighter and great on a Raspberry Pi, but Kokoro sounds noticeably more natural, especially for long-form narration. On a mini PC or better, Kokoro is the upgrade.
+
+**Does it need the internet?**
+Only to download the image or model the first time. After that, it runs fully offline.
+
+**Can I run Kokoro and Ollama on the same machine?**
+Yes. Kokoro uses so little memory that it happily sits next to a small LLM. See our guide to [the best local AI models for low-end hardware](/blog/best-local-ai-models-low-vram-ram-guide) to pick one that fits.
+
+## The Bottom Line
+
+Kokoro is one of those rare self-hosted tools that's genuinely *better* than most paid alternatives for everyday use. It's tiny, fast, free, private, and it sounds great. Spin up the Docker container, point Open WebUI or Home Assistant at it, and your homelab finally has a voice worth listening to.

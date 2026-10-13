@@ -1,0 +1,253 @@
+---
+title: 'Best Local AI Models for Low-End Hardware (Late 2026): How Much VRAM & RAM You Really Need'
+date: '2026-10-11'
+category: 'Technology'
+tags: ['local-ai', 'llm', 'ollama', 'vram', 'apple-silicon', 'unified-memory', 'qwen', 'gemma', 'gpt-oss', 'lm-studio', 'budget']
+featuredImage: ''
+excerpt: 'Which local AI models actually run on 4, 8, 12, 16 and 24 GB of VRAM or a Mac with unified memory? A no-hype guide with memory math, model picks, and the cheapest hardware that works.'
+---
+
+Every week there's a new "GPT-level model you can run at home!" headline. Then you download it, and your 8 GB graphics card wheezes, swaps to system RAM, and produces one word every three seconds.
+
+The good news is that **late 2026 is the best time ever to run AI locally on modest hardware**. Small models like **Qwen3.5 9B** and **Gemma 4 E4B** are genuinely useful. Mixture-of-experts models such as **gpt-oss-20b** and **Qwen3.6 35B-A3B** punch way above their weight, and **Apple Silicon Macs** with unified memory have become the budget-friendly secret weapon.
+
+This guide answers the question everyone actually has: **"What's the best model I can run on *my* hardware, and how much VRAM or RAM do I really need?"**
+
+{/* IMAGE: Desk setup with a mini PC, a used RTX 3060 and a Mac mini side by side, each labelled with its memory — suggested caption: "Three affordable routes to local AI: CPU + RAM, a used GPU, or a Mac with unified memory" */}
+
+## Quick Answer: What Can You Run?
+
+Approximate figures for 4-bit quantized models (Q4_K_M or similar) with a modest 4K–8K context:
+
+| Your memory | Best all-round pick | Also great | Feels like |
+|---|---|---|---|
+| **4–6 GB VRAM** or **8 GB RAM** (CPU) | Qwen3.5 4B | Gemma 4 E2B / E4B, Llama 3.2 3B | Smart autocomplete, quick Q&A |
+| **8 GB VRAM** | **Qwen3.5 9B** | Gemma 4 E4B (higher quant) | Solid daily assistant |
+| **12 GB VRAM** | Qwen3.5 9B (Q6–Q8, long context) | gpt-oss-20b (partial offload) | Strong assistant, decent coding |
+| **16 GB VRAM** or **16–24 GB Mac** | **gpt-oss-20b** | Qwen3.5 9B at Q8 | Reasoning, tool use, good coding |
+| **24 GB VRAM** or **32 GB+ Mac** | **Qwen3.6 27B** or **Qwen3.6 35B-A3B** | Gemma 4 31B / 26B A4B | Close to last-gen cloud models |
+
+> **Note:** New models land monthly. The *memory math* below never goes out of date, so learn it once and you can size any future model in ten seconds.
+
+## The Memory Math (How to Size Any Model)
+
+A model's memory footprint comes from three things.
+
+### 1. Weights: parameters × bits per parameter
+
+| Precision | Bytes per parameter | 9B model | 27B model |
+|---|---|---|---|
+| FP16 / BF16 (full) | 2.0 | ~18 GB | ~54 GB |
+| Q8 (8-bit) | ~1.06 | ~9.5 GB | ~29 GB |
+| **Q4_K_M (4-bit)** | **~0.6** | **~5.5 GB** | **~16.5 GB** |
+| Q3 / IQ3 (3-bit) | ~0.45 | ~4 GB | ~12 GB |
+
+**Rule of thumb:** at 4-bit, a model needs about **0.6 GB per billion parameters**. Q4_K_M is the sweet spot: the quality loss versus full precision is small for chat and coding, and it's the default in Ollama and LM Studio.
+
+### 2. Context (the KV cache)
+
+Every token of conversation history takes memory. For a typical modern 7–9B model, expect very roughly **0.5–1.5 GB per 8K tokens** of context, depending on architecture. If you want 32K+ context for long documents, budget several extra GB, or enable **KV-cache quantization** (`OLLAMA_KV_CACHE_TYPE=q8_0` with flash attention on) to roughly halve it.
+
+### 3. Overhead
+
+Leave **~1 GB** for the runtime and, if it's your display GPU, whatever your desktop uses (often 0.5–1.5 GB).
+
+**Worked example:** Qwen3.5 9B at Q4_K_M is ~6.6 GB as an Ollama download. Add ~1 GB of context and ~0.5 GB of overhead, and you get **~8 GB**. It fits an 8 GB card *just*, with a short context. On a 12 GB card it's comfortable.
+
+### Dense vs mixture-of-experts (MoE)
+
+This matters a lot for budget hardware:
+
+- **Dense** models (Qwen3.6 27B, Gemma 4 31B) use *every* parameter for every token.
+- **MoE** models (gpt-oss-20b, Qwen3.6 35B-A3B, Gemma 4 26B A4B) store lots of parameters but only activate a few billion per token.
+
+**Memory is set by *total* parameters; speed is set by *active* parameters.** A 35B-A3B model needs the RAM of a 35B model but generates text at roughly the speed of a 3B model. That makes MoE models brilliant on **Macs and CPU-only machines**, where you have plenty of (slow) memory.
+
+{/* IMAGE: Simple diagram comparing a dense model (all blocks lit) with an MoE model (only a few expert blocks lit per token) — suggested caption: "MoE models only wake up a few experts per token, which is why they're fast on modest hardware" */}
+
+## Why Speed Is About Memory *Bandwidth*
+
+When generating text, the hardware has to read (roughly) all of the *active* weights from memory **for every token**. So:
+
+> **Max tokens/second ≈ memory bandwidth ÷ size of active weights**
+
+| Hardware | Approx. bandwidth | 9B Q4 (~5.5 GB) ceiling | 3B-active MoE ceiling |
+|---|---|---|---|
+| Intel N100 (single-channel DDR5) | ~38 GB/s | ~6 tok/s | ~15–20 tok/s |
+| Desktop dual-channel DDR5 | ~80–90 GB/s | ~15 tok/s | ~35–45 tok/s |
+| Apple M4 (base) | 120 GB/s | ~20 tok/s | ~50+ tok/s |
+| Apple M4 Pro | 273 GB/s | ~45 tok/s | ~90+ tok/s |
+| RTX 3060 12 GB | 360 GB/s | ~55 tok/s | n/a (if it fits) |
+| RTX 3090 24 GB | 936 GB/s | ~120 tok/s | very fast |
+
+Real-world numbers land at roughly **50–80% of these ceilings**. Still, the table explains the most important thing in local AI: **a used RTX 3090 is far faster than a new budget card, and an M4 Pro Mac is roughly twice as fast as a base M4 at the same model size.**
+
+Want real numbers from a tiny box? We measured an N100 in [Running Ollama on Intel N100](/blog/ollama-n100-mini-pc-local-ai).
+
+## Apple Silicon and Unified Memory: The Budget Secret Weapon
+
+On a PC, your GPU can only use its own VRAM, usually 8–16 GB on affordable cards. Anything that doesn't fit spills into system RAM and slows to a crawl.
+
+On an Apple Silicon Mac, **CPU and GPU share one pool of unified memory**. A Mac with 32 GB can hand ~24 GB to the GPU. A graphics card with 24 GB of VRAM costs more than that whole Mac mini.
+
+### How much of a Mac's memory can the GPU use?
+
+By default macOS lets the GPU "wire" roughly **65–75% of total RAM** (the exact share depends on the machine). In practice:
+
+| Mac memory | Usable for models (default) | Comfortable model choice |
+|---|---|---|
+| 8 GB | ~5 GB | Qwen3.5 4B, Gemma 4 E2B. Honestly, skip 8 GB for AI |
+| **16 GB** | ~10–11 GB | Qwen3.5 9B (Q4–Q6), Gemma 4 E4B |
+| **24 GB** | ~16–18 GB | gpt-oss-20b, Qwen3.5 9B at Q8 with long context |
+| **32 GB** | ~22–24 GB | Qwen3.6 35B-A3B (Q4), Qwen3.6 27B (Q4) |
+| **48–64 GB** | ~36–48 GB | Gemma 4 31B at Q6–Q8, 70B-class models at Q4 (64 GB) |
+
+Power users can raise the limit (it resets on reboot) and leave ~8 GB for macOS:
+
+```bash
+# Example: let the GPU use up to 26 GB on a 32 GB Mac
+sudo sysctl iogpu.wired_limit_mb=26624
+```
+
+This isn't an officially supported Apple setting. Push it too far and macOS will start swapping or freeze, so raise it gradually.
+
+### Bandwidth by chip (why "Pro" and "Max" matter)
+
+| Chip | Unified memory bandwidth |
+|---|---|
+| M1 | 68 GB/s |
+| M2 / M3 | 100 GB/s |
+| M4 | 120 GB/s |
+| M5 | 153 GB/s |
+| M4 Pro | 273 GB/s |
+| M4 Max | 410–546 GB/s |
+| M3 Ultra | 819 GB/s |
+
+Newer M5-generation Pro, Max and Ultra chips push these numbers higher still. Check Apple's spec page for the exact model you're considering. **For AI, a used M1/M2 Max or Pro with lots of memory can beat a brand-new base-model Mac.**
+
+### MLX vs llama.cpp on Mac
+
+- **llama.cpp / Ollama (GGUF):** works everywhere, huge model selection, uses Metal on the GPU.
+- **MLX (Apple's own framework):** often **10–30% faster** on Apple Silicon. **LM Studio** can run MLX models with one click, and Ollama now offers MLX builds of some models too.
+
+If you're on a Mac, try both on your favourite model and keep the faster one.
+
+## The Best Models by Tier (Late 2026)
+
+### Tier 1: 4–6 GB VRAM, or CPU with 8 GB RAM
+
+- **Qwen3.5 4B** (~3.4 GB): the best quality you'll get at this size. Good at instructions, summaries, and simple code.
+- **Gemma 4 E2B / E4B**: Google's "effective parameter" models, built for phones and laptops. They also accept **images**, so you can ask questions about screenshots or photos. Use the **QAT** (quantization-aware trained) builds for the smallest download.
+- **Llama 3.2 3B**: older, but extremely well supported and very fast on CPU. Still a great pick for an N100 or Raspberry Pi 5.
+
+**Use for:** Home Assistant voice commands, summarizing notes, autocomplete, quick lookups.
+
+### Tier 2: 8 GB VRAM (RTX 3060 Ti / 4060 / 3070)
+
+- **Qwen3.5 9B (Q4_K_M, ~6.6 GB)**: the consensus best model for 8 GB cards in 2026. It handles tool-calling and agents well, and includes a "thinking" mode for harder problems.
+- **Gemma 4 E4B at Q8**: excellent multilingual writing and image understanding.
+
+**Watch out:** keep context to 4K–8K on 8 GB, or the model spills to system RAM and slows dramatically.
+
+### Tier 3: 12 GB VRAM (RTX 3060 12 GB, 4070, B580)
+
+- **Qwen3.5 9B at Q6/Q8** with 16–32K context: noticeably sharper than Q4, with room for long documents.
+- **gpt-oss-20b** with a few layers offloaded to RAM: still very usable because it's MoE (only ~3.6B parameters active per token).
+
+The **used RTX 3060 12 GB** remains the best budget AI card: cheap, power-efficient, and it has more VRAM than many newer mid-range cards.
+
+### Tier 4: 16 GB VRAM, or a 24 GB Mac
+
+- **gpt-oss-20b**: OpenAI's open-weight reasoning model. OpenAI says its native MXFP4 format runs within **16 GB of memory**. Strong at step-by-step reasoning, tool use and code, with adjustable reasoning effort (low/medium/high).
+- **Qwen3.6 35B-A3B at ~3-bit** (around 14 GB): squeezes onto 16 GB with a short context, with excellent coding for the size.
+
+### Tier 5: 24 GB VRAM (used RTX 3090 / 4090), or a 32 GB+ Mac
+
+This is where local AI starts to feel like last generation's cloud models:
+
+- **Qwen3.6 27B (dense, Q4 ~17 GB)**: top-tier quality for a single GPU, with strong coding and reasoning. Apache 2.0.
+- **Qwen3.6 35B-A3B (MoE, Q4 ~22 GB)**: almost as smart and *much* faster thanks to ~3B active parameters. The perfect Mac model.
+- **Gemma 4 31B (dense, Q4 ~20 GB)** and **Gemma 4 26B A4B (MoE)**: excellent writing, multilingual and vision. Long context (up to 256K).
+
+> **Check the tags.** Model names and download sizes change as new builds are published. Search the [Ollama library](https://ollama.com/library) or LM Studio's model browser for the exact tag and size before you pull.
+
+## Getting Started in 5 Minutes
+
+### Ollama (Linux, Windows, macOS)
+
+```bash
+# Install (Linux)
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Pull and chat with a model that fits your tier
+ollama run qwen3.5:9b
+
+# Check how much is on the GPU vs CPU
+ollama ps
+```
+
+`ollama ps` is your best friend. If the **PROCESSOR** column shows something like `40%/60% CPU/GPU`, the model doesn't fit. Pick a smaller model, a lower quant, or shorter context.
+
+For a full setup with a ChatGPT-style web interface, follow our [Ollama + Open WebUI guide](/blog/running-local-ai-agents-ollama-guide).
+
+### LM Studio (easiest on Mac and Windows)
+
+Download LM Studio, search for a model, and it shows a **green "fits" or red "too large" badge** based on your hardware. On a Mac, prefer the **MLX** versions.
+
+### Give it a voice
+
+Pair your model with [Kokoro TTS](/blog/kokoro-tts-local-text-to-speech-setup), a tiny local text-to-speech model, for a fully private voice assistant.
+
+## Cheapest Hardware That Actually Works
+
+| Budget route | Memory for AI | Best for |
+|---|---|---|
+| **Existing PC + 32 GB DDR5** | System RAM | Small MoE models on CPU; slow but free |
+| **Intel N100/N150 mini PC (16 GB)** | System RAM | 3–4B models, always-on, ~10 W idle |
+| **Used RTX 3060 12 GB** | 12 GB VRAM | Best price-per-GB of VRAM; Tier 3 |
+| **Used RTX 3090 24 GB** | 24 GB VRAM | Tier 5 performance on a budget (needs a big PSU) |
+| **Mac mini (24–32 GB)** | Unified memory | Quiet, ~5–30 W, MoE models shine |
+| **Used Mac Studio M1/M2 Max (64 GB)** | Unified memory | 70B-class models, high bandwidth |
+
+**Avoid:** buying a *new* 8 GB GPU for AI in 2026. It's the most frustrating tier, because everything good is just slightly too big. If you're building a PC, our [budget gaming PC guide](/blog/budget-gaming-pc-build-2025) explains how to stretch for a 12–16 GB card.
+
+## Troubleshooting Slow Local AI
+
+**It's painfully slow (1–3 tokens/s)**
+The model is spilling into system RAM. Check `ollama ps`, then use a smaller quant, a smaller model, or a shorter context window.
+
+**It loads, then crashes with out-of-memory**
+Context is too big. Lower `num_ctx`, or enable flash attention plus KV-cache quantization.
+
+**Answers are rambling or ignore instructions**
+Very small models (under 4B) struggle with complex prompts. Move up a tier, or give shorter, clearer instructions. For "thinking" models, switch thinking off for simple tasks.
+
+**Mac shows plenty of free RAM but the model won't load on the GPU**
+You've hit the default GPU wired-memory limit. Pick a smaller quant, or carefully raise `iogpu.wired_limit_mb`.
+
+## FAQ
+
+**Is 8 GB of VRAM enough for local AI?**
+For 4B–9B models at Q4 with short context, yes. Qwen3.5 9B runs well. For anything larger, aim for 12 GB or more.
+
+**Can I run local AI without a GPU?**
+Yes. CPU-only works fine for 3–4B models, and MoE models like gpt-oss-20b run surprisingly well on 32 GB of fast DDR5. Expect single-digit to low-double-digit tokens per second.
+
+**Is a Mac better than a PC with a GPU for local AI?**
+Per dollar of *memory*, usually yes: a 32 GB Mac mini runs models no affordable GPU can fit. Per dollar of *speed*, a used RTX 3090 still wins for models that fit in 24 GB.
+
+**What does Q4_K_M mean?**
+It's a 4-bit quantization format from llama.cpp. "K" means it uses k-quant blocks, and "M" is medium quality. It's the best default trade-off between size and quality.
+
+**How much RAM do I need alongside the GPU?**
+At least as much system RAM as VRAM, ideally double. 32 GB is the comfortable minimum for a local AI box.
+
+## The Bottom Line
+
+You don't need a $2,000 GPU to run genuinely useful AI at home. Match the model to your memory:
+
+- **8 GB** → Qwen3.5 9B
+- **16 GB** → gpt-oss-20b
+- **24 GB or a 32 GB Mac** → Qwen3.6 27B or 35B-A3B
+
+Then use the bandwidth rule to set realistic speed expectations. Learn the memory math once and you'll be ready for whatever model drops next month.

@@ -1,0 +1,293 @@
+---
+title: 'Seerr + Jellyfin: Build Your Own Netflix-Style Request System (2026 Setup Guide)'
+date: '2026-10-09'
+category: 'HomeLab'
+tags: ['seerr', 'jellyfin', 'jellyseerr', 'overseerr', 'media-server', 'radarr', 'sonarr', 'self-hosting', 'docker']
+featuredImage: ''
+excerpt: 'Set up Seerr with Jellyfin so family and friends can request movies and shows in one tap. Docker Compose, Radarr/Sonarr, permissions, notifications, and Jellyseerr migration.'
+---
+
+You built the perfect media server. Jellyfin is humming, Radarr and Sonarr are grabbing everything automatically… and your phone still buzzes every evening with *"hey, can you add that new show?"*
+
+**Seerr** fixes that. It gives everyone on your server a slick, Netflix-style "browse and request" app. They search for a title, tap **Request**, and Seerr hands it to Radarr or Sonarr for you. When it lands in Jellyfin, they get a notification. You never have to touch it.
+
+This guide walks through a complete **Seerr + Jellyfin setup** in 2026: Docker Compose, signing in with Jellyfin accounts, connecting Radarr and Sonarr, per-user request limits, notifications, and safe remote access. If you're still running **Jellyseerr** or **Overseerr**, there's a migration section too.
+
+{/* IMAGE: Seerr discover page on desktop showing trending movies and a "Request" button — suggested caption: "Seerr's Discover page: your users browse and request, the automation does the rest" */}
+
+## What Is Seerr? (And What Happened to Jellyseerr and Overseerr?)
+
+For years there were two near-identical request apps:
+
+- **Overseerr** – the original, built for **Plex**.
+- **Jellyseerr** – a fork that added **Jellyfin** and **Emby** support.
+
+In 2025 the two teams **merged into a single project called Seerr**, and the combined app shipped as **Seerr v3**. It includes everything from Overseerr plus all the Jellyfin/Emby features from Jellyseerr, under one codebase and one Docker image: `ghcr.io/seerr-team/seerr`.
+
+**What that means for you:**
+
+| You're running… | What to do |
+|---|---|
+| Nothing yet | Install Seerr (this guide) |
+| Jellyseerr | Swap the image to Seerr; your database migrates automatically |
+| Overseerr | Swap the image to Seerr; an extra config migration runs on first start |
+| LinuxServer.io Overseerr image | It's deprecated; move to the official Seerr image |
+
+Old Jellyseerr guides still mostly apply, since the UI and settings are the same family. The names and the Docker image are what changed.
+
+## How Seerr Fits Into Your Media Stack
+
+Seerr doesn't download anything itself. It's the front door to the automation you already have:
+
+1. **User** searches for a movie in Seerr and taps **Request**.
+2. **Seerr** checks permissions, then auto-approves the request or waits for an admin.
+3. **Radarr** (movies) or **Sonarr** (TV) receives the request and searches your indexers via **Prowlarr**.
+4. Your **download client** grabs it, and Radarr or Sonarr imports and renames it.
+5. **Jellyfin** scans the new file, and **Seerr** marks it as *Available* and notifies the user.
+
+If you don't have Radarr, Sonarr, and Prowlarr running yet, start with our [Ultimate 2026 Media Stack guide](/blog/ultimate-2026-media-stack-jellyfin-arrs), then come back here.
+
+{/* IMAGE: Flow diagram — User → Seerr → Radarr/Sonarr → Download client → Jellyfin → notification back to user — suggested caption: "Where Seerr sits in a Jellyfin + Arr stack" */}
+
+## Requirements
+
+- A working **Jellyfin** server (10.10 or newer; 10.11+ recommended).
+- **Radarr** and/or **Sonarr** with at least one quality profile and root folder configured.
+- **Docker** and Docker Compose on any Linux box, NAS, or mini PC. Seerr is light: roughly 200–400 MB of RAM and almost no CPU when idle.
+- Your **Jellyfin admin** username and password, plus Radarr and Sonarr API keys (found under *Settings → General* in each app).
+
+New to Docker? Our [self-hosting with Docker guide](/blog/self-hosting-with-docker) covers the basics.
+
+## Step 1: Install Seerr with Docker Compose
+
+Create a folder for Seerr's config and give it to UID 1000. The official image runs as the non-root `node` user, and this is the step people most often skip:
+
+```bash
+mkdir -p /opt/seerr/config
+sudo chown -R 1000:1000 /opt/seerr/config
+```
+
+Now add Seerr to your `compose.yaml`. Ideally use the same file and network as Jellyfin and the Arrs so the containers can reach each other by name:
+
+```yaml
+services:
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    container_name: seerr
+    init: true                      # required – the image no longer ships its own init
+    environment:
+      - LOG_LEVEL=info
+      - TZ=America/New_York         # your TZ database name
+      - PORT=5055                   # optional
+    ports:
+      - 5055:5055
+    volumes:
+      - /opt/seerr/config:/app/config
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/settings/public || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    security_opt:
+      - no-new-privileges
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+```
+
+Start it:
+
+```bash
+docker compose up -d seerr
+docker logs -f seerr
+```
+
+When the logs settle, open `http://YOUR-SERVER-IP:5055` and the setup wizard will appear.
+
+> **Tip:** Pin a version tag (for example `ghcr.io/seerr-team/seerr:v3`) instead of `latest` if you'd rather update on your own schedule. Seerr publishes `latest`, major (`v3`), minor (`v3.x`) and exact version tags.
+
+## Step 2: Connect Seerr to Jellyfin
+
+The first-run wizard asks which media server you use.
+
+1. Choose **Jellyfin**.
+2. **Hostname or IP:** if Seerr and Jellyfin share a Docker network, use the container name, such as `jellyfin`. Otherwise use the server's LAN IP. Avoid `localhost`, because inside a container that means Seerr itself.
+3. **Port:** `8096` (or `8920` if you terminate HTTPS on Jellyfin itself).
+4. **URL Base:** leave blank unless Jellyfin runs under a sub-path like `/jellyfin`.
+5. Enter an **email address** plus your **Jellyfin admin username and password**. This account becomes the Seerr owner.
+6. Click **Sign In**, then **Sync Libraries**, tick your **Movies** and **Shows** libraries, and hit **Start Scan**.
+
+The scan matches everything already in Jellyfin, so Seerr knows what's *Available* and won't let people re-request it.
+
+{/* IMAGE: Seerr setup wizard — Jellyfin server connection form filled in with container hostname "jellyfin" and port 8096 — suggested caption: "Use the container name, not localhost, when everything runs in Docker" */}
+
+### Set the external Jellyfin URL
+
+Under **Settings → Jellyfin**, set the **External URL** to the address your users actually open, for example `https://jellyfin.yourdomain.com`. Seerr uses it for the **Play on Jellyfin** buttons and in notifications. Without it, users get links to an internal IP that won't work from their phones.
+
+## Step 3: Connect Radarr and Sonarr
+
+Go to **Settings → Services**.
+
+### Add Radarr (movies)
+
+1. Click **Add Radarr Server**.
+2. Tick **Default Server**.
+3. **Hostname:** `radarr` (container name) or the LAN IP. **Port:** `7878`.
+4. Paste the **API key** from Radarr (*Settings → General*).
+5. Click **Test**. When it passes, the dropdowns fill in.
+6. Pick a **Quality Profile** (for example *HD-1080p*), **Root Folder** (for example `/data/media/movies`) and **Minimum Availability** (*Released* is a sensible default).
+7. Turn on **Enable Scan** so Seerr can see what Radarr already has.
+8. Save.
+
+### Add Sonarr (TV)
+
+Same process: hostname `sonarr`, port `8989`, API key, quality profile, and root folder. Two extra settings matter:
+
+- **Series Type** – leave *Standard* for normal shows; set an **Anime** profile and root folder if you split anime out.
+- **Season Folders** – enable it so each season gets its own folder, which keeps Jellyfin happy.
+
+### Optional: separate 4K servers
+
+If you keep 4K in its own Radarr and Sonarr instances, add them as extra servers and tick **4K Server**. Users with the **Request 4K** permission then get a separate 4K button. Everyone else only sees standard requests, so your 4K library (and bandwidth) stays under control.
+
+{/* IMAGE: Seerr Settings → Services page showing one Radarr and one Sonarr default server, plus a 4K Radarr — suggested caption: "Standard and 4K servers side by side" */}
+
+## Step 4: Users, Permissions and Request Limits
+
+This is what makes Seerr feel like a real service instead of a free-for-all.
+
+### Let people sign in with their Jellyfin account
+
+Under **Settings → Users**, make sure **Enable Jellyfin Sign-In** is on. Then go to the **Users** page and click **Import Jellyfin Users**. Everyone keeps the same username and password they use for Jellyfin, so there's nothing new to remember.
+
+If you'd rather invite people who *don't* have Jellyfin accounts yet, enable **Local Sign-In** and create users manually.
+
+### Set sensible default permissions
+
+**Settings → Users → Default Permissions** applies to every new user. A good starting point for family and friends:
+
+| Permission | Recommended | Why |
+|---|---|---|
+| Request (Movies / Series) | ✅ On | The whole point |
+| Auto-Approve | ✅ for trusted users only | Skips the admin queue |
+| Request 4K | ❌ Off | 4K files are 4–10× larger |
+| Advanced Requests | ❌ Off | Lets users change quality profiles and folders |
+| Manage Requests | ❌ Admins only | Approve/decline others |
+
+### Add request limits (quotas)
+
+Under **Settings → Users**, set a **Global Movie Request Limit** and **Global Series Request Limit**, for example *10 movies per 7 days* and *3 series per 7 days*. This one setting does more to protect your disk space than anything else. You can raise limits per user later from their profile.
+
+## Step 5: Notifications – Tell Users When It's Ready
+
+The magic moment is a phone notification saying **"Your request is now available."** Seerr supports a long list of agents under **Settings → Notifications**, including:
+
+- **Email** (SMTP)
+- **Discord** and **Slack** webhooks
+- **Telegram**
+- **ntfy**, **Gotify**, **Pushover** and **Pushbullet**
+- **Web Push** (browser and installed-PWA notifications, no extra app needed; requires HTTPS)
+- Generic **Webhook** (send JSON anywhere, such as Home Assistant or n8n)
+
+**Easiest family setup:** once Seerr is served over HTTPS (see Step 6), enable **Web Push**, then ask everyone to open Seerr on their phone and choose **Add to Home Screen**. Seerr behaves like a native app, and users can toggle which notifications they get from their own profile.
+
+**For you as admin:** add a Discord or Telegram channel and enable *Request Pending Approval* and *Request Failed*, so you only hear about things that need attention.
+
+{/* IMAGE: Phone screenshot of Seerr installed as a home-screen app with a "Your request is now available" push notification — suggested caption: "Seerr as a home-screen app with push notifications" */}
+
+## Step 6: Secure Remote Access
+
+Your users will want to request from anywhere, so put Seerr behind a **reverse proxy with HTTPS**. Don't just forward port 5055 on your router.
+
+With Traefik, it's a few labels on the Seerr container:
+
+```yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.seerr.rule=Host(`requests.yourdomain.com`)"
+      - "traefik.http.routers.seerr.entrypoints=websecure"
+      - "traefik.http.routers.seerr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.seerr.loadbalancer.server.port=5055"
+```
+
+The full Traefik setup is in our [reverse proxy guide](/blog/reverse-proxy-traefik-guide). If you'd rather not expose anything publicly, a VPN such as WireGuard or Tailscale works well too. See our [home VPN guide](/blog/home-vpn-privacy-guide).
+
+**Security checklist:**
+
+- Keep **Local Sign-In** off unless you need it, so Jellyfin stays your single source of accounts.
+- Turn on **Settings → Network → Enable Proxy Support** when running behind a reverse proxy, so Seerr logs real client IPs.
+- Use a strong password on the Jellyfin admin account. It's now the key to Seerr as well.
+
+## Migrating from Jellyseerr or Overseerr to Seerr
+
+The Seerr team built the migration to run **automatically on first start**. Do it like this:
+
+1. **Back up** your existing config folder (it contains `db/` and `settings.json`):
+   ```bash
+   docker stop jellyseerr
+   cp -a /opt/jellyseerr/config /opt/jellyseerr/config.backup
+   ```
+2. **Fix ownership**, since Seerr runs as UID 1000:
+   ```bash
+   sudo chown -R 1000:1000 /opt/jellyseerr/config
+   ```
+3. **Edit your compose file:**
+   - Change the image to `ghcr.io/seerr-team/seerr:latest`.
+   - Add `init: true`.
+   - Remove any `user:` line (no longer needed).
+   - Optionally rename the service and container to `seerr`.
+4. `docker compose up -d` and watch `docker logs -f seerr` until the migration finishes.
+
+Your users, requests, and settings carry over. If anything goes wrong, stop the container, restore the backup, and switch back to the old image.
+
+## Troubleshooting Common Seerr + Jellyfin Problems
+
+**"Unable to connect to Jellyfin" during setup**
+Seerr is probably trying `localhost`. Use the Jellyfin **container name** (on the same Docker network) or the host's **LAN IP**. Check that `curl http://jellyfin:8096/System/Info/Public` works from another container on that network.
+
+**Container restarts with permission errors (`EACCES`)**
+The config folder isn't owned by UID 1000. Run `sudo chown -R 1000:1000 /opt/seerr/config` and restart.
+
+**Requests stuck on "Requested" forever**
+Seerr did its job; Radarr or Sonarr didn't find a release. Open Radarr or Sonarr and look at the item's **Interactive Search** and **History**. It's usually an indexer or quality-profile problem, not Seerr.
+
+**Content is in Jellyfin but Seerr still says "Requested"**
+Run **Settings → Jellyfin → Sync Libraries → Start Scan**, or wait for the next scheduled scan. Also check that the title matched correctly in Jellyfin (wrong TMDB ID = no match).
+
+**"Play on Jellyfin" opens the wrong address**
+Set the **External URL** under *Settings → Jellyfin*.
+
+**Users can't log in with Jellyfin credentials**
+Confirm **Enable Jellyfin Sign-In** is on under *Settings → Users*, and that the user has been imported via **Users → Import Jellyfin Users**.
+
+## Bonus: Request Directly From Jellyfin
+
+Want users to request *without leaving Jellyfin*? The **Jellyfin Enhanced** plugin can talk to Seerr, so search results inside Jellyfin show titles you don't have yet, with a **Request** button right there. We cover it, plus some gorgeous theming, in [Make Jellyfin Look Better Than Netflix](/blog/jellyfin-enhanced-media-bar-elegantfin-theme).
+
+## FAQ
+
+**Is Seerr free?**
+Yes. Seerr is open source and free, with no premium tier.
+
+**Do I need Jellyseerr or Overseerr anymore?**
+No. Seerr replaces both. New installs should use `ghcr.io/seerr-team/seerr`.
+
+**Does Seerr work with Plex and Emby too?**
+Yes. Seerr supports Jellyfin, Emby, and Plex from the same image.
+
+**Can Seerr run on a Raspberry Pi or N100 mini PC?**
+Easily. It uses a few hundred MB of RAM, and the image supports ARM64. An [N100 mini PC](/blog/low-power-homelab-n100-mini-pc) can run Seerr, Jellyfin, and the whole Arr stack together.
+
+**Can users request individual seasons?**
+Yes. When requesting a series, users pick specific seasons, and Seerr tells Sonarr to monitor only those.
+
+**Where does Seerr store its data?**
+Everything lives in `/app/config` (SQLite by default; PostgreSQL is supported). Back up that folder and you've backed up Seerr.
+
+## The Bottom Line
+
+Seerr is the missing piece that turns a Jellyfin server into something that *feels* like a streaming service. Your family gets a beautiful app to browse and request. You get approvals, quotas, and notifications, and you stop being everyone's personal download button.
+
+Set it up once, import your Jellyfin users, add a couple of request limits, and enjoy the quiet.

@@ -1,0 +1,300 @@
+---
+title: 'Never Miss a Price Drop Again: The Complete changedetection.io Self-Hosting Guide'
+date: '2026-10-12'
+category: 'HomeLab'
+tags: ['changedetection', 'self-hosting', 'docker', 'price-tracking', 'restock-alerts', 'web-monitoring', 'apprise', 'home-assistant', 'automation']
+featuredImage: ''
+excerpt: 'Self-host changedetection.io to track price drops, restocks, job posts and any web page change. Docker setup, JS-heavy sites, filters, and Discord/Telegram/ntfy alerts.'
+---
+
+That GPU went back in stock for *eleven minutes* at 3 a.m. The concert tickets dropped at 9:00 and sold out at 9:04. The visa appointment page added new slots while you were at lunch.
+
+You don't need to refresh pages all day. You need a robot that does it for you, and that robot is **changedetection.io**.
+
+**changedetection.io** is a free, open-source tool that watches any web page and alerts you the moment something changes: a price, a "Sold out" label, a new job listing, a firmware release, a government notice. Self-host it on any homelab box, and get alerts on Discord, Telegram, ntfy, email, or almost anything else.
+
+This guide covers a complete **changedetection.io self-hosted setup**: Docker Compose (including the Chrome add-on for JavaScript-heavy sites), watching only the part of a page you care about, price and restock tracking, notifications, and seven copy-paste recipes.
+
+{/* IMAGE: changedetection.io dashboard listing several watches (product page, job board, GitHub releases) with last-changed times — suggested caption: "The changedetection.io dashboard: every page you care about, checked automatically" */}
+
+## What Can You Monitor?
+
+Almost anything with a URL:
+
+- 💸 **Price drops** on Amazon-style product pages, eBay listings, flights and hotels
+- 📦 **Restocks**: GPUs, consoles, limited-edition parts, Pokémon cards
+- 💼 **Job boards**: new roles matching your keywords
+- 🛂 **Government pages**: visa slots, permit updates, tender notices
+- 🛠️ **Software releases**: GitHub releases, firmware and BIOS update pages
+- 🚗 **Classifieds**: new listings for that project car you've been hunting
+- 📜 **Terms of service and policy pages**: know when the small print changes
+- 🔌 **APIs and JSON feeds**: alert when a value crosses a threshold
+
+## Self-Hosted vs Hosted
+
+The developers also run a paid hosted version, which is a good way to fund the project if you don't want to run it yourself. Self-hosting gets you:
+
+- **Unlimited watches** and check frequency (within reason; be polite to websites)
+- **Full privacy**: no third party sees what you monitor
+- **Local integrations** with Home Assistant, ntfy, and your own LLM via Ollama
+
+It's light: the main container idles at around **100–200 MB of RAM**. Add **~500 MB–1 GB** if you enable the Chrome browser for JavaScript sites. A Raspberry Pi, an N100 mini PC, or a corner of your NAS is plenty.
+
+## Step 1: Install changedetection.io with Docker Compose
+
+Create a folder and a `compose.yaml`. This version includes **Sockpuppetbrowser**, a lightweight Chrome service the project recommends for JavaScript-heavy sites, screenshots, the Visual Selector, and Browser Steps:
+
+```yaml
+services:
+  changedetection:
+    image: ghcr.io/dgtlmoon/changedetection.io:latest
+    container_name: changedetection
+    hostname: changedetection
+    volumes:
+      - ./datastore:/datastore
+    environment:
+      - TZ=America/New_York
+      - PLAYWRIGHT_DRIVER_URL=ws://browser-sockpuppet-chrome:3000
+      - BASE_URL=https://changes.yourdomain.com   # used for links in notifications
+      - HIDE_REFERER=true
+    ports:
+      - 5000:5000
+    depends_on:
+      browser-sockpuppet-chrome:
+        condition: service_started
+    restart: unless-stopped
+
+  browser-sockpuppet-chrome:
+    image: dgtlmoon/sockpuppetbrowser:latest
+    container_name: browser-sockpuppet-chrome
+    hostname: browser-sockpuppet-chrome
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1024
+      - SCREEN_DEPTH=16
+      - MAX_CONCURRENT_CHROME_PROCESSES=5
+    restart: unless-stopped
+```
+
+```bash
+docker compose up -d
+```
+
+Open `http://YOUR-SERVER-IP:5000`. That's it, you're monitoring.
+
+> **Mac users:** port 5000 clashes with AirPlay Receiver. Map `5050:5000` instead.
+
+**First things to do:**
+
+1. **Settings → General → Password**: set one, especially if you'll expose it remotely.
+2. **Settings → General → Default recheck time**: something sensible, such as every **1–3 hours**. Override it per watch for the urgent stuff.
+3. **Settings → Notifications**: add a default notification URL (see Step 4).
+
+If you'd rather not run Chrome, delete the `browser-sockpuppet-chrome` service and the `PLAYWRIGHT_DRIVER_URL` line. The fast built-in fetcher handles most plain HTML sites.
+
+{/* IMAGE: changedetection.io Settings → General tab showing the password and default recheck time fields — suggested caption: "Set a password and a sensible default check interval first" */}
+
+## Step 2: Add Your First Watch
+
+1. Paste a URL into the **Add a new change detection watch** box.
+2. Optionally add a **tag**, such as `deals`, `jobs` or `homelab`. Tags group watches and can share notification settings.
+3. Click **Watch**.
+
+The first check records a baseline. From then on, every change shows up as a highlighted **diff** (green for added, red for removed) and triggers your notifications.
+
+### Plain requests vs Chrome
+
+Edit a watch, open the **Request** tab, and choose the **Fetch method**:
+
+| Fetch method | Use when | Cost |
+|---|---|---|
+| **Basic fast plaintext/HTTP** | Normal sites, blogs, GitHub, most government pages | Very light |
+| **Playwright Chromium** (via Sockpuppet) | The content loads with JavaScript, you need screenshots, Visual Selector or Browser Steps | Heavier |
+
+**Tip:** start with the fast fetcher. If the "preview" is blank or missing the price, switch that watch to Chrome.
+
+## Step 3: Watch Only the Part You Care About
+
+Whole-page monitoring is noisy: ads rotate, "related products" shuffle, timestamps tick. The trick to useful alerts is **filtering**.
+
+### Visual Selector (no code)
+
+With the Chrome fetcher enabled, open the watch's **Visual Filter Selector** tab, click the element you want (a price, a stock label, a table), and save. changedetection.io writes the selector for you.
+
+{/* IMAGE: Visual Selector tab with the product price element highlighted in a box — suggested caption: "Click the price, and changedetection.io builds the CSS selector for you" */}
+
+### Filters & Triggers tab (power users)
+
+| Option | What it does | Example |
+|---|---|---|
+| **CSS/XPath/JSONPath/jq filter** | Only watch matching elements | `#price`, `.availability`, `//table[@id='slots']`, `json:$.version` |
+| **Remove elements** | Strip noisy parts before comparing | `header`, `footer`, `.ads`, `.recommendations` |
+| **Ignore text** | Ignore lines containing this text (supports regex) | `Last updated`, `/\d+ people viewing/` |
+| **Trigger/wait for text** | Only alert when this text appears | `In stock`, `Add to cart` |
+| **Block change-detection while text matches** | Suppress alerts while text is present | `Sold out` |
+| **Extract text** | Keep only matching text (regex) | `/\$[\d,.]+/` |
+
+You can combine them: watch `.product-info`, remove `.reviews`, and trigger only on `In stock`.
+
+### Conditions
+
+For number-based rules, use **Conditions** on the watch: for example, *only notify when the extracted number is below 500*. It turns "the page changed" into "the thing I care about happened."
+
+## Step 4: Notifications That Actually Reach You
+
+changedetection.io uses **Apprise**, which supports 100+ services with one URL format. Add URLs under **Settings → Notifications** (global default), a **tag**, or an individual watch.
+
+| Service | Apprise URL format |
+|---|---|
+| **Discord** | `discord://webhook_id/webhook_token` |
+| **Telegram** | `tgram://bot_token/chat_id` |
+| **ntfy** (self-hosted or ntfy.sh) | `ntfys://ntfy.example.com/deals` |
+| **Email** | `mailto://user:password@gmail.com?to=you@example.com` |
+| **Gotify** | `gotifys://gotify.example.com/app_token` |
+| **Any webhook** (Home Assistant, n8n) | `json://homeassistant.local:8123/api/webhook/changedetection` |
+
+Use the **Send test notification** button before you rely on it.
+
+### Better notification messages
+
+The notification body supports tokens (and Jinja2 templates). A clean format for phone alerts:
+
+```text
+🔔 {{watch_title}} changed
+
+{{diff_added}}
+
+{{watch_url}}
+```
+
+`{{diff_added}}` only includes *new* lines, which is exactly what you want for "new job posted" or "price is now…" alerts.
+
+## Step 5: Price and Restock Tracking
+
+For single-product pages, edit the watch and choose **Re-stock & Price detection for single product pages** as the watch type. changedetection.io reads the product data most shops embed in the page (structured metadata), so you usually don't need any selectors.
+
+You can then:
+
+- Alert when the item comes **back in stock**
+- Set a **price below** and/or **price above** threshold
+- Alert on a **percentage change**, for example a drop of 10% or more
+- See a **price history graph** to spot fake "sales"
+
+{/* IMAGE: Restock & Price watch showing the price history graph and threshold settings — suggested caption: "Price history graphs reveal whether that 'sale' is actually a sale" */}
+
+## Seven Copy-Paste Recipes
+
+### 1. GPU or console restock
+
+- **Watch type:** Re-stock & Price detection
+- **Fetch method:** Chrome (most retailers use JavaScript)
+- **Check every:** 5–10 minutes (only for the few items you really want)
+- **Notify:** Telegram or ntfy with high priority
+
+### 2. Price drop below a target
+
+- **Watch type:** Re-stock & Price detection
+- **Price below:** your target, for example `499`
+- **Check every:** 1–3 hours
+
+### 3. New jobs matching a keyword
+
+- **URL:** the job board's search results page for your query
+- **CSS filter:** the results list, for example `.job-listing`
+- **Ignore text:** `posted \d+ (minutes|hours) ago`
+- **Notification body:** `{{diff_added}}`, so you get only the new listings
+
+### 4. Visa, permit or appointment slots
+
+- **Fetch method:** Chrome
+- **Browser Steps:** for pages behind a form (select a location, click *Search*)
+- **Block change-detection while text matches:** `No appointments available`
+- **Check every:** 15–30 minutes
+
+### 5. GitHub releases (Jellyfin, Home Assistant, your favourite tools)
+
+- **URL:** `https://api.github.com/repos/jellyfin/jellyfin/releases/latest`
+- **Fetch method:** basic (it's plain JSON)
+- **Filter:** `json:$.tag_name`, so you're only alerted when the latest version number changes
+
+### 6. Firmware or BIOS updates
+
+- **URL:** the vendor's support/download page
+- **CSS filter:** the download table
+- Great for routers, NAS boxes, and [mini PC BIOS updates](/blog/low-power-homelab-n100-mini-pc)
+
+### 7. JSON API thresholds
+
+- **URL:** any JSON endpoint, such as a weather or crypto API
+- **Filter:** `json:$.current.temperature`
+- **Conditions:** greater than `35`
+
+## Optional: AI-Powered Change Rules (with Your Local LLM)
+
+Recent versions can connect to an **LLM** to cut the noise even further. You write a plain-English rule like *"only notify me when the price drops below $50"* or *"ignore navigation and footer changes"*. The AI judges each diff and summarizes it in human language, for example *"Price dropped from $89.99 to $67.00."*
+
+It works with cloud providers or **fully locally** with **Ollama**, LM Studio or any OpenAI-compatible endpoint. Choose the OpenAI-compatible option and point it at your server's `/v1` URL. Our guide to [the best local AI models for low-end hardware](/blog/best-local-ai-models-low-vram-ram-guide) will help you pick a model. A small 4B–9B model is plenty for this job.
+
+> **Privacy note:** AI features send page content to whichever model provider you configure. Use a local model if the pages you watch are sensitive. If you don't want AI features at all, set `LLM_FEATURES_DISABLED=true`.
+
+## Home Assistant Integration
+
+Send changes into Home Assistant with a webhook:
+
+1. In Home Assistant, create an automation with a **Webhook** trigger, ID `changedetection`.
+2. In changedetection.io, add the notification URL `json://YOUR-HA-IP:8123/api/webhook/changedetection`.
+3. Have the automation flash a light, announce on a speaker, or push to your phone.
+
+Pair it with [Kokoro TTS](/blog/kokoro-tts-local-text-to-speech-setup) for spoken alerts like *"The RTX card you were watching is back in stock."*
+
+## Don't Get Blocked: Be a Good Web Citizen
+
+- **Use sensible intervals.** Most pages don't need checking more than hourly. Reserve 5–10 minute checks for a handful of urgent watches.
+- **Use the fast fetcher where possible.** It's lighter for you *and* the site.
+- **Respect terms of service.** Some sites forbid automated access; check before you watch.
+- **Proxies:** if a site rate-limits your home IP, changedetection.io supports per-watch proxies (mount a `proxies.json`, or set them under Settings). Use them responsibly.
+- **Run ad and tracker blocking** with [Pi-hole](/blog/pihole-network-ad-blocking) on your network. It won't affect your watches, but it keeps the rest of your browsing clean.
+
+## Secure Remote Access
+
+Want to add watches from your phone? Put changedetection.io behind your reverse proxy with HTTPS (see our [Traefik guide](/blog/reverse-proxy-traefik-guide)), set `BASE_URL` and `USE_X_SETTINGS=1`, and **always set a password**. Or keep it LAN-only and reach it through your [home VPN](/blog/home-vpn-privacy-guide).
+
+## Troubleshooting
+
+**"Empty reply" or the price/text isn't in the preview**
+The content loads with JavaScript. Switch the watch's fetch method to Chrome (Playwright).
+
+**Chrome fetch fails with a connection error**
+Check that `PLAYWRIGHT_DRIVER_URL` matches the Sockpuppet hostname and port (`ws://browser-sockpuppet-chrome:3000`), and that both containers share the same Compose network.
+
+**Constant false alerts**
+Add **Remove elements** for rotating content, plus **Ignore text** for timestamps or counters. Using a narrower CSS filter is the biggest win.
+
+**Site returns 403 / blocked**
+Slow the check interval, use the Chrome fetcher (it looks like a normal browser), or set a proxy for that watch.
+
+**Notifications don't arrive**
+Use **Send test notification**. Most failures are a typo in the Apprise URL or a webhook token with special characters that needs URL-encoding.
+
+## FAQ
+
+**Is changedetection.io free?**
+Yes. The self-hosted version is open source and free. A paid hosted plan exists if you don't want to run it yourself.
+
+**How many pages can I watch?**
+Self-hosted, there's no hard limit. Hundreds of watches on the fast fetcher run happily on a Raspberry Pi. Chrome-based watches are heavier, so keep those to the pages that need them.
+
+**Can it watch pages behind a login?**
+Yes. Use **Browser Steps** to log in (fill in fields, click buttons) before each check. Only do this for your own accounts.
+
+**Can it create RSS feeds?**
+Yes. changedetection.io can expose changes as RSS feeds, handy for feeding detected changes into an RSS reader.
+
+**Does it work on ARM (Raspberry Pi)?**
+Yes. The main image supports ARM64, so it runs well on a [Raspberry Pi home server](/blog/raspberry-pi-home-server).
+
+## The Bottom Line
+
+changedetection.io is one of those homelab apps that pays for itself the first time it catches a price drop or a restock you'd otherwise have missed. Spin it up with Docker, filter down to the bit of the page that matters, connect Telegram or ntfy, and let your homelab do the refreshing for you.
