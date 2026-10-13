@@ -1,14 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
-import { Post } from '@/types';
+import { PostSummary } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
 import { ArrowUpRight, Hash, Tag } from 'lucide-react';
 
 type PostCardProps = {
-  post: Post;
+  post: PostSummary;
 };
 
 export function PostCard({ post }: PostCardProps) {

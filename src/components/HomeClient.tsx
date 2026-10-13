@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Category, Post, CategoryTree } from '@/types';
+import { Category, PostSummary, CategoryTree } from '@/types';
 import { useHeroFade, useScrollReveal, useStaggerReveal } from '@/hooks/use-scroll-reveal';
 import { Button } from '@/components/ui/button';
 
@@ -18,8 +18,8 @@ import {
 } from '@/components/home';
 
 interface HomeContentProps {
-  initialPosts: Post[];
-  popularPosts: Post[];
+  initialPosts: PostSummary[];
+  popularPosts: PostSummary[];
   categoriesList: Category[];
   categoryTree: CategoryTree;
 }

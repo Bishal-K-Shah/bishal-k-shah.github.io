@@ -21,6 +21,9 @@ export type Post = {
   featured?: boolean;
 };
 
+/** Post metadata without the MDX body, for lists and cards that never render content. */
+export type PostSummary = Omit<Post, 'content'>;
+
 export type CategoryInfo = {
   name: Category;
   icon?: LucideIcon; // Icon is now optional since dynamic categories might not have one

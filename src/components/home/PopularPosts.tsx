@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
-import { Post } from '@/types';
+import { PostSummary } from '@/types';
 import { RefObject } from 'react';
 import {
   Carousel,
@@ -15,7 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 
 interface PopularPostsProps {
-  posts: Post[];
+  posts: PostSummary[];
   isMobile: boolean;
   sectionRef: RefObject<HTMLDivElement>;
   isVisible: boolean;

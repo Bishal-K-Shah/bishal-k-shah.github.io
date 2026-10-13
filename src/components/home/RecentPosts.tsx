@@ -4,11 +4,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
 import { ArrowRight } from 'lucide-react';
-import { Post } from '@/types';
+import { PostSummary } from '@/types';
 import { RefObject } from 'react';
 
 interface RecentPostsProps {
-  posts: Post[];
+  posts: PostSummary[];
   isMobile: boolean;
   sectionRef: RefObject<HTMLDivElement>;
   isVisible: boolean;

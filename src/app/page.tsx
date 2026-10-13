@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getPosts, getPopularPosts, getCategories, getCategoryTree } from "@/lib/posts";
+import { getPosts, getPopularPosts, getCategories, getCategoryTree, toPostSummary } from "@/lib/posts";
 import HomeClient from "@/components/HomeClient";
 import { Category, CategoryTree } from "@/types";
 import { Metadata } from "next";
@@ -27,8 +27,8 @@ export default async function Home() {
 
   return (
     <HomeClient 
-      initialPosts={posts} 
-      popularPosts={popularPosts}
+      initialPosts={posts.map(toPostSummary)} 
+      popularPosts={popularPosts.map(toPostSummary)}
       categoriesList={categories} 
       categoryTree={categoryTree}
     />

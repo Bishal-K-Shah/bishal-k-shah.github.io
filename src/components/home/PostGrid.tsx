@@ -3,11 +3,11 @@
 import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/PostCard';
-import { Post } from '@/types';
+import { PostSummary } from '@/types';
 import { RefObject } from 'react';
 
 interface PostGridProps {
-  posts: Post[];
+  posts: PostSummary[];
   gridRef: RefObject<HTMLDivElement>;
   isVisible: boolean;
   getItemDelay: (index: number) => number;

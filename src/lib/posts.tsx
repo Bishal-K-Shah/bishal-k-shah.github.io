@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { Post, MAIN_CATEGORIES, CategoryInfo, Category, CategoryTree } from '@/types';
+import { Post, PostSummary, MAIN_CATEGORIES, CategoryInfo, Category, CategoryTree } from '@/types';
 import { categoryInfo } from '@/components/icons';
 
 const postsDirectory = path.join(process.cwd(), 'src/posts');
@@ -71,6 +71,9 @@ export const getPostBySlug = async (slug: string): Promise<Post | undefined> => 
     featured: data.featured === true,
   };
 };
+
+/** Strip the MDX body so lists don't ship every post's full text to the browser. */
+export const toPostSummary = ({ content: _content, ...summary }: Post): PostSummary => summary;
 
 const POPULAR_POSTS_LIMIT = 10;
 

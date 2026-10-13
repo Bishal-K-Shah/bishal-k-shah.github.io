@@ -71,6 +71,8 @@ const mdxComponents: MDXComponents = {
         <img 
           src={src} 
           alt={alt || "Blog post image"}
+          loading="lazy"
+          decoding="async"
           className="w-full h-auto object-cover"
           {...props} 
         />
