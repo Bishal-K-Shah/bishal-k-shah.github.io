@@ -38,7 +38,7 @@ const mdxComponents: MDXComponents = {
       // Check for native img tag OR custom img component (function with src prop)
       if (
         child.type === 'img' ||
-        (typeof child.type === 'function' && 'src' in (child.props || {}))
+        (typeof child.type === 'function' && 'src' in ((child.props as object) || {}))
       ) {
         return <>{children}</>;
       }
@@ -144,9 +144,9 @@ const mdxComponents: MDXComponents = {
 };
 
 type BlogPostPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export async function generateStaticParams() {
@@ -157,7 +157,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
   const post = await getPostBySlug(slug);
 
   if (!post) {
@@ -216,7 +216,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const { slug } = params;
+  const { slug } = await params;
   const post = await getPostBySlug(slug);
 
   if (!post) {
