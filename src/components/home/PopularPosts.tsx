@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 interface PopularPostsProps {
   posts: PostSummary[];
   isMobile: boolean;
-  sectionRef: RefObject<HTMLDivElement>;
+  sectionRef: RefObject<HTMLDivElement | null>;
   isVisible: boolean;
   getItemDelay: (index: number) => number;
 }

@@ -4,7 +4,7 @@ import { NewsletterForm } from '@/components/NewsletterForm';
 import { RefObject } from 'react';
 
 interface NewsletterCTAProps {
-  ctaRef: RefObject<HTMLDivElement>;
+  ctaRef: RefObject<HTMLDivElement | null>;
   isVisible: boolean;
 }
 

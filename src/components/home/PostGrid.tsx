@@ -8,7 +8,7 @@ import { RefObject } from 'react';
 
 interface PostGridProps {
   posts: PostSummary[];
-  gridRef: RefObject<HTMLDivElement>;
+  gridRef: RefObject<HTMLDivElement | null>;
   isVisible: boolean;
   getItemDelay: (index: number) => number;
   onClearFilters: () => void;

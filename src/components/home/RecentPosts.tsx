@@ -10,7 +10,7 @@ import { RefObject } from 'react';
 interface RecentPostsProps {
   posts: PostSummary[];
   isMobile: boolean;
-  sectionRef: RefObject<HTMLDivElement>;
+  sectionRef: RefObject<HTMLDivElement | null>;
   isVisible: boolean;
   getItemDelay: (index: number) => number;
   onViewAll: () => void;

@@ -7,7 +7,7 @@ import DotGrid from '@/components/DotGrid';
 import { RefObject } from 'react';
 
 interface HeroSectionProps {
-  heroContentRef: RefObject<HTMLDivElement>;
+  heroContentRef: RefObject<HTMLDivElement | null>;
   isMobile: boolean;
   isSearchFocused: boolean;
   isSearchClosing: boolean;
