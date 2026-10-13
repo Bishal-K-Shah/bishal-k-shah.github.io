@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { getPosts, getPopularPosts, getCategories, getCategoryTree, toPostSummary } from "@/lib/posts";
 import HomeClient from "@/components/HomeClient";
 import { Category, CategoryTree } from "@/types";

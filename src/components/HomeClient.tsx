@@ -24,8 +24,25 @@ interface HomeContentProps {
   categoryTree: CategoryTree;
 }
 
-function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree }: HomeContentProps) {
+/**
+ * Reports the ?category= and ?tag= URL params to its parent. Kept in its own tiny
+ * Suspense boundary because useSearchParams() can't be resolved at build time: if the
+ * home page read it directly, the static export would contain only the fallback and
+ * none of the posts.
+ */
+function SearchParamsSync({ onChange }: { onChange: (category: string | null, tag: string | null) => void }) {
   const searchParams = useSearchParams();
+  const category = searchParams.get('category');
+  const tag = searchParams.get('tag');
+
+  useEffect(() => {
+    onChange(category, tag);
+  }, [category, tag, onChange]);
+
+  return null;
+}
+
+function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree }: HomeContentProps) {
   const router = useRouter();
   const postsSectionRef = useRef<HTMLDivElement>(null);
 
@@ -52,25 +69,21 @@ function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree 
     threshold: 0.2,
   });
 
-  // Sync state with URL param on load
-  useEffect(() => {
-    const categoryParam = searchParams.get('category');
-    const tagParam = searchParams.get('tag');
-
-    if (categoryParam) {
-      if (Object.keys(categoryTree).includes(categoryParam)) {
-        setSelectedCategory(categoryParam);
+  // Sync state with the URL params (on load and on every navigation)
+  const syncFiltersFromUrl = useCallback(
+    (categoryParam: string | null, tagParam: string | null) => {
+      if (categoryParam) {
+        if (Object.keys(categoryTree).includes(categoryParam)) {
+          setSelectedCategory(categoryParam);
+        }
+      } else {
+        setSelectedCategory('All');
       }
-    } else {
-      setSelectedCategory('All');
-    }
 
-    if (tagParam) {
-      setSelectedTag(tagParam);
-    } else {
-      setSelectedTag(null);
-    }
-  }, [searchParams, categoryTree]);
+      setSelectedTag(tagParam || null);
+    },
+    [categoryTree]
+  );
 
   // Scroll to posts when filter is applied
   useEffect(() => {
@@ -254,6 +267,10 @@ function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree 
 
   return (
     <div className="min-h-screen">
+      <Suspense fallback={null}>
+        <SearchParamsSync onChange={syncFiltersFromUrl} />
+      </Suspense>
+
       {/* Mobile Search Header */}
       {isMobile && (
         <MobileSearchHeader
@@ -351,19 +368,6 @@ function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree 
   );
 }
 
-export default function Home({ initialPosts, popularPosts, categoriesList, categoryTree }: HomeContentProps) {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">Loading...</div>
-      }
-    >
-      <HomeContent
-        initialPosts={initialPosts}
-        popularPosts={popularPosts}
-        categoriesList={categoriesList}
-        categoryTree={categoryTree}
-      />
-    </Suspense>
-  );
+export default function Home(props: HomeContentProps) {
+  return <HomeContent {...props} />;
 }

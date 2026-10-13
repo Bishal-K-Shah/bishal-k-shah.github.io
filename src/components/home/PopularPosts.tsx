@@ -95,17 +95,13 @@ export function PopularPosts({
               ))}
             </CarouselContent>
             <CarouselPrevious
-              className={cn(
-                'absolute top-1/2 -translate-y-1/2 h-8 w-8 rounded-full',
-                isMobile ? '-left-2' : '-left-12'
-              )}
+              // Offsets stay within the container padding (16/24/32px) so the arrows never
+              // widen the page; CSS breakpoints (not isMobile) keep the pre-hydration HTML right too
+              className="absolute top-1/2 -translate-y-1/2 h-8 w-8 rounded-full -left-2 sm:-left-6 lg:-left-8"
               aria-label="Previous slide"
             />
             <CarouselNext
-              className={cn(
-                'absolute top-1/2 -translate-y-1/2 h-8 w-8 rounded-full',
-                isMobile ? '-right-2' : '-right-12'
-              )}
+              className="absolute top-1/2 -translate-y-1/2 h-8 w-8 rounded-full -right-2 sm:-right-6 lg:-right-8"
               aria-label="Next slide"
             />
           </Carousel>

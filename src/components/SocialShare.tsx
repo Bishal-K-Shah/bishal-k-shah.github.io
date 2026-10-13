@@ -86,6 +86,7 @@ export function SocialShare({ url, title }: SocialShareProps) {
                     size="icon"
                     className={`h-9 w-9 rounded-full transition-all duration-300 ${link.colorClass}`}
                     onClick={link.onClick}
+                    aria-label={link.name}
                   >
                     <link.icon className="h-4 w-4" />
                   </Button>
