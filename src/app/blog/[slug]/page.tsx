@@ -82,15 +82,34 @@ const mdxComponents: MDXComponents = {
     </figure>
   ),
 
+  // Code blocks without a language get their own scrollable box so long lines can't widen the page
+  pre: ({ children, ...props }) => {
+    const child = React.Children.toArray(children)[0];
+    const hasLanguage = React.isValidElement<{ className?: string }>(child) && /language-/.test(child.props.className || '');
+    return hasLanguage ? (
+      <pre {...props}>{children}</pre>
+    ) : (
+      <pre className="my-6 max-w-full overflow-x-auto rounded-lg border border-border/50 bg-muted p-4 text-sm leading-relaxed" {...props}>
+        {children}
+      </pre>
+    );
+  },
+
   // Code Blocks
   code: ({ className, children, ...props }) => {
     const match = /language-(\w+)/.exec(className || '');
+    // Fenced code always ends with a newline; inline code never contains one
+    const isUnlabelledBlock = !match && String(children).includes('\n');
     return match ? (
       <div className="my-8 rounded-lg overflow-hidden shadow-md border border-border/50">
         <CodeBlock>{String(children).replace(/\\n$/, '')}</CodeBlock>
       </div>
+    ) : isUnlabelledBlock ? (
+      <code className="font-mono text-foreground" {...props}>
+        {String(children).replace(/\n$/, '')}
+      </code>
     ) : (
-      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold text-foreground" {...props}>
+      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold text-foreground [overflow-wrap:anywhere]" {...props}>
         {children}
       </code>
     );

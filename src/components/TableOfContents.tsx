@@ -56,7 +56,7 @@ export function MobileTableOfContents({ items }: TableOfContentsProps) {
   return (
     <details
       ref={detailsRef}
-      className="group lg:hidden mb-10 rounded-xl border border-border/60 bg-muted/40"
+      className="group lg:hidden mb-10 rounded-xl border border-primary/25 bg-primary/[0.07] shadow-sm"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-2">
@@ -66,7 +66,7 @@ export function MobileTableOfContents({ items }: TableOfContentsProps) {
         </span>
         <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
       </summary>
-      <nav aria-label="Table of contents" className="border-t border-border/60 px-4 py-3">
+      <nav aria-label="Table of contents" className="border-t border-primary/20 px-4 py-3">
         <ol className="space-y-1">
           {items.map((item, index) => (
             <li key={item.id}>
