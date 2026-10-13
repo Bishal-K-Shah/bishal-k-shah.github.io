@@ -1,5 +1,6 @@
 
 import { Post } from '@/types';
+import { absoluteUrl, DEFAULT_OG_IMAGE } from '@/lib/site';
 
 interface StructuredDataProps {
   post: Post;
@@ -18,7 +19,7 @@ export function StructuredData({ post }: StructuredDataProps) {
     },
     headline: post.title,
     description: post.excerpt,
-    image: post.featuredImage ? `${baseUrl}${post.featuredImage.startsWith('/') ? '' : '/'}${post.featuredImage}` : `${baseUrl}/og-image.png`,
+    image: absoluteUrl(post.featuredImage || DEFAULT_OG_IMAGE),
     author: {
       '@type': 'Organization',
       name: "Hobbyist's Hideaway",

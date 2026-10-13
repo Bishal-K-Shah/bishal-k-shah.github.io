@@ -17,6 +17,7 @@ import { ArticleStickyHeader } from '@/components/ArticleStickyHeader';
 import { Metadata } from 'next';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { StructuredData } from '@/components/StructuredData';
+import { DEFAULT_OG_IMAGE } from '@/lib/site';
 import { MobileTableOfContents, SidebarTableOfContents } from '@/components/TableOfContents';
 import { rehypeCollectHeadings, type TocItem } from '@/lib/toc';
 
@@ -165,7 +166,8 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
   const baseUrl = 'https://bishalkshah.com.np';
   const url = `${baseUrl}/blog/${post.slug}`;
-  
+  const shareImage = post.featuredImage || DEFAULT_OG_IMAGE;
+
   return {
     title: post.title,
     description: post.excerpt,
@@ -188,7 +190,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       tags: post.tags,
       images: [
         {
-          url: post.featuredImage,
+          url: shareImage,
           width: 1200,
           height: 630,
           alt: post.title,
@@ -199,7 +201,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       card: 'summary_large_image',
       title: post.title,
       description: post.excerpt,
-      images: [post.featuredImage],
+      images: [shareImage],
     },
     robots: {
       index: true,

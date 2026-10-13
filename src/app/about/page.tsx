@@ -8,7 +8,11 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: "About",
   description: "Learn more about Hobbyist's Hideaway, a sanctuary for makers, tinkers, and tech enthusiasts. Discover our mission to document journeys in tech, mechanics, and electronics.",
+  alternates: {
+    canonical: '/about',
+  },
   openGraph: {
+    url: '/about',
     title: "About | Hobbyist's Hideaway",
     description: "Learn more about Hobbyist's Hideaway, our mission, and the topics we cover.",
   },
