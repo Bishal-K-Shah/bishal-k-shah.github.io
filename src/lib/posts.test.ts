@@ -101,3 +101,46 @@ describe('getCategoryTree', () => {
     expect(tree['My New Hobby']).toContain('Fun');
   });
 });
+
+describe('getRelatedPosts', () => {
+  const post = (slug: string, category: string, tags: string[], date: string) =>
+    ({ slug, title: slug, category, tags, date, excerpt: '', featuredImage: '' });
+
+  const current = post('current', 'HomeLab', ['jellyfin', 'docker'], '2026-01-01');
+
+  it('ranks shared tags above a shared category, newest first on ties', () => {
+    const all = [
+      current,
+      post('same-category-only', 'HomeLab', ['proxmox'], '2026-05-01'),
+      post('one-tag-other-category', 'Technology', ['Docker'], '2026-02-01'),
+      post('two-tags', 'HomeLab', ['jellyfin', 'docker'], '2025-01-01'),
+      post('one-tag-same-category-old', 'HomeLab', ['jellyfin'], '2024-01-01'),
+      post('one-tag-same-category-new', 'HomeLab', ['jellyfin'], '2025-06-01'),
+    ];
+
+    expect(postsLib.getRelatedPosts(current, all).map((p) => p.slug)).toEqual([
+      'two-tags',
+      'one-tag-same-category-new',
+      'one-tag-same-category-old',
+    ]);
+  });
+
+  it('never includes the post itself', () => {
+    const all = [current, post('other', 'HomeLab', ['jellyfin'], '2026-01-02')];
+    expect(postsLib.getRelatedPosts(current, all).map((p) => p.slug)).toEqual(['other']);
+  });
+
+  it('fills remaining slots with the newest unrelated posts', () => {
+    const all = [
+      current,
+      post('related', 'HomeLab', [], '2020-01-01'),
+      post('unrelated-old', 'Automobile', ['oil'], '2021-01-01'),
+      post('unrelated-new', 'Automobile', ['brakes'], '2026-03-01'),
+    ];
+    expect(postsLib.getRelatedPosts(current, all).map((p) => p.slug)).toEqual([
+      'related',
+      'unrelated-new',
+      'unrelated-old',
+    ]);
+  });
+});

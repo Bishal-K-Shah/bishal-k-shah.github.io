@@ -82,6 +82,37 @@ export const getPopularPosts = async (): Promise<Post[]> => {
   return posts.filter((post) => post.featured === true).slice(0, POPULAR_POSTS_LIMIT);
 };
 
+const RELATED_TAG_WEIGHT = 3;
+const RELATED_CATEGORY_WEIGHT = 2;
+
+/**
+ * Picks the posts most related to `post`: each shared tag (case-insensitive) scores
+ * RELATED_TAG_WEIGHT and a shared category RELATED_CATEGORY_WEIGHT; ties go to the newer
+ * post. If fewer than `limit` posts are related at all, the newest remaining posts fill the gap.
+ */
+export const getRelatedPosts = <T extends PostSummary>(post: PostSummary, allPosts: T[], limit = 3): T[] => {
+  const tags = new Set((post.tags ?? []).map((tag) => tag.toLowerCase()));
+  const byNewest = (a: T, b: T) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+
+  const candidates = allPosts.filter((p) => p.slug !== post.slug);
+  const scored = candidates
+    .map((candidate) => {
+      const sharedTags = (candidate.tags ?? []).filter((tag) => tags.has(tag.toLowerCase())).length;
+      const sameCategory = candidate.category === post.category ? 1 : 0;
+      return { candidate, score: sharedTags * RELATED_TAG_WEIGHT + sameCategory * RELATED_CATEGORY_WEIGHT };
+    })
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score || byNewest(a.candidate, b.candidate))
+    .map(({ candidate }) => candidate);
+
+  const related = scored.slice(0, limit);
+  if (related.length < limit) {
+    const chosen = new Set(related.map((p) => p.slug));
+    related.push(...candidates.filter((p) => !chosen.has(p.slug)).sort(byNewest).slice(0, limit - related.length));
+  }
+  return related;
+};
+
 // Returns a Map of Category -> Unique Tags
 export const getCategoryTree = async (): Promise<CategoryTree> => {
   const posts = await getPosts();

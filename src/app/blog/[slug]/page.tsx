@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
-import { getPostBySlug, getPosts } from '@/lib/posts';
+import { getPostBySlug, getPosts, getRelatedPosts, toPostSummary } from '@/lib/posts';
 import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
 import { Clock, Calendar, Hash } from 'lucide-react';
@@ -226,11 +226,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const categoryData = categoryInfo[post.category];
   const Icon = categoryData?.icon || Hash;
 
-  // Logic for Related Posts
+  // Related posts, ranked by shared tags and category
   const allPosts = await getPosts();
-  const relatedPosts = allPosts
-    .filter((p) => p.category === post.category && p.slug !== post.slug)
-    .slice(0, 3);
+  const relatedPosts = getRelatedPosts(post, allPosts.map(toPostSummary));
 
   const baseUrl = 'https://bishalkshah.com.np'; 
   const shareUrl = `${baseUrl}/blog/${post.slug}`;
