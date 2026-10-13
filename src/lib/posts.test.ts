@@ -9,7 +9,7 @@ vi.mock('fs');
 vi.mock('path');
 vi.mock('gray-matter');
 
-describe('getCategoryTree', () => {
+describe('getCategoryTags', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     
@@ -60,16 +60,17 @@ describe('getCategoryTree', () => {
       } as any);
 
     // 4. Run the function
-    const tree = await postsLib.getCategoryTree();
+    const tree = await postsLib.getCategoryTags();
 
-    // 5. Assertions
+    // 5. Assertions (equal counts sort alphabetically)
     expect(tree).toEqual({
-      Electronics: ['Arduino', 'Sensors', 'Soldering'],
-      Automobile: ['Maintenance'],
+      Electronics: [
+        { tag: 'Arduino', count: 1 },
+        { tag: 'Sensors', count: 1 },
+        { tag: 'Soldering', count: 1 },
+      ],
+      Automobile: [{ tag: 'Maintenance', count: 1 }],
     });
-    
-    // Verify sorting of tags if applicable (our implementation sorts them)
-    expect(tree.Electronics).toEqual(['Arduino', 'Sensors', 'Soldering'].sort());
   });
 
   it('should handle posts without tags', async () => {
@@ -80,7 +81,7 @@ describe('getCategoryTree', () => {
       content: '' 
     } as any);
 
-    const tree = await postsLib.getCategoryTree();
+    const tree = await postsLib.getCategoryTags();
 
     expect(tree).toEqual({
       HomeLab: [],
@@ -95,10 +96,50 @@ describe('getCategoryTree', () => {
       content: '' 
     } as any);
 
-    const tree = await postsLib.getCategoryTree();
+    const tree = await postsLib.getCategoryTags();
 
     expect(tree).toHaveProperty('My New Hobby');
-    expect(tree['My New Hobby']).toContain('Fun');
+    expect(tree['My New Hobby']).toContainEqual({ tag: 'Fun', count: 1 });
+  });
+
+  const mockPosts = (posts: { category: string; tags: string[] }[]) => {
+    vi.mocked(fs.readdirSync).mockReturnValue(posts.map((_, i) => `post${i}.mdx`) as any);
+    vi.mocked(fs.readFileSync).mockReturnValue('');
+    posts.forEach((p, i) =>
+      vi.mocked(matter).mockReturnValueOnce({ data: { title: `P${i}`, date: `2026-01-0${i + 1}`, ...p }, content: '' } as any)
+    );
+  };
+
+  it('merges spelling variants, ranks by post count and prefers capitalised labels', async () => {
+    mockPosts([
+      { category: 'HomeLab', tags: ['self-hosting', 'docker'] },
+      { category: 'HomeLab', tags: ['Self-Hosting', 'Docker'] },
+      { category: 'HomeLab', tags: ['self hosting', 'proxmox'] },
+    ]);
+
+    expect((await postsLib.getCategoryTags()).HomeLab).toEqual([
+      { tag: 'Self-Hosting', count: 3 },
+      { tag: 'Docker', count: 2 },
+      { tag: 'proxmox', count: 1 },
+    ]);
+  });
+
+  it('drops tags below the minimum post count but keeps the category', async () => {
+    mockPosts([
+      { category: 'HomeLab', tags: ['docker', 'proxmox'] },
+      { category: 'HomeLab', tags: ['Docker'] },
+      { category: 'Automobile', tags: ['brakes'] },
+    ]);
+
+    expect(await postsLib.getCategoryTags(postsLib.MIN_POSTS_PER_MENU_TAG)).toEqual({
+      HomeLab: [{ tag: 'Docker', count: 2 }],
+      Automobile: [],
+    });
+  });
+
+  it('counts a tag once per post even if the post repeats it', async () => {
+    mockPosts([{ category: 'Electronics', tags: ['DIY', 'diy'] }]);
+    expect((await postsLib.getCategoryTags()).Electronics).toEqual([{ tag: 'DIY', count: 1 }]);
   });
 });
 
@@ -123,6 +164,15 @@ describe('getRelatedPosts', () => {
       'one-tag-same-category-new',
       'one-tag-same-category-old',
     ]);
+  });
+
+  it('treats spelling variants of a tag as the same tag', () => {
+    const all = [
+      current,
+      post('variant', 'Automobile', ['Docker'], '2020-01-01'),
+      post('newer-unrelated', 'Automobile', ['oil'], '2026-06-01'),
+    ];
+    expect(postsLib.getRelatedPosts(current, all, 1).map((p) => p.slug)).toEqual(['variant']);
   });
 
   it('never includes the post itself', () => {

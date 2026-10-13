@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Category, PostSummary, CategoryTree } from '@/types';
+import { Category, PostSummary, CategoryTags } from '@/types';
+import { sameTag } from '@/lib/tags';
 import { useHeroFade, useScrollReveal, useStaggerReveal } from '@/hooks/use-scroll-reveal';
 import { Button } from '@/components/ui/button';
 
@@ -21,7 +22,7 @@ interface HomeContentProps {
   initialPosts: PostSummary[];
   popularPosts: PostSummary[];
   categoriesList: Category[];
-  categoryTree: CategoryTree;
+  categoryTags: CategoryTags;
 }
 
 /**
@@ -42,7 +43,7 @@ function SearchParamsSync({ onChange }: { onChange: (category: string | null, ta
   return null;
 }
 
-function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree }: HomeContentProps) {
+function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTags }: HomeContentProps) {
   const router = useRouter();
   const postsSectionRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +74,7 @@ function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree 
   const syncFiltersFromUrl = useCallback(
     (categoryParam: string | null, tagParam: string | null) => {
       if (categoryParam) {
-        if (Object.keys(categoryTree).includes(categoryParam)) {
+        if (Object.keys(categoryTags).includes(categoryParam)) {
           setSelectedCategory(categoryParam);
         }
       } else {
@@ -82,7 +83,7 @@ function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree 
 
       setSelectedTag(tagParam || null);
     },
-    [categoryTree]
+    [categoryTags]
   );
 
   // Scroll to posts when filter is applied
@@ -143,7 +144,7 @@ function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree 
   const filteredPosts = useMemo(() => {
     return initialPosts.filter((post) => {
       const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
-      const matchesTag = selectedTag ? post.tags?.includes(selectedTag) : true;
+      const matchesTag = selectedTag ? post.tags?.some((tag) => sameTag(tag, selectedTag)) : true;
       const query = searchQuery.toLowerCase();
       const matchesSearch =
         post.title.toLowerCase().includes(query) || post.excerpt.toLowerCase().includes(query);
@@ -328,7 +329,7 @@ function HomeContent({ initialPosts, popularPosts, categoriesList, categoryTree 
         <CategoryTabs
           selectedCategory={selectedCategory}
           selectedTag={selectedTag}
-          categoryTree={categoryTree}
+          categoryTags={categoryTags}
           isMobileBrowseOpen={isMobileBrowseOpen}
           onMobileBrowseOpenChange={setIsMobileBrowseOpen}
           onCategoryClick={handleCategoryClick}

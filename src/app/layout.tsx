@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
-import { getCategoryTree } from '@/lib/posts';
+import { getCategoryTags, MIN_POSTS_PER_MENU_TAG } from '@/lib/posts';
 
 const baseUrl = 'https://bishalkshah.com.np';
 
@@ -68,7 +68,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const categoryTree = await getCategoryTree();
+  const categoryTags = await getCategoryTags(MIN_POSTS_PER_MENU_TAG);
 
   return (
     <html lang="en" className="h-full">
@@ -86,7 +86,7 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Hobbyist's Hideaway" />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col" suppressHydrationWarning>
-        <Header categoryTree={categoryTree} />
+        <Header categoryTags={categoryTags} />
         <main className="flex-grow">
           {children}
         </main>

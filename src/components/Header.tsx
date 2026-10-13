@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn, capitalize } from "@/lib/utils";
-import { Menu, ChevronDown } from "lucide-react";
+import { Menu, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,16 +19,25 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { CategoryTree } from "@/types";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { CategoryTags } from "@/types";
+
+// Menus show only each category's most used tags; the full list lives on the category page
+const DESKTOP_MENU_TAG_LIMIT = 8;
+const MOBILE_MENU_TAG_LIMIT = 5;
+
+const categoryHref = (category: string) => `/?category=${encodeURIComponent(category)}`;
+const tagHref = (category: string, tag: string) =>
+  `/?category=${encodeURIComponent(category)}&tag=${encodeURIComponent(tag)}`;
 
 interface HeaderProps {
-  categoryTree: CategoryTree;
+  categoryTags: CategoryTags;
 }
 
-export function Header({ categoryTree }: HeaderProps) {
+export function Header({ categoryTags }: HeaderProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
-  const categories = Object.keys(categoryTree).sort();
+  const categories = Object.keys(categoryTags).sort();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -85,8 +94,9 @@ export function Header({ categoryTree }: HeaderProps) {
                 <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider">Browse by Topic</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {categories.map((category) => {
-                  const tags = categoryTree[category];
-                  const hasTags = tags && tags.length > 0;
+                  const allTags = categoryTags[category] ?? [];
+                  const tags = allTags.slice(0, DESKTOP_MENU_TAG_LIMIT);
+                  const hasTags = tags.length > 0;
 
                   if (hasTags) {
                     return (
@@ -97,18 +107,28 @@ export function Header({ categoryTree }: HeaderProps) {
                         <DropdownMenuSubContent className="p-1">
                           {/* Main Category Link - acts as "All" */}
                           <DropdownMenuItem asChild className="cursor-pointer font-bold">
-                            <Link href={`/?category=${category}`} className="w-full">
+                            <Link href={categoryHref(category)} className="w-full">
                               {capitalize(category)}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          {tags.map(tag => (
+                          {tags.map(({ tag }) => (
                             <DropdownMenuItem key={tag} asChild className="cursor-pointer">
-                              <Link href={`/?category=${category}&tag=${tag}`} className="w-full">
+                              <Link href={tagHref(category, tag)} className="w-full">
                                 {capitalize(tag)}
                               </Link>
                             </DropdownMenuItem>
                           ))}
+                          {allTags.length > tags.length && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild className="cursor-pointer text-primary">
+                                <Link href={categoryHref(category)} className="flex w-full items-center gap-1">
+                                  More in {capitalize(category)} <ChevronRight className="h-3.5 w-3.5" />
+                                </Link>
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
                     );
@@ -116,7 +136,7 @@ export function Header({ categoryTree }: HeaderProps) {
 
                   return (
                     <DropdownMenuItem key={category} asChild className="cursor-pointer group">
-                      <Link href={`/?category=${category}`} className="flex items-center gap-2 py-2 w-full">
+                      <Link href={categoryHref(category)} className="flex items-center gap-2 py-2 w-full">
                         <span className="group-focus:text-accent-foreground group-hover:text-accent-foreground">{capitalize(category)}</span>
                       </Link>
                     </DropdownMenuItem>
@@ -167,30 +187,53 @@ export function Header({ categoryTree }: HeaderProps) {
               
               <div className="py-2">
                 <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Categories</h4>
-                <div className="flex flex-col gap-2 pl-4 border-l-2 border-primary ml-1">
-                   {categories.map((category) => (
-                      <div key={category} className="flex flex-col gap-1">
+                <Accordion type="single" collapsible className="flex flex-col pl-4 pr-4 border-l-2 border-primary ml-1">
+                  {categories.map((category) => {
+                    const tags = (categoryTags[category] ?? []).slice(0, MOBILE_MENU_TAG_LIMIT);
+
+                    if (tags.length === 0) {
+                      return (
                         <Link
-                          href={`/?category=${category}`}
+                          key={category}
+                          href={categoryHref(category)}
                           onClick={() => setIsOpen(false)}
-                          className="flex items-center gap-3 text-base font-medium text-foreground/80 hover:text-foreground transition-colors py-1"
+                          className="flex items-center text-base font-medium text-foreground/80 hover:text-foreground transition-colors py-2"
                         >
                           {capitalize(category)}
                         </Link>
-                        {/* Render tags as indented links in mobile menu too */}
-                        {categoryTree[category]?.map(tag => (
-                           <Link
-                            key={tag}
-                            href={`/?category=${category}&tag=${tag}`}
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors pl-4 py-1"
-                          >
-                            - {capitalize(tag)}
-                          </Link>
-                        ))}
-                      </div>
-                   ))}
-                </div>
+                      );
+                    }
+
+                    return (
+                      <AccordionItem key={category} value={category} className="border-b-0">
+                        <AccordionTrigger className="py-2 text-base font-medium text-foreground/80 hover:text-foreground hover:no-underline">
+                          {capitalize(category)}
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-2">
+                          <div className="flex flex-col gap-1 pl-3 border-l border-border">
+                            {tags.map(({ tag }) => (
+                              <Link
+                                key={tag}
+                                href={tagHref(category, tag)}
+                                onClick={() => setIsOpen(false)}
+                                className="text-sm text-muted-foreground hover:text-primary transition-colors py-1.5"
+                              >
+                                {capitalize(tag)}
+                              </Link>
+                            ))}
+                            <Link
+                              href={categoryHref(category)}
+                              onClick={() => setIsOpen(false)}
+                              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors py-1.5"
+                            >
+                              View all {capitalize(category)} <ChevronRight className="h-3.5 w-3.5" />
+                            </Link>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
               </div>
 
               <Link

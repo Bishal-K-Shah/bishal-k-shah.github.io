@@ -4,7 +4,7 @@ import { LayoutGrid, ChevronRight, X, Tag as TagIcon, Hash } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { categoryInfo } from '@/components/icons';
-import { Category, CategoryTree, MAIN_CATEGORIES } from '@/types';
+import { Category, CategoryTags, MAIN_CATEGORIES } from '@/types';
 import { capitalize } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -35,7 +35,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 interface CategoryTabsProps {
   selectedCategory: Category | 'All';
   selectedTag: string | null;
-  categoryTree: CategoryTree;
+  categoryTags: CategoryTags;
   isMobileBrowseOpen: boolean;
   onMobileBrowseOpenChange: (open: boolean) => void;
   onCategoryClick: (category: Category | 'All') => void;
@@ -47,7 +47,7 @@ interface CategoryTabsProps {
 export function CategoryTabs({
   selectedCategory,
   selectedTag,
-  categoryTree,
+  categoryTags,
   isMobileBrowseOpen,
   onMobileBrowseOpenChange,
   onCategoryClick,
@@ -109,10 +109,10 @@ export function CategoryTabs({
                 Browse by Topic
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {Object.keys(categoryTree)
+              {Object.keys(categoryTags)
                 .sort()
                 .map((cat) => {
-                  const tags = categoryTree[cat];
+                  const tags = categoryTags[cat];
                   const hasTags = tags && tags.length > 0;
 
                   if (hasTags) {
@@ -131,7 +131,7 @@ export function CategoryTabs({
                             {capitalize(cat)}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          {tags.map((tag) => (
+                          {tags.map(({ tag }) => (
                             <DropdownMenuItem
                               key={tag}
                               onClick={() => onFilterUpdate(cat, tag)}
@@ -185,10 +185,10 @@ export function CategoryTabs({
               </SheetHeader>
               <ScrollArea className="h-full p-4 pb-20">
                 <Accordion type="single" collapsible className="w-full">
-                  {Object.keys(categoryTree)
+                  {Object.keys(categoryTags)
                     .sort()
                     .map((cat) => {
-                      const tags = categoryTree[cat];
+                      const tags = categoryTags[cat];
                       const hasTags = tags && tags.length > 0;
                       const Icon = categoryInfo[cat]?.icon || Hash;
 
@@ -209,7 +209,7 @@ export function CategoryTabs({
                                 >
                                   View All {capitalize(cat)} <ChevronRight className="h-3 w-3" />
                                 </button>
-                                {tags.map((tag) => (
+                                {tags.map(({ tag }) => (
                                   <button
                                     key={tag}
                                     onClick={() => onFilterUpdate(cat, tag)}

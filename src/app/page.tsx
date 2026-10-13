@@ -1,6 +1,6 @@
-import { getPosts, getPopularPosts, getCategories, getCategoryTree, toPostSummary } from "@/lib/posts";
+import { getPosts, getPopularPosts, getCategories, getCategoryTags, toPostSummary, MIN_POSTS_PER_MENU_TAG } from "@/lib/posts";
 import HomeClient from "@/components/HomeClient";
-import { Category, CategoryTree } from "@/types";
+import { Category } from "@/types";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -15,10 +15,10 @@ export const metadata: Metadata = {
 
 // This is a Server Component
 export default async function Home() {
-  const [posts, popularPosts, categoryTree] = await Promise.all([
+  const [posts, popularPosts, categoryTags] = await Promise.all([
     getPosts(),
     getPopularPosts(),
-    getCategoryTree(),
+    getCategoryTags(MIN_POSTS_PER_MENU_TAG),
   ]);
   // We only pass simple data (strings), not objects with functions (icons)
   // getCategories returns string[], so we need to cast it to Category[]
@@ -29,7 +29,7 @@ export default async function Home() {
       initialPosts={posts.map(toPostSummary)} 
       popularPosts={popularPosts.map(toPostSummary)}
       categoriesList={categories} 
-      categoryTree={categoryTree}
+      categoryTags={categoryTags}
     />
   );
 }

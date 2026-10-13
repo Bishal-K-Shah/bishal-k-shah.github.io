@@ -6,8 +6,11 @@ export type Category = string;
 // The "Main" categories that get special UI treatment (icons, main tabs)
 export const MAIN_CATEGORIES: string[] = ['Automobile', 'Technology', 'Electronics', 'HomeLab'];
 
-// A map of Category -> List of Tags
-export type CategoryTree = Record<string, string[]>;
+// A tag and the number of posts in its category that use it
+export type TagInfo = { tag: string; count: number };
+
+// A map of Category -> its tags, most used first
+export type CategoryTags = Record<string, TagInfo[]>;
 
 export type Post = {
   slug: string;

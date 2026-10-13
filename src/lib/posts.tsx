@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { Post, PostSummary, MAIN_CATEGORIES, CategoryInfo, Category, CategoryTree } from '@/types';
+import { Post, PostSummary, MAIN_CATEGORIES, CategoryInfo, Category, CategoryTags } from '@/types';
+import { pickTagLabel, tagKey } from '@/lib/tags';
 import { categoryInfo } from '@/components/icons';
 
 const postsDirectory = path.join(process.cwd(), 'src/posts');
@@ -86,18 +87,18 @@ const RELATED_TAG_WEIGHT = 3;
 const RELATED_CATEGORY_WEIGHT = 2;
 
 /**
- * Picks the posts most related to `post`: each shared tag (case-insensitive) scores
+ * Picks the posts most related to `post`: each shared tag (spelling variants merged) scores
  * RELATED_TAG_WEIGHT and a shared category RELATED_CATEGORY_WEIGHT; ties go to the newer
  * post. If fewer than `limit` posts are related at all, the newest remaining posts fill the gap.
  */
 export const getRelatedPosts = <T extends PostSummary>(post: PostSummary, allPosts: T[], limit = 3): T[] => {
-  const tags = new Set((post.tags ?? []).map((tag) => tag.toLowerCase()));
+  const tags = new Set((post.tags ?? []).map(tagKey));
   const byNewest = (a: T, b: T) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
 
   const candidates = allPosts.filter((p) => p.slug !== post.slug);
   const scored = candidates
     .map((candidate) => {
-      const sharedTags = (candidate.tags ?? []).filter((tag) => tags.has(tag.toLowerCase())).length;
+      const sharedTags = new Set((candidate.tags ?? []).map(tagKey).filter((key) => tags.has(key))).size;
       const sameCategory = candidate.category === post.category ? 1 : 0;
       return { candidate, score: sharedTags * RELATED_TAG_WEIGHT + sameCategory * RELATED_CATEGORY_WEIGHT };
     })
@@ -113,31 +114,45 @@ export const getRelatedPosts = <T extends PostSummary>(post: PostSummary, allPos
   return related;
 };
 
-// Returns a Map of Category -> Unique Tags
-export const getCategoryTree = async (): Promise<CategoryTree> => {
+/** Tags used by fewer posts than this are left out of navigation menus. */
+export const MIN_POSTS_PER_MENU_TAG = 2;
+
+/**
+ * Returns every category with its tags, most used first. Spelling variants of a tag
+ * ("Self-Hosting" / "self-hosting") are merged and counted once per post; tags used by
+ * fewer than `minPosts` posts in the category are left out (the category itself stays).
+ */
+export const getCategoryTags = async (minPosts = 1): Promise<CategoryTags> => {
   const posts = await getPosts();
-  const tree: CategoryTree = {};
+  // category -> tag key -> spelling -> number of posts using that spelling
+  const byCategory = new Map<string, Map<string, Map<string, number>>>();
 
-  posts.forEach(post => {
-    if (!tree[post.category]) {
-      tree[post.category] = [];
+  for (const post of posts) {
+    if (!byCategory.has(post.category)) byCategory.set(post.category, new Map());
+    const tags = byCategory.get(post.category)!;
+    const seen = new Set<string>();
+
+    for (const spelling of post.tags ?? []) {
+      const key = tagKey(spelling);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const spellings = tags.get(key) ?? new Map<string, number>();
+      spellings.set(spelling, (spellings.get(spelling) ?? 0) + 1);
+      tags.set(key, spellings);
     }
-    
-    if (post.tags) {
-      post.tags.forEach(tag => {
-        if (!tree[post.category].includes(tag)) {
-          tree[post.category].push(tag);
-        }
-      });
-    }
-  });
+  }
 
-  // Sort tags alphabetically
-  Object.keys(tree).forEach(category => {
-    tree[category].sort();
-  });
-
-  return tree;
+  const result: CategoryTags = {};
+  for (const [category, tags] of byCategory) {
+    result[category] = [...tags.values()]
+      .map((spellings) => ({
+        tag: pickTagLabel(spellings),
+        count: [...spellings.values()].reduce((sum, n) => sum + n, 0),
+      }))
+      .filter(({ count }) => count >= minPosts)
+      .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag, undefined, { sensitivity: 'base' }));
+  }
+  return result;
 };
 
 // Backwards compatibility for now, returns just the MAIN categories
